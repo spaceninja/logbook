@@ -49,7 +49,7 @@
     "eslint-plugin-vue": "10.9.2",
     "firebase-tools": "15.22.1",
     "jsdom": "29.1.1",
-    "npm-run-all2": "9.0.0",
+    "npm-run-all2": "9.0.2",
     "prettier": "3.8.3",
     "stylelint": "17.11.1",
     "stylelint-config-recommended-vue": "1.6.1",
