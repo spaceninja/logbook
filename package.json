@@ -25,9 +25,9 @@
     "validate": "run-s lint:check type-check test"
   },
   "dependencies": {
-    "nuxt": "^4.4.8",
-    "vue": "^3.5.38",
-    "vue-router": "^5.1.0"
+    "nuxt": "4.4.8",
+    "vue": "3.5.38",
+    "vue-router": "5.1.0"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
