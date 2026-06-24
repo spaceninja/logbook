@@ -22,7 +22,7 @@
 ## 1. Overview
 
 Logbook tracks four media types — **books, movies, shows, games** — in a single
-unified collection. Each tracked thing (a book, a movie, a *season* of a show, a
+unified collection. Each tracked thing (a book, a movie, a _season_ of a show, a
 game) is one **item**. Two views read over that collection:
 
 - **Backlog** — things you intend to consume (not yet completed, or completed and
@@ -107,33 +107,34 @@ Type-specific fields live in a nested `metadata` map.
 
 ```jsonc
 {
-  "id": "movie-tmdb-27205",        // unique; also the Firestore document id
-  "type": "movie",                 // book | movie | show | game
+  "id": "movie-tmdb-27205", // unique; also the Firestore document id
+  "type": "movie", // book | movie | show | game
   "title": "Inception",
-  "creator": "Christopher Nolan",  // unified: author | director | created_by | developer
-  "cover": "https://image.tmdb.org/t/p/w500/...jpg",  // large image, detail view
+  "creator": "Christopher Nolan", // unified: author | director | created_by | developer
+  "cover": "https://image.tmdb.org/t/p/w500/...jpg", // large image, detail view
   "thumbnail": "https://image.tmdb.org/t/p/w185/...jpg", // small image, list view
-  "release_date": "2010-07-16",    // ISO date; for shows, the season air date
+  "release_date": "2010-07-16", // ISO date; for shows, the season air date
   "description": "A thief who steals corporate secrets...", // official synopsis/blurb
 
-  "length": 148,                   // numeric size of the work
-  "length_unit": "min",            // pages | min | episodes | hours
+  "length": 148, // numeric size of the work
+  "length_unit": "min", // pages | min | episodes | hours
 
-  "community_rating": 8.2,         // optional; aggregate rating from the provider
-  "my_rating": 9,                  // optional; the owner's rating
-  "provider": "tmdb",              // data origin: tmdb | igdb | goodreads | google-books | open-library | manual
-  "recommended_by": "Chuck",       // optional; person who recommended this item
+  "community_rating": 8.2, // optional; aggregate rating from the provider
+  "my_rating": 9, // optional; the owner's rating
+  "provider": "tmdb", // data origin: tmdb | igdb | goodreads | google-books | open-library | manual
+  "recommended_by": "Chuck", // optional; person who recommended this item
 
-  "status": "backlog",            // backlog | in_progress | inactive
+  "status": "backlog", // backlog | in_progress | inactive
   "is_purchased": false,
   "is_prioritized": true,
-  "completed_dates": [],           // array of ISO dates; one entry per completion
-  "completed_years": [],           // derived from completed_dates; for year queries (§4)
-  "notes": "",                     // private notes (distinct from description)
+  "completed_dates": [], // array of ISO dates; one entry per completion
+  "completed_years": [], // derived from completed_dates; for year queries (§4)
+  "notes": "", // private notes (distinct from description)
   "tags": [],
 
-  "metadata": {                    // type-specific (see §3.3)
-  }
+  "metadata": {
+    // type-specific (see §3.3)
+  },
 }
 ```
 
@@ -145,18 +146,18 @@ special-case status:
 - **History membership** = `completed_dates.length > 0`
 - **Backlog membership** = `status` is `backlog` or `in_progress`
 
-`status` describes *current intent only*; `completed_dates` is the record of what
+`status` describes _current intent only_; `completed_dates` is the record of what
 you've finished. Their combination expresses every state:
 
-| `completed_dates` | `status`      | Backlog? | History? | Meaning                         |
-| ----------------- | ------------- | :------: | :------: | ------------------------------- |
-| `[]`              | `backlog`     |    ✅    |    —     | want to; never started          |
-| `[]`              | `in_progress` |    ✅    |    —     | consuming for the first time    |
-| `[]`              | `inactive`    |    —     |    —     | abandoned / DNF ("Dropped")     |
-| `[d1]`            | `inactive`    |    —     |    ✅    | finished; no replay planned     |
-| `[d1]`            | `backlog`     |    ✅    |    ✅    | finished; want to repeat        |
-| `[d1]`            | `in_progress` |    ✅    |    ✅    | finished before; repeating now  |
-| `[d1, d2]`        | `inactive`    |    —     |    ✅    | finished twice; done            |
+| `completed_dates` | `status`      | Backlog? | History? | Meaning                        |
+| ----------------- | ------------- | :------: | :------: | ------------------------------ |
+| `[]`              | `backlog`     |    ✅    |    —     | want to; never started         |
+| `[]`              | `in_progress` |    ✅    |    —     | consuming for the first time   |
+| `[]`              | `inactive`    |    —     |    —     | abandoned / DNF ("Dropped")    |
+| `[d1]`            | `inactive`    |    —     |    ✅    | finished; no replay planned    |
+| `[d1]`            | `backlog`     |    ✅    |    ✅    | finished; want to repeat       |
+| `[d1]`            | `in_progress` |    ✅    |    ✅    | finished before; repeating now |
+| `[d1, d2]`        | `inactive`    |    —     |    ✅    | finished twice; done           |
 
 **Repeats:** marking an item complete appends today's date (or the source's date)
 to `completed_dates` and sets `status` to `inactive`. Wanting a repeat sets
@@ -175,12 +176,12 @@ string in a query, so the year must be stored as a matchable value.
 `creator` (top-level) absorbs the former per-type author/director/developer, so
 `metadata` now holds only genuinely type-specific fields:
 
-| Type    | `metadata` fields                                              | `length_unit` |
-| ------- | ------------------------------------------------------------- | ------------- |
-| `book`  | `series`, `series_number`, `isbn`                             | `pages`       |
-| `movie` | *(none)*                                                      | `min`         |
-| `show`  | `show_tmdb_id`, `season_number`, `episode_count`, `episode_runtime` | `min`   |
-| `game`  | `platform`                                                    | `hours`       |
+| Type    | `metadata` fields                                                   | `length_unit` |
+| ------- | ------------------------------------------------------------------- | ------------- |
+| `book`  | `series`, `series_number`, `isbn`                                   | `pages`       |
+| `movie` | _(none)_                                                            | `min`         |
+| `show`  | `show_tmdb_id`, `season_number`, `episode_count`, `episode_runtime` | `min`         |
+| `game`  | `platform`                                                          | `hours`       |
 
 Notes:
 
@@ -192,13 +193,13 @@ Notes:
 - **`show_tmdb_id`** is kept explicit (not derived from `id`) because grouping a
   show's seasons is a Firestore `where('metadata.show_tmdb_id','==',N)` query. The
   `show_` qualifier distinguishes the parent series id from a season's own TMDB id.
-- **`isbn`** is kept because it is *not* derivable: book ids use the Goodreads id
+- **`isbn`** is kept because it is _not_ derivable: book ids use the Goodreads id
   (`book-goodreads-<id>`), not ISBN.
 
 ### 3.4 Shows are tracked per-season
 
 A show item is **one season**, not the whole series. Seasons are linked by a shared
-`show_tmdb_id` so views can group them under their show *for display* while storage
+`show_tmdb_id` so views can group them under their show _for display_ while storage
 stays flat and uniform.
 
 - `id` format: `show-tmdb-<showId>-s<seasonNumber>` (e.g. `show-tmdb-95396-s1`)
@@ -275,11 +276,11 @@ Fine filtering/sorting beyond these runs client-side, so the index set stays sma
 
 ### 4.5 Target queries (validation)
 
-| Question                                | View    | Coarse query                         | Client sort        |
-| --------------------------------------- | ------- | ------------------------------------ | ------------------ |
-| "What shows did I watch in 2024?"       | History | `type=show` + `completed_years∋2024` | completion date    |
-| "Top-rated movies last year?"           | History | `type=movie` + `completed_years∋2024`| `my_rating` ↓      |
-| "Most popular books in my backlog?"     | Backlog | `type=book` + `status∈{backlog,…}`   | `community_rating` ↓ |
+| Question                            | View    | Coarse query                          | Client sort          |
+| ----------------------------------- | ------- | ------------------------------------- | -------------------- |
+| "What shows did I watch in 2024?"   | History | `type=show` + `completed_years∋2024`  | completion date      |
+| "Top-rated movies last year?"       | History | `type=movie` + `completed_years∋2024` | `my_rating` ↓        |
+| "Most popular books in my backlog?" | Backlog | `type=book` + `status∈{backlog,…}`    | `community_rating` ↓ |
 
 ---
 
@@ -305,15 +306,15 @@ The core value-add: manual entry that autofills metadata from public APIs.
 
 ### Metadata sources (all proxied through Nitro server routes)
 
-| Type    | Search API                                  | Notes                                            |
-| ------- | ------------------------------------------- | ------------------------------------------------ |
-| `book`  | Google Books (existing key) / Open Library  | Most books arrive via Goodreads sync; manual is the exception |
-| `movie` | TMDB                                         | Free key                                         |
-| `show`  | TMDB (show search → season details)         | Free key; two-step                               |
-| `game`  | IGDB (Twitch OAuth)                          | Free non-commercial; requires server-side token  |
+| Type    | Search API                                 | Notes                                                         |
+| ------- | ------------------------------------------ | ------------------------------------------------------------- |
+| `book`  | Google Books (existing key) / Open Library | Most books arrive via Goodreads sync; manual is the exception |
+| `movie` | TMDB                                       | Free key                                                      |
+| `show`  | TMDB (show search → season details)        | Free key; two-step                                            |
+| `game`  | IGDB (Twitch OAuth)                        | Free non-commercial; requires server-side token               |
 
 All searches route through the proxy (not browser-direct) for one consistent code
-path and to keep every key server-side — IGDB *requires* a server-side Twitch
+path and to keep every key server-side — IGDB _requires_ a server-side Twitch
 OAuth token regardless.
 
 Cover-URL cleanup carried over from the current app: rewrite `http→https` and strip
@@ -366,6 +367,7 @@ empty).
 
   This is the real gate; the Nuxt UI additionally shows/hides Add/Edit/Delete
   controls based on auth state, which is cosmetic only.
+
 - **Hosting:** the Nuxt app deploys to **Netlify** (Nitro Netlify preset). Firebase
   is used only for **Auth + Firestore**, which stay on the **free Spark tier** — no
   Cloud Functions, so no Blaze plan required.
@@ -417,7 +419,7 @@ which Netlify watches. Two mechanisms prevent wasted builds:
    (exit 0 = skip), covering any stray manual commit under `backup/` as well.
 
 **Open: backup destination (do not bundle backups with the app).** Committing
-backups into the app repo made sense when the repo *was* the data store. But the
+backups into the app repo made sense when the repo _was_ the data store. But the
 app now ships **without data** and could be forked or self-hosted by others against
 their own Firebase project — bundling the owner's personal backups into a clone
 would be odd. The backup should therefore live **outside the app repo** (a separate
@@ -448,10 +450,10 @@ in-repo commits left to ignore.
   items **directly to Firestore**, sourcing from: Goodreads CSV (books),
   Letterboxd export (movies), Trakt export (shows), Infinite Backlog (games).
   Shared challenge: metadata-matching by title+year to TMDB/IGDB. Notable wrinkles:
-  Trakt tracks *episodes*, so its history must be rolled up into season
+  Trakt tracks _episodes_, so its history must be rolled up into season
   completions; the movie source should be **Letterboxd only** (Trakt also has
   movies — avoid duplicates); games must filter the collection export to the
-  *completed* subset for History.
+  _completed_ subset for History.
 - **Achievement / streaming auto-sync** (Steam, PSN, Xbox, Younify, Plex) —
   intentionally dropped; these are logged manually. Possible future enhancement.
 - **Private (auth-gated) reads** — not needed; the site is public-read.
@@ -460,16 +462,16 @@ in-repo commits left to ignore.
 
 ## 11. Data volume (validation)
 
-Counts from existing exports (2026-06-22), in *logbook items* (a book, a movie, a
+Counts from existing exports (2026-06-22), in _logbook items_ (a book, a movie, a
 show-**season**, or a game):
 
-| Type   | Source           | History (completed) | Backlog        | ~Total |
-| ------ | ---------------- | ------------------- | -------------- | ------ |
-| Books  | Goodreads        | 488 `read`          | 251            | 739    |
-| Movies | Letterboxd       | 1,755 watched       | 161 watchlist  | ~1,900 |
-| Shows  | Trakt            | 770 seasons         | + watchlist    | ~770+  |
-| Games  | Infinite Backlog | subset of 770       | 49 wishlist    | ~820   |
-| **All**|                  | **~3,800**          |                | **~4,250** |
+| Type    | Source           | History (completed) | Backlog       | ~Total     |
+| ------- | ---------------- | ------------------- | ------------- | ---------- |
+| Books   | Goodreads        | 488 `read`          | 251           | 739        |
+| Movies  | Letterboxd       | 1,755 watched       | 161 watchlist | ~1,900     |
+| Shows   | Trakt            | 770 seasons         | + watchlist   | ~770+      |
+| Games   | Infinite Backlog | subset of 770       | 49 wishlist   | ~820       |
+| **All** |                  | **~3,800**          |               | **~4,250** |
 
 Movies dominate; History is the heavy view (~3,800). Growth is at human pace
 (~hundreds/year), so the 10-year ceiling is ~10K items — comfortably within
