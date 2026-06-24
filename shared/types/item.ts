@@ -1,0 +1,85 @@
+/**
+ * The unified item schema. Every tracked thing — a book, a movie, a season of a
+ * show, or a game — is one `Item` stored as a single Firestore document in the
+ * `items` collection (document id = `Item.id`). See the core design doc, §3.
+ */
+
+export type MediaType = 'book' | 'movie' | 'show' | 'game';
+
+export type ItemStatus = 'backlog' | 'in_progress' | 'inactive';
+
+export type LengthUnit = 'pages' | 'min' | 'episodes' | 'hours';
+
+export type Provider =
+  | 'tmdb'
+  | 'igdb'
+  | 'goodreads'
+  | 'google-books'
+  | 'open-library'
+  | 'manual';
+
+export interface BookMetadata {
+  series?: string;
+  series_number?: number;
+  isbn?: string;
+}
+
+// Movies carry no type-specific metadata; `creator` (top-level) holds the director.
+export type MovieMetadata = Record<string, never>;
+
+export interface ShowMetadata {
+  show_tmdb_id: number;
+  season_number: number;
+  episode_count: number;
+  episode_runtime: number;
+}
+
+export interface GameMetadata {
+  platform?: string;
+}
+
+export type ItemMetadata =
+  | BookMetadata
+  | MovieMetadata
+  | ShowMetadata
+  | GameMetadata;
+
+export interface Item {
+  /** Unique id; also the Firestore document id. */
+  id: string;
+  type: MediaType;
+  title: string;
+  /** Unified author | director | created_by | developer. */
+  creator?: string | string[];
+  /** Large image for the detail view. */
+  cover?: string;
+  /** Small image for list views. */
+  thumbnail?: string;
+  /** ISO date; for shows, the season air date. */
+  release_date?: string;
+  description?: string;
+  /** Numeric size of the work, paired with `length_unit`. */
+  length?: number;
+  length_unit?: LengthUnit;
+  /**
+   * Aggregate rating from the provider, normalized to a 0–10 scale (matching
+   * `my_rating`). Sources are normalized at the boundary: Goodreads (0–5) ×2,
+   * TMDB (0–10) as-is, IGDB (0–100) ÷10.
+   */
+  community_rating?: number;
+  /** The owner's rating, on a 0–10 scale. */
+  my_rating?: number;
+  provider?: Provider;
+  recommended_by?: string;
+  /** Current intent only; History membership is driven by `completed_dates`. */
+  status: ItemStatus;
+  is_purchased: boolean;
+  is_prioritized: boolean;
+  /** One ISO date per completion. */
+  completed_dates: string[];
+  /** Derived from `completed_dates`; enables History year queries. */
+  completed_years: number[];
+  notes?: string;
+  tags: string[];
+  metadata: ItemMetadata;
+}

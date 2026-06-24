@@ -53,6 +53,15 @@ export default [
     ...pluginVitest.configs.recommended,
   },
   {
+    // Test files are TypeScript; parse them with the TS parser so type-only
+    // imports (`import type { … }`) and other TS syntax are understood. The
+    // recommended test configs above leave the default (espree) parser in place.
+    files: ['**/*.test.*', '**/*.spec.*'],
+    languageOptions: {
+      parser: typescriptParser,
+    },
+  },
+  {
     // Our additions on top of the recommended sets.
     files: ['**/*.test.*', '**/*.spec.*'],
     rules: {

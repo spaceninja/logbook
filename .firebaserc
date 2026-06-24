@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "dev": "logbook-dev",
+    "prod": "logbook-prod"
+  }
+}

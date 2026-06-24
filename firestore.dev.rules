@@ -1,0 +1,11 @@
+rules_version = '2';
+
+// DEV rules. Open read+write so the in-app seed buttons can wipe and reload the
+// database without auth. Deploy ONLY to the logbook-dev project; never to prod.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /items/{id} {
+      allow read, write: if true;
+    }
+  }
+}

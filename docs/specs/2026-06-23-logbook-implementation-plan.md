@@ -97,7 +97,12 @@ export type MediaType = 'book' | 'movie' | 'show' | 'game';
 export type ItemStatus = 'backlog' | 'in_progress' | 'inactive';
 export type LengthUnit = 'pages' | 'min' | 'episodes' | 'hours';
 export type Provider =
-  | 'tmdb' | 'igdb' | 'goodreads' | 'google-books' | 'open-library' | 'manual';
+  | 'tmdb'
+  | 'igdb'
+  | 'goodreads'
+  | 'google-books'
+  | 'open-library'
+  | 'manual';
 
 export interface BookMetadata {
   series?: string;
@@ -116,13 +121,13 @@ export interface GameMetadata {
 }
 
 export interface Item {
-  id: string;                 // also the Firestore document id
+  id: string; // also the Firestore document id
   type: MediaType;
   title: string;
   creator?: string | string[];
   cover?: string;
   thumbnail?: string;
-  release_date?: string;      // ISO date
+  release_date?: string; // ISO date
   description?: string;
   length?: number;
   length_unit?: LengthUnit;
@@ -133,8 +138,8 @@ export interface Item {
   status: ItemStatus;
   is_purchased: boolean;
   is_prioritized: boolean;
-  completed_dates: string[];  // ISO dates
-  completed_years: number[];  // derived from completed_dates
+  completed_dates: string[]; // ISO dates
+  completed_years: number[]; // derived from completed_dates
   notes?: string;
   tags: string[];
   metadata: BookMetadata | MovieMetadata | ShowMetadata | GameMetadata;
@@ -218,12 +223,12 @@ No file needed — the empty dataset is `[]`; its button wipes and loads nothing
 For each of the 4 types, four items covering the field-coverage and view-membership
 corners:
 
-| variant          | fields populated            | status        | completed_dates |
-| ---------------- | --------------------------- | ------------- | --------------- |
-| minimal-backlog  | required only               | `backlog`     | `[]`            |
-| maximal-backlog  | every field                 | `backlog`     | `[]`            |
-| minimal-history  | required only               | `inactive`    | `[one date]`    |
-| maximal-history  | every field                 | `inactive`    | `[two dates]`   |
+| variant         | fields populated | status     | completed_dates |
+| --------------- | ---------------- | ---------- | --------------- |
+| minimal-backlog | required only    | `backlog`  | `[]`            |
+| maximal-backlog | every field      | `backlog`  | `[]`            |
+| minimal-history | required only    | `inactive` | `[one date]`    |
+| maximal-history | every field      | `inactive` | `[two dates]`   |
 
 4 types × 4 variants = **16 items**. Maximal items populate type-specific `metadata`
 fully; minimal items use the empty/required `metadata` for their type.
