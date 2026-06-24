@@ -1,6 +1,6 @@
 {
   "projects": {
-    "dev": "logbook-dev",
-    "prod": "logbook-prod"
+    "dev": "spaceninja-logbook-dev",
+    "prod": "spaceninja-logbook-prod"
   }
 }

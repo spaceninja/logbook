@@ -15,15 +15,18 @@ const BATCH_LIMIT = 500;
  * Dev-only seeding: wipe the entire `items` collection and replace it with a
  * dataset. Kept out of the read path; only the `/dev` page (gated on
  * `import.meta.dev`) calls these, and only the dev project allows writes.
+ *
+ * Firestore is resolved lazily inside each method (not at setup): the Firebase
+ * plugin is client-only, so `$firestore` is undefined during SSR.
  */
 export function useSeed() {
-  const { $firestore } = useNuxtApp();
-  const db = $firestore as Firestore;
-  const items = collection(db, 'items');
+  const nuxtApp = useNuxtApp();
+  const getDb = () => nuxtApp.$firestore as Firestore;
 
   /** Delete every document in the `items` collection, in batches of 500. */
   async function wipeAll(): Promise<void> {
-    const snapshot = await getDocs(items);
+    const db = getDb();
+    const snapshot = await getDocs(collection(db, 'items'));
     const docs = snapshot.docs;
 
     for (let i = 0; i < docs.length; i += BATCH_LIMIT) {
@@ -43,6 +46,8 @@ export function useSeed() {
   async function loadDataset(dataset: Item[]): Promise<void> {
     await wipeAll();
 
+    const db = getDb();
+    const items = collection(db, 'items');
     for (let i = 0; i < dataset.length; i += BATCH_LIMIT) {
       const batch = writeBatch(db);
       for (const item of dataset.slice(i, i + BATCH_LIMIT)) {
