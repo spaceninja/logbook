@@ -11,8 +11,9 @@ const {
   data: items,
   pending,
   error,
-} = await useAsyncData('history', () => getHistory(year.value), {
+} = useAsyncData('history', () => getHistory(year.value), {
   server: false,
+  lazy: true,
   default: () => [],
   watch: [year],
 });
@@ -44,18 +45,25 @@ const sorted = computed(() =>
       </select>
     </label>
 
-    <p v-if="pending">Loading…</p>
-    <p v-else-if="error">Failed to load history: {{ error.message }}</p>
-    <p v-else-if="sorted.length === 0">Nothing completed in {{ year }}.</p>
-    <ul v-else>
-      <li v-for="item in sorted" :key="item.id">
-        <NuxtLink :to="`/item/${item.id}`">
-          <strong>{{ itemDisplayTitle(item) }}</strong>
-        </NuxtLink>
-        <span> — {{ item.type }}</span>
-        <span v-if="item.creator"> · {{ formatCreator(item.creator) }}</span>
-        <span> · completed {{ datesInYear(item).join(', ') }}</span>
-      </li>
-    </ul>
+    <!-- Client-only Firestore data; render client-side to avoid hydrating
+         against the empty SSR default. -->
+    <ClientOnly>
+      <template #fallback>
+        <p>Loading…</p>
+      </template>
+      <p v-if="pending">Loading…</p>
+      <p v-else-if="error">Failed to load history: {{ error.message }}</p>
+      <p v-else-if="sorted.length === 0">Nothing completed in {{ year }}.</p>
+      <ul v-else>
+        <li v-for="item in sorted" :key="item.id">
+          <NuxtLink :to="`/item/${item.id}`">
+            <strong>{{ itemDisplayTitle(item) }}</strong>
+          </NuxtLink>
+          <span> — {{ item.type }}</span>
+          <span v-if="item.creator"> · {{ formatCreator(item.creator) }}</span>
+          <span> · completed {{ datesInYear(item).join(', ') }}</span>
+        </li>
+      </ul>
+    </ClientOnly>
   </section>
 </template>

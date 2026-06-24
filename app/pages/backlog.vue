@@ -8,8 +8,9 @@ const {
   data: items,
   pending,
   error,
-} = await useAsyncData('backlog', () => getBacklog(), {
+} = useAsyncData('backlog', () => getBacklog(), {
   server: false,
+  lazy: true,
   default: () => [],
 });
 
@@ -24,24 +25,31 @@ const sorted = computed(() =>
 <template>
   <section>
     <h1>Backlog</h1>
-    <p v-if="pending">Loading…</p>
-    <p v-else-if="error">Failed to load backlog: {{ error.message }}</p>
-    <p v-else-if="sorted.length === 0">Nothing in the backlog.</p>
-    <ul v-else>
-      <li v-for="item in sorted" :key="item.id">
-        <NuxtLink :to="`/item/${item.id}`">
-          <img
-            v-if="item.thumbnail"
-            :src="item.thumbnail"
-            :alt="`${itemDisplayTitle(item)} cover`"
-            width="40"
-          />
-          <strong>{{ itemDisplayTitle(item) }}</strong>
-        </NuxtLink>
-        <span> — {{ item.type }}</span>
-        <span v-if="item.creator"> · {{ formatCreator(item.creator) }}</span>
-        <span> · {{ item.status }}</span>
-      </li>
-    </ul>
+    <!-- Data comes from the client-only Firestore SDK, so render it client-side
+         to avoid hydrating against the empty SSR default. -->
+    <ClientOnly>
+      <template #fallback>
+        <p>Loading…</p>
+      </template>
+      <p v-if="pending">Loading…</p>
+      <p v-else-if="error">Failed to load backlog: {{ error.message }}</p>
+      <p v-else-if="sorted.length === 0">Nothing in the backlog.</p>
+      <ul v-else>
+        <li v-for="item in sorted" :key="item.id">
+          <NuxtLink :to="`/item/${item.id}`">
+            <img
+              v-if="item.thumbnail"
+              :src="item.thumbnail"
+              :alt="`${itemDisplayTitle(item)} cover`"
+              width="40"
+            />
+            <strong>{{ itemDisplayTitle(item) }}</strong>
+          </NuxtLink>
+          <span> — {{ item.type }}</span>
+          <span v-if="item.creator"> · {{ formatCreator(item.creator) }}</span>
+          <span> · {{ item.status }}</span>
+        </li>
+      </ul>
+    </ClientOnly>
   </section>
 </template>

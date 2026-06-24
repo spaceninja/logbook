@@ -1,5 +1,11 @@
 import type { Item } from '../types/item';
 
+// Placeholder image URLs (real provider covers are opaque API-supplied paths).
+const img = (label: string): Pick<Item, 'cover' | 'thumbnail'> => ({
+  thumbnail: `https://placehold.co/185x278?text=${encodeURIComponent(label)}`,
+  cover: `https://placehold.co/500x750?text=${encodeURIComponent(label)}`,
+});
+
 /**
  * Edge-case dataset: for each of the four media types, a *minimal* item
  * (required fields only) and a *maximal* item (every field populated), in both
@@ -29,8 +35,7 @@ export const edgeSeed: Item[] = [
     type: 'book',
     title: 'Maximal Backlog Book',
     creator: 'Ada Author',
-    cover: 'https://example.com/book-cover.jpg',
-    thumbnail: 'https://example.com/book-thumb.jpg',
+    ...img('Maximal Backlog Book'),
     release_date: '2023-05-01',
     description: 'Every optional field populated, never completed.',
     length: 432,
@@ -69,8 +74,7 @@ export const edgeSeed: Item[] = [
     type: 'book',
     title: 'Maximal History Book',
     creator: ['Ada Author', 'Bob Coauthor'],
-    cover: 'https://example.com/book-cover2.jpg',
-    thumbnail: 'https://example.com/book-thumb2.jpg',
+    ...img('Maximal History Book'),
     release_date: '2018-09-20',
     description: 'Every optional field populated, completed in two years.',
     length: 640,
@@ -111,8 +115,7 @@ export const edgeSeed: Item[] = [
     type: 'movie',
     title: 'Maximal Backlog Movie',
     creator: 'Dee Director',
-    cover: 'https://example.com/movie-cover.jpg',
-    thumbnail: 'https://example.com/movie-thumb.jpg',
+    ...img('Maximal Backlog Movie'),
     release_date: '2024-11-15',
     description: 'Every optional field populated, never watched.',
     length: 137,
@@ -147,8 +150,7 @@ export const edgeSeed: Item[] = [
     type: 'movie',
     title: 'Maximal History Movie',
     creator: 'Dee Director',
-    cover: 'https://example.com/movie-cover2.jpg',
-    thumbnail: 'https://example.com/movie-thumb2.jpg',
+    ...img('Maximal History Movie'),
     release_date: '2010-07-16',
     description: 'Every optional field populated, watched twice.',
     length: 148,
@@ -190,8 +192,7 @@ export const edgeSeed: Item[] = [
     type: 'show',
     title: 'Maximal Backlog Show',
     creator: ['Gus Creator', 'Hana Creator'],
-    cover: 'https://example.com/show-cover.jpg',
-    thumbnail: 'https://example.com/show-thumb.jpg',
+    ...img('Maximal Backlog Show'),
     release_date: '2022-02-18',
     description: 'Every optional field populated, season not yet watched.',
     length: 480,
@@ -236,8 +237,7 @@ export const edgeSeed: Item[] = [
     type: 'show',
     title: 'Maximal History Show',
     creator: 'Gus Creator',
-    cover: 'https://example.com/show-cover2.jpg',
-    thumbnail: 'https://example.com/show-thumb2.jpg',
+    ...img('Maximal History Show'),
     release_date: '2019-04-14',
     description:
       'Every optional field populated, season finished across two years.',
@@ -280,8 +280,7 @@ export const edgeSeed: Item[] = [
     type: 'game',
     title: 'Maximal Backlog Game',
     creator: 'Kilo Studios',
-    cover: 'https://example.com/game-cover.jpg',
-    thumbnail: 'https://example.com/game-thumb.jpg',
+    ...img('Maximal Backlog Game'),
     release_date: '2025-09-30',
     description: 'Every optional field populated, in the wishlist.',
     length: 60,
@@ -316,8 +315,7 @@ export const edgeSeed: Item[] = [
     type: 'game',
     title: 'Maximal History Game',
     creator: 'Kilo Studios',
-    cover: 'https://example.com/game-cover2.jpg',
-    thumbnail: 'https://example.com/game-thumb2.jpg',
+    ...img('Maximal History Game'),
     release_date: '2017-03-03',
     description: 'Every optional field populated, finished in two years.',
     length: 90,
