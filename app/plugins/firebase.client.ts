@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, type Firestore } from 'firebase/firestore';
+import { initializeFirestore, type Firestore } from 'firebase/firestore';
 
 /**
  * Initializes the Firebase app and Firestore from runtime config and exposes
@@ -18,7 +18,13 @@ export default defineNuxtPlugin(() => {
     appId: firebase.appId,
   });
 
-  const firestore = getFirestore(app);
+  // Force HTTP long-polling instead of the default streaming WebChannel.
+  // Safari (and content blockers / proxies) intermittently kill the streaming
+  // `Listen/channel` request with a CORS "access control" error, which hangs
+  // reads. Long-polling uses ordinary XHR and sidesteps that.
+  const firestore = initializeFirestore(app, {
+    experimentalForceLongPolling: true,
+  });
 
   return {
     provide: {
