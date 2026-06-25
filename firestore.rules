@@ -1,12 +1,13 @@
 rules_version = '2';
 
-// PRODUCTION rules. Items are world-readable; writes are blocked entirely until
-// the auth milestone replaces `false` with an owner-uid check (core design §7).
+// PRODUCTION rules. Public read; writes restricted to the owner. The UID is this
+// project's owner UID (per-project; differs from the dev project's).
 service cloud.firestore {
   match /databases/{database}/documents {
     match /items/{id} {
       allow read: if true;
-      allow write: if false;
+      allow write: if request.auth != null
+                   && request.auth.uid == 'AzKrHAEzZDTS6Q3hezWGBbHcIH63';
     }
   }
 }
