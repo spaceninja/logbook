@@ -4,7 +4,8 @@ import { itemDisplayTitle, formatCreator } from '~~/shared/utils/itemDisplay';
 const route = useRoute();
 const id = computed(() => String(route.params.id));
 
-const { getItem } = useItems();
+const { getItem, deleteItem } = useItems();
+const { isOwner } = useAuth();
 
 const {
   data: item,
@@ -24,6 +25,26 @@ const {
 const metadataEntries = computed(() =>
   item.value ? Object.entries(item.value.metadata) : [],
 );
+
+const deleting = ref(false);
+
+async function onDelete() {
+  if (!item.value) return;
+  if (
+    !window.confirm(
+      `Delete "${itemDisplayTitle(item.value)}"? This cannot be undone.`,
+    )
+  ) {
+    return;
+  }
+  deleting.value = true;
+  try {
+    await deleteItem(id.value);
+    await navigateTo('/backlog');
+  } finally {
+    deleting.value = false;
+  }
+}
 </script>
 
 <template>
@@ -45,6 +66,14 @@ const metadataEntries = computed(() =>
 
       <article v-else>
         <h1>{{ itemDisplayTitle(item) }}</h1>
+
+        <p v-if="isOwner">
+          <NuxtLink :to="`/item/${id}/edit`">Edit</NuxtLink>
+          <button type="button" :disabled="deleting" @click="onDelete">
+            {{ deleting ? 'Deleting…' : 'Delete' }}
+          </button>
+        </p>
+
         <img
           v-if="item.cover"
           :src="item.cover"

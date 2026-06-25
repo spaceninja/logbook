@@ -1,13 +1,16 @@
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
   query,
+  setDoc,
   where,
   type Firestore,
 } from 'firebase/firestore';
 import type { Item } from '~~/shared/types/item';
+import { deriveCompletedYears } from '~~/shared/utils/completedYears';
 
 /**
  * Read access to the `items` collection. Each method runs a coarse Firestore
@@ -44,5 +47,23 @@ export function useItems() {
     return snapshot.exists() ? (snapshot.data() as Item) : null;
   }
 
-  return { getBacklog, getHistory, getItem };
+  /**
+   * Create or replace an item (used by both add and edit). `completed_years` is
+   * recomputed from `completed_dates` so the stored value can't drift. Owner-only
+   * by Firestore rules; callers gate the UI on `isOwner`.
+   */
+  async function saveItem(item: Item): Promise<void> {
+    const record: Item = {
+      ...item,
+      completed_years: deriveCompletedYears(item.completed_dates),
+    };
+    await setDoc(doc(items(), item.id), record);
+  }
+
+  /** Delete an item by id. Owner-only by Firestore rules. */
+  async function deleteItem(id: string): Promise<void> {
+    await deleteDoc(doc(items(), id));
+  }
+
+  return { getBacklog, getHistory, getItem, saveItem, deleteItem };
 }

@@ -15,6 +15,7 @@ definePageMeta({
 });
 
 const { loadDataset } = useSeed();
+const { isOwner, login } = useAuth();
 
 type DatasetKey = 'empty' | 'edge' | 'sample';
 
@@ -54,13 +55,28 @@ async function load(dataset: (typeof datasets)[number]) {
       Each button <strong>wipes the entire database</strong> and replaces it
       with the chosen dataset. Dev only.
     </p>
-    <ul>
-      <li v-for="dataset in datasets" :key="dataset.key">
-        <button type="button" :disabled="busy !== null" @click="load(dataset)">
-          {{ busy === dataset.key ? 'Loading…' : `Load ${dataset.label}` }}
-        </button>
-      </li>
-    </ul>
-    <p v-if="message">{{ message }}</p>
+    <!-- Dev rules are owner-only, so seeding requires the owner to be signed in. -->
+    <ClientOnly>
+      <template #fallback>
+        <p>Loading…</p>
+      </template>
+      <p v-if="!isOwner">
+        <button type="button" @click="login">Log in with GitHub to seed</button>
+      </p>
+      <template v-else>
+        <ul>
+          <li v-for="dataset in datasets" :key="dataset.key">
+            <button
+              type="button"
+              :disabled="busy !== null"
+              @click="load(dataset)"
+            >
+              {{ busy === dataset.key ? 'Loading…' : `Load ${dataset.label}` }}
+            </button>
+          </li>
+        </ul>
+        <p v-if="message">{{ message }}</p>
+      </template>
+    </ClientOnly>
   </section>
 </template>

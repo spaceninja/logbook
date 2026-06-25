@@ -1,10 +1,19 @@
 import { initializeApp } from 'firebase/app';
 import { initializeFirestore, type Firestore } from 'firebase/firestore';
+import {
+  getAuth,
+  onAuthStateChanged,
+  type Auth,
+  type User,
+} from 'firebase/auth';
 
 /**
- * Initializes the Firebase app and Firestore from runtime config and exposes
- * the Firestore instance as `$firestore`. Client-only: reads (and the dev-only
- * seed writes) run in the browser this milestone; SSR data fetching is deferred.
+ * Initializes the Firebase app, Firestore, and Auth from runtime config, and
+ * exposes them as `$firestore` / `$auth`. Client-only: reads, the dev-only seed
+ * writes, and auth all run in the browser this milestone (SSR is deferred).
+ *
+ * A single `onAuthStateChanged` listener mirrors the current user into shared
+ * state (`useState('auth-user')`) so `useAuth()` can read it app-wide.
  */
 export default defineNuxtPlugin(() => {
   const { firebase } = useRuntimeConfig().public;
@@ -26,9 +35,25 @@ export default defineNuxtPlugin(() => {
     experimentalForceLongPolling: true,
   });
 
+  const auth = getAuth(app);
+  const user = useState<User | null>('auth-user', () => null);
+
+  // Resolves once the SDK has restored (or confirmed the absence of) a session.
+  // Route guards await this so they don't redirect the owner before auth is known.
+  let markReady: () => void;
+  const authReady = new Promise<void>((resolve) => {
+    markReady = resolve;
+  });
+  onAuthStateChanged(auth, (next) => {
+    user.value = next;
+    markReady();
+  });
+
   return {
     provide: {
       firestore: firestore as Firestore,
+      auth: auth as Auth,
+      authReady,
     },
   };
 });

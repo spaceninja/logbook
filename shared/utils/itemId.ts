@@ -1,4 +1,4 @@
-import type { Provider } from '../types/item';
+import type { MediaType, Provider } from '../types/item';
 
 /**
  * Item id helpers. The id is also the Firestore document id, so it must be
@@ -40,4 +40,14 @@ export function makeShowId(
   seasonNumber: number,
 ): string {
   return `show-${provider}-${showId}-s${seasonNumber}`;
+}
+
+/**
+ * Id for a manually-entered item, which has no provider source id. The random
+ * UUID fills the source-id slot, keeping the id unique and stable across edits
+ * (titles change; the id must not). Provider-sourced ids (e.g. movie-tmdb-123)
+ * arrive with the future lookup flow; manual items keep this id permanently.
+ */
+export function makeManualId(type: MediaType): string {
+  return `${type}-manual-${crypto.randomUUID()}`;
 }

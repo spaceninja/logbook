@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { makeBookId, makeGameId, makeMovieId, makeShowId } from './itemId';
+import {
+  makeBookId,
+  makeGameId,
+  makeManualId,
+  makeMovieId,
+  makeShowId,
+} from './itemId';
 
 describe('item id helpers', () => {
   it('builds a book id from provider and source id', () => {
@@ -16,5 +22,15 @@ describe('item id helpers', () => {
 
   it('encodes show id and season number into a show id', () => {
     expect(makeShowId('tmdb', 95396, 1)).toBe('show-tmdb-95396-s1');
+  });
+
+  it('builds a manual id with the type prefix and a uuid', () => {
+    expect(makeManualId('movie')).toMatch(
+      /^movie-manual-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+  });
+
+  it('builds a unique manual id on each call', () => {
+    expect(makeManualId('book')).not.toBe(makeManualId('book'));
   });
 });

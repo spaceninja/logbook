@@ -46,7 +46,9 @@ export default [
   // and `rules` keys.
   {
     files: ['**/*.test.*', '**/*.spec.*'],
-    ...testingLibrary.configs['flat/dom'],
+    // flat/vue (not flat/dom): @testing-library/vue's fireEvent is async, so
+    // awaiting it is correct — the dom config would wrongly flag those awaits.
+    ...testingLibrary.configs['flat/vue'],
   },
   {
     files: ['**/*.test.*', '**/*.spec.*'],

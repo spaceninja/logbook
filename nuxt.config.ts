@@ -14,6 +14,10 @@ export default defineNuxtConfig({
         messagingSenderId: '',
         appId: '',
       },
+      // The owner's Firebase Auth UID. Per-project (dev/prod differ); sourced
+      // from NUXT_PUBLIC_OWNER_UID. Gates write controls in the UI; the real
+      // enforcement is the Firestore rules.
+      ownerUid: '',
     },
   },
   // https://nuxt.com/docs/api/nuxt-config#tsconfig
@@ -31,7 +35,7 @@ export default defineNuxtConfig({
   // https://vite.dev/guide/dep-pre-bundling.html
   vite: {
     optimizeDeps: {
-      include: ['firebase/app', 'firebase/firestore'],
+      include: ['firebase/app', 'firebase/firestore', 'firebase/auth'],
     },
   },
 });
