@@ -1,11 +1,14 @@
 rules_version = '2';
 
-// DEV rules. Open read+write so the in-app seed buttons can wipe and reload the
-// database without auth. Deploy ONLY to the logbook-dev project; never to prod.
+// DEV rules. Public read; writes restricted to the owner (the seed buttons and
+// add/edit/delete require the owner to be signed in). Deploy ONLY to the
+// logbook-dev project. The UID is this project's owner UID (per-project).
 service cloud.firestore {
   match /databases/{database}/documents {
     match /items/{id} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.auth.uid == 'eRrTVzUxwUNOh3a7DbJa4F0uWeC3';
     }
   }
 }
