@@ -1,5 +1,6 @@
 import type { Item } from '../types/item';
 import type { SearchResult } from '../types/search';
+import { htmlToMarkdown } from '../utils/htmlToMarkdown';
 import { makeBookId } from '../utils/itemId';
 import {
   cleanCoverUrl,
@@ -72,7 +73,7 @@ export function mapGoogleBooksDraft(volume: GoogleBooksVolume): Item {
   const creator = toCreator(info.authors ?? []);
   if (creator !== undefined) item.creator = creator;
   if (info.publishedDate) item.release_date = info.publishedDate;
-  if (info.description) item.description = info.description;
+  if (info.description) item.description = htmlToMarkdown(info.description);
   if (info.pageCount && info.pageCount > 0) {
     item.length = info.pageCount;
     item.length_unit = 'pages';

@@ -1,5 +1,6 @@
 import type { Item } from '../types/item';
 import type { SearchResult } from '../types/search';
+import { htmlToMarkdown } from '../utils/htmlToMarkdown';
 import { makeGameId } from '../utils/itemId';
 import {
   draftDefaults,
@@ -67,7 +68,7 @@ export function mapIgdbDraft(game: IgdbGame): Item {
   if (creator !== undefined) item.creator = creator;
   const releaseDate = unixSecondsToIsoDate(game.first_release_date);
   if (releaseDate) item.release_date = releaseDate;
-  if (game.summary) item.description = game.summary;
+  if (game.summary) item.description = htmlToMarkdown(game.summary);
   // IGDB rating is 0–100; normalize to 0–10.
   if (game.rating && game.rating > 0) {
     item.community_rating = round2(game.rating / 10);

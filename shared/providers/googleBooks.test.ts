@@ -11,7 +11,7 @@ const volume: GoogleBooksVolume = {
     title: 'Dune',
     authors: ['Frank Herbert'],
     publishedDate: '1965-08-01',
-    description: 'On the desert planet Arrakis…',
+    description: '<p>On <b>Arrakis</b>.</p>',
     categories: ['Fiction / Science Fiction / Space Opera'],
     pageCount: 412,
     averageRating: 4.5,
@@ -47,6 +47,7 @@ describe('mapGoogleBooksDraft', () => {
     const item = mapGoogleBooksDraft(volume);
     expect(item.id).toBe('book-google-books-zyTCAlFPjgYC');
     expect(item.creator).toBe('Frank Herbert');
+    expect(item.description).toBe('On **Arrakis**.'); // HTML → markdown
     const pages = item.length;
     expect(pages).toBe(412);
     expect(item.length_unit).toBe('pages');

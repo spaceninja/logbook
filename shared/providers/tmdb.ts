@@ -1,5 +1,6 @@
 import type { Item } from '../types/item';
 import type { SearchResult, SeasonSummary } from '../types/search';
+import { htmlToMarkdown } from '../utils/htmlToMarkdown';
 import { makeMovieId, makeShowId } from '../utils/itemId';
 import {
   cleanCoverUrl,
@@ -115,7 +116,7 @@ export function mapTmdbMovieDraft(d: TmdbMovieDetails): Item {
   const creator = toCreator(directors);
   if (creator !== undefined) item.creator = creator;
   if (d.release_date) item.release_date = d.release_date;
-  if (d.overview) item.description = d.overview;
+  if (d.overview) item.description = htmlToMarkdown(d.overview);
   if (d.runtime && d.runtime > 0) {
     item.length = d.runtime;
     item.length_unit = 'min';
@@ -173,7 +174,7 @@ export function mapTmdbSeasonDraft(
   if (creator !== undefined) item.creator = creator;
   const airDate = season.air_date ?? summary?.air_date ?? undefined;
   if (airDate) item.release_date = airDate;
-  if (show.overview) item.description = show.overview;
+  if (show.overview) item.description = htmlToMarkdown(show.overview);
   if (totalRuntime > 0) {
     item.length = totalRuntime;
     item.length_unit = 'min';
