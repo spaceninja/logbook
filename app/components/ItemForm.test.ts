@@ -103,6 +103,20 @@ describe('ItemForm', () => {
     expect((emitted().submit as [Item][])[0]![0].id).toBe('movie-tmdb-27205');
   });
 
+  it('submits after editing a numeric input (number-typed v-model)', async () => {
+    // Regression: `<input type="number">` v-model yields a number once edited,
+    // which previously crashed assemble's string-trimming.
+    const { emitted } = render(ItemForm, {
+      props: { mode: 'create', initialType: 'movie' },
+    });
+
+    await fireEvent.update(screen.getByLabelText('Title'), 'Inception');
+    await fireEvent.update(screen.getByLabelText(/Community rating/), '6.7');
+    await submitForm();
+
+    expect((emitted().submit as [Item][])[0]![0].community_rating).toBe(6.7);
+  });
+
   it('starts a manual add on the given initialType with a manual id', async () => {
     const { emitted } = render(ItemForm, {
       props: { mode: 'create', initialType: 'game' },

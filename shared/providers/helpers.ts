@@ -9,6 +9,11 @@ export function cleanCoverUrl(url: string | undefined): string | undefined {
   return url.replace(/^http:/, 'https:').replace(/&edge=curl/, '');
 }
 
+/** Round a rating to two decimal places (keeps stored ratings tidy). */
+export function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
 /** Lowercase, trim, drop empties, de-duplicate — for mapping genres → tags. */
 export function normalizeTags(names: (string | undefined | null)[]): string[] {
   const seen = new Set<string>();

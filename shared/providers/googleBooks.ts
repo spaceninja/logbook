@@ -5,6 +5,7 @@ import {
   cleanCoverUrl,
   draftDefaults,
   normalizeTags,
+  round2,
   toCreator,
   yearOf,
 } from './helpers';
@@ -78,7 +79,7 @@ export function mapGoogleBooksDraft(volume: GoogleBooksVolume): Item {
   }
   // Google Books averageRating is 0–5; normalize to 0–10 (often absent).
   if (info.averageRating && info.averageRating > 0) {
-    item.community_rating = info.averageRating * 2;
+    item.community_rating = round2(info.averageRating * 2);
   }
   const cover = cleanCoverUrl(
     info.imageLinks?.thumbnail ?? info.imageLinks?.smallThumbnail,

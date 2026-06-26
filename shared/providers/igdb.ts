@@ -4,6 +4,7 @@ import { makeGameId } from '../utils/itemId';
 import {
   draftDefaults,
   normalizeTags,
+  round2,
   toCreator,
   unixSecondsToIsoDate,
 } from './helpers';
@@ -68,7 +69,9 @@ export function mapIgdbDraft(game: IgdbGame): Item {
   if (releaseDate) item.release_date = releaseDate;
   if (game.summary) item.description = game.summary;
   // IGDB rating is 0–100; normalize to 0–10.
-  if (game.rating && game.rating > 0) item.community_rating = game.rating / 10;
+  if (game.rating && game.rating > 0) {
+    item.community_rating = round2(game.rating / 10);
+  }
   const cover = igdbImage(game.cover?.image_id, 't_cover_big');
   const thumbnail = igdbImage(game.cover?.image_id, 't_thumb');
   if (cover) item.cover = cover;

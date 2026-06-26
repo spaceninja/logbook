@@ -36,7 +36,7 @@ describe('mapIgdbDraft', () => {
     expect(item.id).toBe('game-igdb-1020');
     expect(item.creator).toBe('Bungie'); // developer only
     expect(item.release_date).toBe('2001-11-21'); // unix → ISO
-    expect(item.community_rating).toBeCloseTo(8.85); // 88.5 / 10
+    expect(item.community_rating).toBe(8.85); // 88.5 / 10, rounded to 2dp
     expect(item.tags).toStrictEqual(['shooter', 'action', 'science fiction']);
     expect(item.cover).toBe(
       'https://images.igdb.com/igdb/image/upload/t_cover_big/co1n7l.jpg',

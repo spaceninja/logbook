@@ -127,8 +127,10 @@ function removeDate(index: number) {
   form.completed_dates.splice(index, 1);
 }
 
-function num(value: string): number | undefined {
-  const trimmed = value.trim();
+// `<input type="number">` v-model yields a number once edited, so coerce to a
+// string before trimming (the field may hold either a string or a number).
+function num(value: string | number): number | undefined {
+  const trimmed = String(value).trim();
   if (trimmed === '') return undefined;
   const n = Number(trimmed);
   return Number.isNaN(n) ? undefined : n;
@@ -301,7 +303,7 @@ function onSubmit() {
         type="number"
         min="0"
         max="10"
-        step="0.1"
+        step="any"
       />
     </label>
 
@@ -312,7 +314,7 @@ function onSubmit() {
         type="number"
         min="0"
         max="10"
-        step="0.1"
+        step="any"
       />
     </label>
 

@@ -5,6 +5,7 @@ import {
   cleanCoverUrl,
   draftDefaults,
   normalizeTags,
+  round2,
   toCreator,
   yearOf,
 } from './helpers';
@@ -119,8 +120,9 @@ export function mapTmdbMovieDraft(d: TmdbMovieDetails): Item {
     item.length = d.runtime;
     item.length_unit = 'min';
   }
-  if (d.vote_average && d.vote_average > 0)
-    item.community_rating = d.vote_average;
+  if (d.vote_average && d.vote_average > 0) {
+    item.community_rating = round2(d.vote_average);
+  }
   const cover = tmdbImage(d.poster_path, COVER_SIZE);
   const thumbnail = tmdbImage(d.poster_path, THUMB_SIZE);
   if (cover) item.cover = cover;
@@ -177,7 +179,7 @@ export function mapTmdbSeasonDraft(
     item.length_unit = 'min';
   }
   if (show.vote_average && show.vote_average > 0) {
-    item.community_rating = show.vote_average;
+    item.community_rating = round2(show.vote_average);
   }
   // Season poster preferred; fall back to the show poster.
   const posterPath =
