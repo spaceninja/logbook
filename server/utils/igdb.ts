@@ -8,7 +8,7 @@ import {
 import { getIgdbToken } from './igdbToken';
 
 const FIELDS =
-  'name,first_release_date,summary,rating,cover.image_id,genres.name,themes.name,involved_companies.developer,involved_companies.company.name';
+  'name,first_release_date,summary,rating,cover.image_id,artworks.image_id,screenshots.image_id,genres.name,themes.name,involved_companies.developer,involved_companies.company.name';
 
 async function igdbQuery(body: string): Promise<IgdbGame[]> {
   const { twitchClientId } = useRuntimeConfig();

@@ -60,6 +60,8 @@ export interface Item {
   cover?: string;
   /** Small image for list views. */
   thumbnail?: string;
+  /** Large landscape art (16:9) for the detail view. Movies/shows/games only. */
+  backdrop?: string;
   /** ISO date; for shows, the season air date. */
   release_date?: string;
   description?: string;

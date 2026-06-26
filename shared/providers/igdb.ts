@@ -20,6 +20,8 @@ export interface IgdbGame {
   summary?: string;
   rating?: number; // 0–100
   cover?: { image_id?: string };
+  artworks?: { image_id?: string }[];
+  screenshots?: { image_id?: string }[];
   genres?: IgdbNamed[];
   themes?: IgdbNamed[];
   involved_companies?: { developer?: boolean; company?: { name?: string } }[];
@@ -32,6 +34,8 @@ export interface IgdbGame {
 // which is a 90×90 square crop.
 const COVER_SIZE = 't_cover_big_2x';
 const THUMB_SIZE = 't_cover_small_2x';
+// Landscape art for the backdrop (16:9).
+const BACKDROP_SIZE = 't_1080p_2x';
 
 function igdbImage(
   imageId: string | undefined,
@@ -83,7 +87,12 @@ export function mapIgdbDraft(game: IgdbGame): Item {
   }
   const cover = igdbImage(game.cover?.image_id, COVER_SIZE);
   const thumbnail = igdbImage(game.cover?.image_id, THUMB_SIZE);
+  // Prefer official artwork; fall back to a screenshot.
+  const backdropId =
+    game.artworks?.[0]?.image_id ?? game.screenshots?.[0]?.image_id;
+  const backdrop = igdbImage(backdropId, BACKDROP_SIZE);
   if (cover) item.cover = cover;
   if (thumbnail) item.thumbnail = thumbnail;
+  if (backdrop) item.backdrop = backdrop;
   return item;
 }

@@ -39,6 +39,7 @@ interface FormState {
   creator: string;
   cover: string;
   thumbnail: string;
+  backdrop: string;
   release_date: string;
   description: string;
   length: string;
@@ -86,6 +87,7 @@ function initialForm(): FormState {
     creator: creatorStr(i?.creator),
     cover: i?.cover ?? '',
     thumbnail: i?.thumbnail ?? '',
+    backdrop: i?.backdrop ?? '',
     release_date: i?.release_date ?? '',
     description: i?.description ?? '',
     length: numStr(i?.length),
@@ -125,6 +127,7 @@ function applyProviderFields(source: Item) {
   form.creator = creatorStr(source.creator);
   form.cover = source.cover ?? '';
   form.thumbnail = source.thumbnail ?? '';
+  form.backdrop = source.backdrop ?? '';
   form.release_date = source.release_date ?? '';
   form.description = source.description ?? '';
   form.length = numStr(source.length);
@@ -235,6 +238,7 @@ function assemble(): Item {
   if (creator !== undefined) item.creator = creator;
   if (form.cover.trim()) item.cover = form.cover.trim();
   if (form.thumbnail.trim()) item.thumbnail = form.thumbnail.trim();
+  if (form.backdrop.trim()) item.backdrop = form.backdrop.trim();
   if (form.release_date.trim()) item.release_date = form.release_date.trim();
   if (form.description.trim()) item.description = form.description.trim();
   const length = num(form.length);
@@ -312,6 +316,11 @@ function onSubmit() {
     <label>
       Thumbnail URL
       <input v-model="form.thumbnail" type="url" />
+    </label>
+
+    <label>
+      Backdrop URL
+      <input v-model="form.backdrop" type="url" />
     </label>
 
     <label>

@@ -36,6 +36,7 @@ export interface TmdbMovieDetails {
   runtime?: number;
   vote_average?: number;
   poster_path?: string | null;
+  backdrop_path?: string | null;
   genres?: TmdbGenre[];
   credits?: { crew?: { job: string; name: string }[] };
 }
@@ -52,6 +53,7 @@ export interface TmdbShowDetails {
   overview?: string;
   vote_average?: number;
   poster_path?: string | null;
+  backdrop_path?: string | null;
   genres?: TmdbGenre[];
   created_by?: { name: string }[];
   seasons?: TmdbSeasonSummary[];
@@ -66,6 +68,7 @@ export interface TmdbSeasonDetails {
 
 const COVER_SIZE = 'w500';
 const THUMB_SIZE = 'w185';
+const BACKDROP_SIZE = 'w1280';
 
 function tmdbImage(
   path: string | null | undefined,
@@ -126,8 +129,10 @@ export function mapTmdbMovieDraft(d: TmdbMovieDetails): Item {
   }
   const cover = tmdbImage(d.poster_path, COVER_SIZE);
   const thumbnail = tmdbImage(d.poster_path, THUMB_SIZE);
+  const backdrop = tmdbImage(d.backdrop_path, BACKDROP_SIZE);
   if (cover) item.cover = cover;
   if (thumbnail) item.thumbnail = thumbnail;
+  if (backdrop) item.backdrop = backdrop;
   return item;
 }
 
@@ -187,7 +192,10 @@ export function mapTmdbSeasonDraft(
     summary?.poster_path ?? season.poster_path ?? show.poster_path;
   const cover = tmdbImage(posterPath, COVER_SIZE);
   const thumbnail = tmdbImage(posterPath, THUMB_SIZE);
+  // TMDB season details carry no backdrop; use the show's.
+  const backdrop = tmdbImage(show.backdrop_path, BACKDROP_SIZE);
   if (cover) item.cover = cover;
   if (thumbnail) item.thumbnail = thumbnail;
+  if (backdrop) item.backdrop = backdrop;
   return item;
 }

@@ -80,6 +80,12 @@ async function onDelete() {
           :alt="`${itemDisplayTitle(item)} cover`"
           width="200"
         />
+        <img
+          v-if="item.backdrop"
+          :src="item.backdrop"
+          :alt="`${itemDisplayTitle(item)} backdrop`"
+          width="400"
+        />
         <dl>
           <dt>Type</dt>
           <dd>{{ item.type }}</dd>

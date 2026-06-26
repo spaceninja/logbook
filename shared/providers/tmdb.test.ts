@@ -38,6 +38,7 @@ describe('mapTmdbMovieDraft', () => {
     runtime: 148,
     vote_average: 8.4,
     poster_path: '/p.jpg',
+    backdrop_path: '/bd.jpg',
     genres: [{ name: 'Action' }, { name: 'Science Fiction' }],
     credits: {
       crew: [
@@ -57,6 +58,7 @@ describe('mapTmdbMovieDraft', () => {
     expect(item.length_unit).toBe('min');
     expect(item.community_rating).toBe(8.4);
     expect(item.cover).toBe('https://image.tmdb.org/t/p/w500/p.jpg');
+    expect(item.backdrop).toBe('https://image.tmdb.org/t/p/w1280/bd.jpg');
     expect(item.tags).toStrictEqual(['action', 'science fiction']);
     expect(item.provider).toBe('tmdb');
     expect(item.status).toBe('backlog');
@@ -72,6 +74,7 @@ describe('mapTmdbMovieDraft', () => {
     expect(item.length).toBeUndefined();
     expect(item.community_rating).toBeUndefined();
     expect(item.creator).toBeUndefined();
+    expect(item.backdrop).toBeUndefined();
   });
 });
 
@@ -82,6 +85,7 @@ describe('show seasons', () => {
     overview: 'Work you…',
     vote_average: 8.7,
     poster_path: '/show.jpg',
+    backdrop_path: '/showbd.jpg',
     genres: [{ name: 'Mystery' }],
     created_by: [{ name: 'Dan Erickson' }],
     seasons: [
@@ -117,6 +121,8 @@ describe('show seasons', () => {
     expect(seasonLength).toBe(110); // 50 + 60, null skipped
     expect(item.community_rating).toBe(8.7); // show-level proxy
     expect(item.cover).toBe('https://image.tmdb.org/t/p/w500/s1.jpg');
+    // Season has no backdrop of its own; uses the show's.
+    expect(item.backdrop).toBe('https://image.tmdb.org/t/p/w1280/showbd.jpg');
     expect(item.metadata).toStrictEqual({
       show_tmdb_id: 95396,
       season_number: 1,

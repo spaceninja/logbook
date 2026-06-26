@@ -8,6 +8,8 @@ const game: IgdbGame = {
   summary: 'Master Chief…',
   rating: 88.5,
   cover: { image_id: 'co1n7l' },
+  artworks: [{ image_id: 'ar1' }],
+  screenshots: [{ image_id: 'sc1' }],
   genres: [{ name: 'Shooter' }],
   themes: [{ name: 'Action' }, { name: 'Science fiction' }],
   involved_companies: [
@@ -42,7 +44,22 @@ describe('mapIgdbDraft', () => {
     expect(item.cover).toBe(
       'https://images.igdb.com/igdb/image/upload/t_cover_big_2x/co1n7l.jpg',
     );
+    expect(item.backdrop).toBe(
+      'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar1.jpg',
+    ); // prefers artwork
     expect(item.metadata).toStrictEqual({}); // platform is user-set
     expect(item.provider).toBe('igdb');
+  });
+
+  it('falls back to a screenshot when there is no artwork', () => {
+    const item = mapIgdbDraft({ ...game, artworks: [] });
+    expect(item.backdrop).toBe(
+      'https://images.igdb.com/igdb/image/upload/t_1080p_2x/sc1.jpg',
+    );
+  });
+
+  it('omits the backdrop when there is no artwork or screenshot', () => {
+    const item = mapIgdbDraft({ ...game, artworks: [], screenshots: [] });
+    expect(item.backdrop).toBeUndefined();
   });
 });
