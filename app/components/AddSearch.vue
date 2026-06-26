@@ -4,6 +4,7 @@ import type { SearchResult } from '~~/shared/types/search';
 
 const emit = defineEmits<{
   select: [result: SearchResult];
+  series: [result: SearchResult];
   manual: [type: MediaType];
 }>();
 
@@ -79,6 +80,13 @@ watch([query, type], () => {
           <strong>{{ result.title }}</strong>
           <span v-if="result.year"> ({{ result.year }})</span>
           <span v-if="result.subtitle"> · {{ result.subtitle }}</span>
+        </button>
+        <button
+          v-if="result.type === 'movie' || result.type === 'game'"
+          type="button"
+          @click="emit('series', result)"
+        >
+          Add series
         </button>
       </li>
     </ul>

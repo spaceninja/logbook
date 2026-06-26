@@ -23,6 +23,9 @@ export interface IgdbGame {
   genres?: IgdbNamed[];
   themes?: IgdbNamed[];
   involved_companies?: { developer?: boolean; company?: { name?: string } }[];
+  // The game's "series" groupings (for Add-series). Plural arrays in IGDB v4.
+  collections?: number[];
+  franchises?: number[];
 }
 
 function igdbImage(

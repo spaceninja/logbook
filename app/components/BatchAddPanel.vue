@@ -2,7 +2,9 @@
 import type { Item, ItemStatus } from '~~/shared/types/item';
 import { itemDisplayTitle } from '~~/shared/utils/itemDisplay';
 
-const props = defineProps<{ drafts: Item[] }>();
+const props = withDefaults(defineProps<{ drafts: Item[]; unit?: string }>(), {
+  unit: 'item',
+});
 const emit = defineEmits<{ done: []; back: [] }>();
 
 const { saveItem } = useItems();
@@ -81,9 +83,9 @@ async function onFullEditSubmit(item: Item) {
       <button type="button" @click="emit('back')">← Back to search</button>
     </p>
 
-    <!-- Full edit: one form per season, saved as you go. -->
+    <!-- Full edit: one form per item, saved as you go. -->
     <template v-if="fullEdit">
-      <h2>Season {{ fullEditIndex + 1 }} of {{ drafts.length }}</h2>
+      <h2>{{ unit }} {{ fullEditIndex + 1 }} of {{ drafts.length }}</h2>
       <p v-if="error" role="alert">{{ error }}</p>
       <ItemForm
         :key="fullEditIndex"
@@ -93,9 +95,9 @@ async function onFullEditSubmit(item: Item) {
       />
     </template>
 
-    <!-- Streamlined: shared fields applied to all selected seasons. -->
+    <!-- Streamlined: shared fields applied to all selected items. -->
     <template v-else>
-      <h2>Add {{ drafts.length }} seasons</h2>
+      <h2>Add {{ drafts.length }} {{ unit }}s</h2>
       <ul>
         <li v-for="draft in drafts" :key="draft.id">
           {{ itemDisplayTitle(draft) }}
@@ -114,9 +116,9 @@ async function onFullEditSubmit(item: Item) {
         </select>
       </label>
       <p v-if="status === 'complete'">
-        Each season will be saved as complete with an initial completion date of
-        its air date and no rating. Edit individual seasons to set a custom date
-        or rating.
+        Each {{ unit }} will be saved as complete with an initial completion
+        date of its release date and no rating. Edit individual {{ unit }}s to
+        set a custom date or rating.
       </p>
 
       <label>
@@ -142,7 +144,7 @@ async function onFullEditSubmit(item: Item) {
 
       <p>
         <button type="button" :disabled="saving" @click="saveAll">
-          {{ saving ? 'Saving…' : `Add ${drafts.length} seasons` }}
+          {{ saving ? 'Saving…' : `Add ${drafts.length} ${unit}s` }}
         </button>
         <button type="button" :disabled="saving" @click="fullEdit = true">
           Full edit instead

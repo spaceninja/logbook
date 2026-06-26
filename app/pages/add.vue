@@ -6,18 +6,23 @@ definePageMeta({ middleware: 'owner' });
 
 const { saveItem } = useItems();
 
-type Step = 'search' | 'seasons' | 'batch' | 'form';
+type Step = 'search' | 'seasons' | 'series' | 'batch' | 'form';
 const step = ref<Step>('search');
 const formInitial = ref<Item | undefined>();
 const manualType = ref<MediaType>('movie');
 const showResult = ref<SearchResult | null>(null);
+const seriesMembers = ref<SearchResult[]>([]);
+const seriesTitle = ref('');
+const seriesType = ref<MediaType>('movie');
 const batchDrafts = ref<Item[]>([]);
+const batchUnit = ref('item');
 const error = ref('');
 
 function reset() {
   step.value = 'search';
   formInitial.value = undefined;
   showResult.value = null;
+  seriesMembers.value = [];
   error.value = '';
 }
 
@@ -38,30 +43,78 @@ async function onSelect(result: SearchResult) {
   }
 }
 
+async function onSeries(result: SearchResult) {
+  error.value = '';
+  try {
+    const members = await $fetch<SearchResult[]>('/api/series', {
+      params: { type: result.type, id: result.providerId },
+    });
+    if (!members.length) {
+      error.value = `No series found for “${result.title}”.`;
+      return;
+    }
+    seriesType.value = result.type;
+    seriesTitle.value = result.title;
+    seriesMembers.value = members;
+    step.value = 'series';
+  } catch {
+    error.value = 'Could not load the series.';
+  }
+}
+
 function onManual(type: MediaType) {
   formInitial.value = undefined; // empty form → manual UUID id
   manualType.value = type;
   step.value = 'form';
 }
 
+async function fetchDrafts(
+  type: MediaType,
+  params: Record<string, string | number>[],
+) {
+  return Promise.all(
+    params.map((p) => $fetch<Item>('/api/draft', { params: { type, ...p } })),
+  );
+}
+
 async function onSeasonsConfirm(seasonNumbers: number[]) {
   error.value = '';
   const id = showResult.value!.providerId;
   try {
-    const drafts = await Promise.all(
-      seasonNumbers.map((season) =>
-        $fetch<Item>('/api/draft', { params: { type: 'show', id, season } }),
-      ),
+    const drafts = await fetchDrafts(
+      'show',
+      seasonNumbers.map((season) => ({ id, season })),
     );
     if (drafts.length === 1) {
       formInitial.value = drafts[0];
       step.value = 'form';
     } else {
       batchDrafts.value = drafts;
+      batchUnit.value = 'season';
       step.value = 'batch';
     }
   } catch {
     error.value = 'Could not load those seasons. Go back and try again.';
+  }
+}
+
+async function onSeriesConfirm(providerIds: string[]) {
+  error.value = '';
+  try {
+    const drafts = await fetchDrafts(
+      seriesType.value,
+      providerIds.map((id) => ({ id })),
+    );
+    if (drafts.length === 1) {
+      formInitial.value = drafts[0];
+      step.value = 'form';
+    } else {
+      batchDrafts.value = drafts;
+      batchUnit.value = seriesType.value; // "movie" / "game"
+      step.value = 'batch';
+    }
+  } catch {
+    error.value = 'Could not load those titles. Go back and try again.';
   }
 }
 
@@ -85,7 +138,12 @@ function onBatchDone() {
     <h1>Add item</h1>
     <p v-if="error" role="alert">{{ error }}</p>
 
-    <AddSearch v-if="step === 'search'" @select="onSelect" @manual="onManual" />
+    <AddSearch
+      v-if="step === 'search'"
+      @select="onSelect"
+      @series="onSeries"
+      @manual="onManual"
+    />
 
     <SeasonPicker
       v-else-if="step === 'seasons' && showResult"
@@ -95,9 +153,18 @@ function onBatchDone() {
       @back="reset"
     />
 
+    <SeriesPicker
+      v-else-if="step === 'series'"
+      :title="seriesTitle"
+      :members="seriesMembers"
+      @confirm="onSeriesConfirm"
+      @back="reset"
+    />
+
     <BatchAddPanel
       v-else-if="step === 'batch'"
       :drafts="batchDrafts"
+      :unit="batchUnit"
       @done="onBatchDone"
       @back="reset"
     />

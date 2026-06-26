@@ -40,3 +40,24 @@ export async function igdbDraft(id: string) {
   }
   return mapIgdbDraft(games[0]);
 }
+
+/**
+ * A game's series (e.g. "Halo"), main games only, oldest first. Empty if none.
+ * Prefers the tighter `collections` grouping, falling back to `franchises`;
+ * `game_type = 0` (IGDB's renamed `category`) keeps only main games — no DLC,
+ * map packs, bundles, or editions.
+ */
+export async function igdbGameSeries(id: string) {
+  const [game] = await igdbQuery(
+    `fields collections,franchises; where id = ${Number(id)};`,
+  );
+  const collectionId = game?.collections?.[0];
+  const franchiseId = game?.franchises?.[0];
+  const field = collectionId ? 'collections' : 'franchises';
+  const groupId = collectionId ?? franchiseId;
+  if (!groupId) return [];
+  const members = await igdbQuery(
+    `fields ${FIELDS}; where ${field} = (${groupId}) & game_type = 0; sort first_release_date asc; limit 50;`,
+  );
+  return mapIgdbSearch(members);
+}
