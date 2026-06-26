@@ -24,7 +24,8 @@ describe('mapIgdbSearch', () => {
       providerId: '1020',
       title: 'Halo: Combat Evolved',
       year: '2001',
-      thumbnail: 'https://images.igdb.com/igdb/image/upload/t_thumb/co1n7l.jpg',
+      thumbnail:
+        'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co1n7l.jpg',
       subtitle: 'Bungie',
     });
   });
@@ -39,7 +40,7 @@ describe('mapIgdbDraft', () => {
     expect(item.community_rating).toBe(8.85); // 88.5 / 10, rounded to 2dp
     expect(item.tags).toStrictEqual(['shooter', 'action', 'science fiction']);
     expect(item.cover).toBe(
-      'https://images.igdb.com/igdb/image/upload/t_cover_big/co1n7l.jpg',
+      'https://images.igdb.com/igdb/image/upload/t_cover_big_2x/co1n7l.jpg',
     );
     expect(item.metadata).toStrictEqual({}); // platform is user-set
     expect(item.provider).toBe('igdb');

@@ -28,6 +28,11 @@ export interface IgdbGame {
   franchises?: number[];
 }
 
+// Portrait cover sizes (retina): big = 528×748, small = 180×256. Avoid t_thumb,
+// which is a 90×90 square crop.
+const COVER_SIZE = 't_cover_big_2x';
+const THUMB_SIZE = 't_cover_small_2x';
+
 function igdbImage(
   imageId: string | undefined,
   size: string,
@@ -49,7 +54,7 @@ export function mapIgdbSearch(games: IgdbGame[]): SearchResult[] {
     providerId: String(g.id),
     title: g.name,
     year: unixSecondsToIsoDate(g.first_release_date)?.slice(0, 4),
-    thumbnail: igdbImage(g.cover?.image_id, 't_thumb'),
+    thumbnail: igdbImage(g.cover?.image_id, THUMB_SIZE),
     subtitle: developers(g).join(', ') || undefined,
   }));
 }
@@ -76,8 +81,8 @@ export function mapIgdbDraft(game: IgdbGame): Item {
   if (game.rating && game.rating > 0) {
     item.community_rating = round2(game.rating / 10);
   }
-  const cover = igdbImage(game.cover?.image_id, 't_cover_big');
-  const thumbnail = igdbImage(game.cover?.image_id, 't_thumb');
+  const cover = igdbImage(game.cover?.image_id, COVER_SIZE);
+  const thumbnail = igdbImage(game.cover?.image_id, THUMB_SIZE);
   if (cover) item.cover = cover;
   if (thumbnail) item.thumbnail = thumbnail;
   return item;
