@@ -140,7 +140,8 @@ async function onDelete() {
 
           <template v-if="item.description">
             <dt>Description</dt>
-            <dd>{{ item.description }}</dd>
+            <!-- eslint-disable-next-line vue/no-v-html -- markdown rendered with raw HTML disabled (safe) -->
+            <dd v-html="renderMarkdown(item.description)" />
           </template>
 
           <template v-if="item.notes">
