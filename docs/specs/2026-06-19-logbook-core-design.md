@@ -533,3 +533,46 @@ the backup.
   or similar — chosen so it lives **outside the app repo** (forks/self-hosters must
   not inherit the owner's data).
 - Firebase Auth session handling in Nuxt (module choice, owner-uid configuration).
+
+---
+
+## 15. Open threads & backlog
+
+Running list of work not yet done, so nothing gets lost. Status as of 2026-06-25
+(after the read-only, auth, and search-assisted-add milestones shipped).
+
+### Remaining feature milestones (already designed above)
+
+- **Goodreads sync** (§6) — daily scheduled import of the `read` / `to-read`
+  shelves; the primary way books get added (manual book add is the fallback). Book
+  **series** handling is folded in here (the RSS feed carries series info), since
+  the manual add flow has no reliable live series source.
+- **NDJSON backup** (§8) — daily Firestore→git export for data ownership; backup
+  **destination** still to be chosen (§14).
+- **Streaming availability** (§12) — "what's it on?" on movie/show detail pages via
+  TMDB watch providers; display-only, on-demand, not stored.
+
+### Known gaps & polish (surfaced during implementation)
+
+- **History year switcher is hardcoded** to `[2026, 2025]` (`app/pages/history.vue`).
+  Must derive the selectable years from the data. Firestore has no DISTINCT, so the
+  intended approach is a small maintained aggregate doc (e.g. `meta/completionYears`)
+  updated via `arrayUnion` on write and rebuilt by the seed loader — not a full
+  scan. Items completed in other years are currently unreachable in the UI.
+- **Sort by author/creator last name** — `creator` is a display string (or array),
+  so reliable last-name sort needs a dedicated sort key (e.g. a `creator_sort`
+  field populated at add/sync time), not render-time parsing. Part of the
+  client-side filter/sort module (§4).
+- **IGDB search relevance** — IGDB orders search hits by text match, not popularity
+  (e.g. "Hades" surfaces a 1995 game above the 2020 one). Tune the games search
+  (e.g. sort/secondary-rank by rating or follows). Minor.
+- **SSR / hybrid reads** (§14) — reads are currently client-only, which causes an
+  accepted brief "Loading…" flash on Backlog/History/Detail. SSR/hybrid reads would
+  remove it. Cosmetic; deferred.
+
+### Documentation consistency
+
+- The status model changed from `backlog | in_progress | inactive` to
+  `backlog | in_progress | complete | dnf` (Milestone 3, "search-assisted add"
+  plan §2). The §3.2 table and surrounding prose above still describe the old
+  `inactive` status and should be reconciled.
