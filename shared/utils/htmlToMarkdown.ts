@@ -35,6 +35,20 @@ function decodeEntities(text: string): string {
   });
 }
 
+/**
+ * Wrap an emphasis span's text in `marker`, keeping the markers tight against the
+ * text: boundary whitespace moves outside (`word ` → `*word* `), and if the span
+ * still contains a newline the markers are dropped (markdown emphasis can't span
+ * line breaks). `inner` has already had its <br>/blocks turned into newlines.
+ */
+function emphasize(inner: string, marker: string): string {
+  const [, lead = '', core = '', trail = ''] =
+    inner.match(/^(\s*)([\s\S]*?)(\s*)$/) ?? [];
+  if (!core) return inner; // whitespace-only span
+  if (/\n/.test(core)) return `${lead}${core}${trail}`;
+  return `${lead}${marker}${core}${marker}${trail}`;
+}
+
 export function htmlToMarkdown(html: string): string {
   let text = html;
 
@@ -43,14 +57,21 @@ export function htmlToMarkdown(html: string): string {
     /<a\b[^>]*\bhref=["']([^"']*)["'][^>]*>(.*?)<\/a>/gi,
     '[$2]($1)',
   );
-  // Bold / italic (open and close → the same marker)
-  text = text.replace(/<\/?(?:strong|b)\b[^>]*>/gi, '**');
-  text = text.replace(/<\/?(?:em|i)\b[^>]*>/gi, '*');
   // List items
   text = text.replace(/<li\b[^>]*>/gi, '- ').replace(/<\/li>/gi, '\n');
-  // Line breaks and block boundaries
+  // Line/block breaks → newlines (before emphasis, so emphasis spans can detect
+  // and avoid wrapping them).
   text = text.replace(/<br\s*\/?>/gi, '\n');
   text = text.replace(/<\/(?:p|div|h[1-6]|ul|ol|blockquote)>/gi, '\n\n');
+  // Bold / italic as paired spans (outer first, so nested italics survive).
+  text = text.replace(
+    /<(?:strong|b)\b[^>]*>([\s\S]*?)<\/(?:strong|b)>/gi,
+    (_match, inner: string) => emphasize(inner, '**'),
+  );
+  text = text.replace(
+    /<(?:em|i)\b[^>]*>([\s\S]*?)<\/(?:em|i)>/gi,
+    (_match, inner: string) => emphasize(inner, '*'),
+  );
   // Strip every remaining tag
   text = text.replace(/<[^>]+>/g, '');
 
