@@ -1,3 +1,4 @@
+import { mount } from '@vue/test-utils';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { describe, expect, it } from 'vitest';
 import type { Item } from '~~/shared/types/item';
@@ -115,6 +116,45 @@ describe('ItemForm', () => {
     await submitForm();
 
     expect((emitted().submit as [Item][])[0]![0].community_rating).toBe(6.7);
+  });
+
+  it('applyProviderFields overwrites provider fields but keeps user fields', async () => {
+    const initial: Item = {
+      id: 'movie-tmdb-1',
+      type: 'movie',
+      title: 'Old Title',
+      provider: 'tmdb',
+      status: 'complete',
+      my_rating: 9,
+      is_purchased: true,
+      is_prioritized: false,
+      completed_dates: ['2025-01-01'],
+      completed_years: [2025],
+      notes: 'my notes',
+      tags: ['fav'],
+      metadata: {},
+    };
+    const wrapper = mount(ItemForm, { props: { mode: 'edit', initial } });
+
+    // A fresh provider draft (with different values in both groups).
+    const fresh: Item = {
+      ...initial,
+      title: 'New Title',
+      description: 'Fresh synopsis',
+      community_rating: 8.5,
+      my_rating: 1,
+      notes: 'should-not-apply',
+    };
+    (wrapper.vm as InstanceType<typeof ItemForm>).applyProviderFields(fresh);
+    await wrapper.find('form').trigger('submit');
+
+    const item = wrapper.emitted('submit')![0]![0] as Item;
+    expect(item.title).toBe('New Title'); // provider field overwritten
+    expect(item.description).toBe('Fresh synopsis'); // provider field applied
+    expect(item.community_rating).toBe(8.5); // provider field applied
+    expect(item.my_rating).toBe(9); // user field preserved
+    expect(item.notes).toBe('my notes'); // user field preserved
+    expect(item.status).toBe('complete'); // user field preserved
   });
 
   it('starts a manual add on the given initialType with a manual id', async () => {

@@ -70,18 +70,20 @@ function defaultUnit(type: MediaType): LengthUnit {
   return 'min';
 }
 
+// Convert stored values to the string-based form fields.
+const numStr = (v: unknown) => (typeof v === 'number' ? String(v) : '');
+const str = (v: unknown) => (typeof v === 'string' ? v : '');
+const creatorStr = (creator: Item['creator']) =>
+  Array.isArray(creator) ? creator.join(', ') : (creator ?? '');
+
 function initialForm(): FormState {
   const i = props.initial;
   const type = i?.type ?? props.initialType ?? 'movie';
   const m = (i?.metadata ?? {}) as Record<string, unknown>;
-  const numStr = (v: unknown) => (typeof v === 'number' ? String(v) : '');
-  const str = (v: unknown) => (typeof v === 'string' ? v : '');
   return {
     type,
     title: i?.title ?? '',
-    creator: Array.isArray(i?.creator)
-      ? i.creator.join(', ')
-      : (i?.creator ?? ''),
+    creator: creatorStr(i?.creator),
     cover: i?.cover ?? '',
     thumbnail: i?.thumbnail ?? '',
     release_date: i?.release_date ?? '',
@@ -111,6 +113,34 @@ function initialForm(): FormState {
 
 const form = reactive<FormState>(initialForm());
 const error = ref('');
+
+/**
+ * Overwrite only the provider-sourced fields from `source`, leaving the user's
+ * fields (status, ratings, completion, notes, tags, …) and any unsaved edits
+ * intact. Used by the edit page's "Refresh metadata" action.
+ */
+function applyProviderFields(source: Item) {
+  const m = source.metadata as Record<string, unknown>;
+  form.title = source.title;
+  form.creator = creatorStr(source.creator);
+  form.cover = source.cover ?? '';
+  form.thumbnail = source.thumbnail ?? '';
+  form.release_date = source.release_date ?? '';
+  form.description = source.description ?? '';
+  form.length = numStr(source.length);
+  form.length_unit = source.length_unit ?? defaultUnit(form.type);
+  form.community_rating = numStr(source.community_rating);
+  form.series = str(m.series);
+  form.series_number = numStr(m.series_number);
+  form.isbn = str(m.isbn);
+  form.show_tmdb_id = numStr(m.show_tmdb_id);
+  form.season_number = numStr(m.season_number);
+  form.episode_count = numStr(m.episode_count);
+  form.episode_runtime = numStr(m.episode_runtime);
+  form.platform = str(m.platform);
+}
+
+defineExpose({ applyProviderFields });
 
 // Reset the length unit to the type's default when the type changes.
 watch(
