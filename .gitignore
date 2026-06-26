@@ -22,3 +22,5 @@ logs
 .env
 .env.*
 !.env.example
+# Committed: dummy (non-secret) config that the test runtime needs, incl. CI.
+!.env.test
