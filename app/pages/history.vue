@@ -59,9 +59,13 @@ const sorted = computed(() =>
           <NuxtLink :to="`/item/${item.id}`">
             <strong>{{ itemDisplayTitle(item) }}</strong>
           </NuxtLink>
+          <span v-if="item.status === 'dnf'" data-status="dnf"> [DNF]</span>
           <span> — {{ item.type }}</span>
           <span v-if="item.creator"> · {{ formatCreator(item.creator) }}</span>
-          <span> · completed {{ datesInYear(item).join(', ') }}</span>
+          <span>
+            · {{ item.status === 'dnf' ? 'stopped' : 'completed' }}
+            {{ datesInYear(item).join(', ') }}</span
+          >
         </li>
       </ul>
     </ClientOnly>

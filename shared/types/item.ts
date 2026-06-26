@@ -6,7 +6,12 @@
 
 export type MediaType = 'book' | 'movie' | 'show' | 'game';
 
-export type ItemStatus = 'backlog' | 'in_progress' | 'inactive';
+/**
+ * Current intent. Backlog view = `backlog` | `in_progress`; History view is
+ * date-driven (any item with a completion date), so `complete` and `dnf` both
+ * appear there when dated — `dnf` (did not finish) only differs visually.
+ */
+export type ItemStatus = 'backlog' | 'in_progress' | 'complete' | 'dnf';
 
 export type LengthUnit = 'pages' | 'min' | 'episodes' | 'hours';
 

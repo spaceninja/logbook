@@ -40,7 +40,7 @@ describe('ItemForm', () => {
       type: 'movie',
       title: 'Inception',
       provider: 'tmdb',
-      status: 'inactive',
+      status: 'complete',
       is_purchased: false,
       is_prioritized: false,
       completed_dates: ['2024-01-02', '2026-02-14'],

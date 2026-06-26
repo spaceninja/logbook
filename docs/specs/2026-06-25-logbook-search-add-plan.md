@@ -130,6 +130,7 @@ runtimeConfig: {
   expiry. IGDB calls send `Client-ID` + `Authorization: Bearer <token>`.
 
 ### Setup handed to the owner (§ end)
+
 TMDB API key (free, from a TMDB account), Google Books API key (existing), and a
 Twitch application (client id + secret) for IGDB.
 
@@ -144,26 +145,27 @@ Each provider exposes `search(q)`, `draft(id, season?)`, and (where supported)
 `&edge=curl`. Capture both `cover` (large) and `thumbnail` (small); `thumbnail`
 falls back to `cover` when only one size exists.
 
-| Field | TMDB movie | TMDB show (season) | Google Books | IGDB game |
-| --- | --- | --- | --- | --- |
-| id | `movie-tmdb-<id>` | `show-tmdb-<showId>-s<n>` | `book-google-books-<volId>` | `game-igdb-<id>` |
-| title | `title` | show `name` | `volumeInfo.title` | `name` |
-| creator | director (from `credits`) | `created_by[].name` | `authors` | developer (involved_companies, developer=true) |
-| release_date | `release_date` | season `air_date` | `publishedDate` | `first_release_date` (unix→ISO) |
-| description | `overview` | show `overview` | `description` | `summary` |
-| length / unit | `runtime` / min | Σ episode runtimes / min | `pageCount` / pages | — / hours (user) |
-| community_rating | `vote_average` (0–10) | show `vote_average` | `averageRating`×2 if present (often empty) | `rating`÷10 (0–100→0–10) |
-| cover/thumbnail | `poster_path` w500/w185 | season poster → show poster fallback | `imageLinks` (cleaned) | `cover.image_id` t_cover_big/t_thumb |
-| tags | `genres[].name` | show `genres[].name` | split `categories[]` | `genres[]`+`themes[]` |
-| provider | `tmdb` | `tmdb` | `google-books` | `igdb` |
-| metadata | — | show_tmdb_id, season_number, episode_count, episode_runtime | series/series_number if present, isbn | platform (left blank — user-set) |
+| Field            | TMDB movie                | TMDB show (season)                                          | Google Books                               | IGDB game                                      |
+| ---------------- | ------------------------- | ----------------------------------------------------------- | ------------------------------------------ | ---------------------------------------------- |
+| id               | `movie-tmdb-<id>`         | `show-tmdb-<showId>-s<n>`                                   | `book-google-books-<volId>`                | `game-igdb-<id>`                               |
+| title            | `title`                   | show `name`                                                 | `volumeInfo.title`                         | `name`                                         |
+| creator          | director (from `credits`) | `created_by[].name`                                         | `authors`                                  | developer (involved_companies, developer=true) |
+| release_date     | `release_date`            | season `air_date`                                           | `publishedDate`                            | `first_release_date` (unix→ISO)                |
+| description      | `overview`                | show `overview`                                             | `description`                              | `summary`                                      |
+| length / unit    | `runtime` / min           | Σ episode runtimes / min                                    | `pageCount` / pages                        | — / hours (user)                               |
+| community_rating | `vote_average` (0–10)     | show `vote_average`                                         | `averageRating`×2 if present (often empty) | `rating`÷10 (0–100→0–10)                       |
+| cover/thumbnail  | `poster_path` w500/w185   | season poster → show poster fallback                        | `imageLinks` (cleaned)                     | `cover.image_id` t_cover_big/t_thumb           |
+| tags             | `genres[].name`           | show `genres[].name`                                        | split `categories[]`                       | `genres[]`+`themes[]`                          |
+| provider         | `tmdb`                    | `tmdb`                                                      | `google-books`                             | `igdb`                                         |
+| metadata         | —                         | show_tmdb_id, season_number, episode_count, episode_runtime | series/series_number if present, isbn      | platform (left blank — user-set)               |
 
 Notes:
+
 - **TMDB movie draft** uses `/movie/{id}?append_to_response=credits` (director +
   runtime). **TMDB show season draft** uses `/tv/{id}` (creators, show poster,
   vote_average) + `/tv/{id}/season/{n}` (air_date, episode_count, per-episode
   runtimes summed → `length`).
-- **IGDB `platform`** is genuinely per-user (which platform *you* played), so it's
+- **IGDB `platform`** is genuinely per-user (which platform _you_ played), so it's
   **not** auto-filled — it stays a form field.
 - All numeric ratings land on the **0–10** scale per the existing convention.
 - `tags` are lowercased + de-duplicated.
@@ -181,9 +183,10 @@ Notes:
 
 `app/components/AddSearch.vue` (presentational; emits a chosen draft or a season
 batch):
+
 - A `role="radiogroup"` of the four types (one click), bound to a `type` ref.
 - A debounced search input (~300ms after typing stops; non-empty) → `GET
-  /api/search`. **Stale-response guard:** track the latest query token and ignore
+/api/search`. **Stale-response guard:** track the latest query token and ignore
   out-of-order responses. Loading / empty / error states.
 - Results list: each shows thumbnail, title, year, subtitle. Plus, for movie/game
   results with `isSeries`, an **"Add series"** affordance (Phase 5).

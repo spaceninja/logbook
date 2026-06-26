@@ -18,7 +18,7 @@ const props = defineProps<{
 const emit = defineEmits<{ submit: [item: Item] }>();
 
 const MEDIA_TYPES: MediaType[] = ['book', 'movie', 'show', 'game'];
-const STATUSES: ItemStatus[] = ['backlog', 'in_progress', 'inactive'];
+const STATUSES: ItemStatus[] = ['backlog', 'in_progress', 'complete', 'dnf'];
 const LENGTH_UNITS: LengthUnit[] = ['pages', 'min', 'episodes', 'hours'];
 const PROVIDERS: Provider[] = [
   'manual',

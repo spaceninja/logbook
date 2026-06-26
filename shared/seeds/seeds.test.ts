@@ -5,7 +5,7 @@ import { edgeSeed } from './edge';
 import { sampleSeed } from './sample';
 
 const MEDIA_TYPES: MediaType[] = ['book', 'movie', 'show', 'game'];
-const STATUSES: ItemStatus[] = ['backlog', 'in_progress', 'inactive'];
+const STATUSES: ItemStatus[] = ['backlog', 'in_progress', 'complete', 'dnf'];
 
 const datasets: [string, Item[]][] = [
   ['edgeSeed', edgeSeed],
@@ -51,7 +51,13 @@ describe('edgeSeed', () => {
     );
   });
 
-  it('has 16 items (4 types × 4 variants)', () => {
-    expect(edgeSeed).toHaveLength(16);
+  it('has the 16 type×variant items plus a DNF example', () => {
+    expect(edgeSeed).toHaveLength(17);
+  });
+
+  it('includes a dnf item with a completion date (shows in History)', () => {
+    const dnf = edgeSeed.find((item) => item.status === 'dnf');
+    expect(dnf).toBeDefined();
+    expect(dnf!.completed_dates.length).toBeGreaterThan(0);
   });
 });
