@@ -13,6 +13,8 @@ import { makeManualId } from '~~/shared/utils/itemId';
 const props = defineProps<{
   mode: 'create' | 'edit';
   initial?: Item;
+  /** Starting type for a manual add (no `initial`); ignored when `initial` is set. */
+  initialType?: MediaType;
 }>();
 
 const emit = defineEmits<{ submit: [item: Item] }>();
@@ -70,7 +72,7 @@ function defaultUnit(type: MediaType): LengthUnit {
 
 function initialForm(): FormState {
   const i = props.initial;
-  const type = i?.type ?? 'movie';
+  const type = i?.type ?? props.initialType ?? 'movie';
   const m = (i?.metadata ?? {}) as Record<string, unknown>;
   const numStr = (v: unknown) => (typeof v === 'number' ? String(v) : '');
   const str = (v: unknown) => (typeof v === 'string' ? v : '');
@@ -179,10 +181,10 @@ function assemble(): Item {
     .filter(Boolean);
 
   const item: Item = {
-    id:
-      props.mode === 'edit' && props.initial
-        ? props.initial.id
-        : makeManualId(form.type),
+    // Keep the id from `initial` when present — an edit, or a create prefilled
+    // from a provider draft (e.g. movie-tmdb-27205). Only a truly manual add
+    // (empty form) mints a UUID id.
+    id: props.initial?.id ?? makeManualId(form.type),
     type: form.type,
     title: form.title.trim(),
     provider: form.provider,

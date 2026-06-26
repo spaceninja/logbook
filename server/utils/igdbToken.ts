@@ -3,6 +3,9 @@
  * it expires (tokens last ~60 days). Re-exchanged on demand. Module scope is
  * per-server-instance, which is fine — a cold start just re-fetches once.
  */
+// Plain ofetch $fetch (see tmdb.ts) — avoids internal-route type matching.
+import { $fetch } from 'ofetch';
+
 let cached: { token: string; expiresAt: number } | null = null;
 
 export async function getIgdbToken(): Promise<string> {

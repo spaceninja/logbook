@@ -79,4 +79,40 @@ describe('ItemForm', () => {
     expect(emitted().submit).toBeUndefined();
     expect(screen.getByRole('alert')).toHaveTextContent('Title is required.');
   });
+
+  it('keeps the provider id when creating from a draft', async () => {
+    const draft: Item = {
+      id: 'movie-tmdb-27205',
+      type: 'movie',
+      title: 'Inception',
+      provider: 'tmdb',
+      status: 'backlog',
+      is_purchased: false,
+      is_prioritized: false,
+      completed_dates: [],
+      completed_years: [],
+      tags: ['action'],
+      metadata: {},
+    };
+    const { emitted } = render(ItemForm, {
+      props: { mode: 'create', initial: draft },
+    });
+
+    await submitForm();
+
+    expect((emitted().submit as [Item][])[0]![0].id).toBe('movie-tmdb-27205');
+  });
+
+  it('starts a manual add on the given initialType with a manual id', async () => {
+    const { emitted } = render(ItemForm, {
+      props: { mode: 'create', initialType: 'game' },
+    });
+
+    await fireEvent.update(screen.getByLabelText('Title'), 'Some Indie Game');
+    await submitForm();
+
+    const item = (emitted().submit as [Item][])[0]![0];
+    expect(item.type).toBe('game');
+    expect(item.id).toMatch(/^game-manual-/);
+  });
 });

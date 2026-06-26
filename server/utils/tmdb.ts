@@ -1,3 +1,6 @@
+// Plain ofetch $fetch (not Nitro's global), so external URLs aren't type-matched
+// against internal app routes (which recurses once /api/* routes exist).
+import { $fetch } from 'ofetch';
 import {
   mapTmdbMovieDraft,
   mapTmdbMovieSearch,
@@ -16,14 +19,13 @@ function tmdbFetch<T>(
   params?: Record<string, string>,
 ): Promise<T> {
   const { tmdbReadToken } = useRuntimeConfig();
-  // Cast away Nitro's TypedInternalResponse wrapper around the generic.
-  return $fetch(`${BASE}${path}`, {
+  return $fetch<T>(`${BASE}${path}`, {
     headers: {
       Authorization: `Bearer ${tmdbReadToken}`,
       accept: 'application/json',
     },
     params,
-  }) as Promise<T>;
+  });
 }
 
 type MovieSearchResults = {

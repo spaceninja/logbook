@@ -1,3 +1,5 @@
+// Plain ofetch $fetch (see tmdb.ts) — avoids internal-route type matching.
+import { $fetch } from 'ofetch';
 import {
   mapGoogleBooksDraft,
   mapGoogleBooksSearch,
