@@ -5,6 +5,13 @@ export default defineNuxtConfig({
   // Firebase web config, sourced from NUXT_PUBLIC_FIREBASE_* env vars.
   // Locally these point at logbook-dev (.env); prod values are set in Netlify.
   runtimeConfig: {
+    // Server-only secrets for the metadata search proxies (never exposed to the
+    // client). Sourced from NUXT_* env vars (local .env / Netlify). TMDB uses the
+    // v4 read token (Bearer); IGDB uses Twitch client-credentials.
+    tmdbReadToken: '', // NUXT_TMDB_READ_TOKEN
+    googleBooksApiKey: '', // NUXT_GOOGLE_BOOKS_API_KEY
+    twitchClientId: '', // NUXT_TWITCH_CLIENT_ID
+    twitchClientSecret: '', // NUXT_TWITCH_CLIENT_SECRET
     public: {
       firebase: {
         apiKey: '',
