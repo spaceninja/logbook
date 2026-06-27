@@ -9,5 +9,12 @@ service cloud.firestore {
       allow write: if request.auth != null
                    && request.auth.uid == 'AzKrHAEzZDTS6Q3hezWGBbHcIH63';
     }
+
+    // Maintained aggregates (e.g. the History year switcher's `completionYears`).
+    match /meta/{id} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.auth.uid == 'AzKrHAEzZDTS6Q3hezWGBbHcIH63';
+    }
   }
 }

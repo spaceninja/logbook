@@ -17,10 +17,36 @@ const SORT_KEYS: SortKey[] = [
   'release_date',
 ];
 
-// Year switcher is hardcoded for now; data-driven years are a follow-up (§15).
-const YEARS = [2026, 2025];
-const year = ref<number>(YEARS[0]!);
+const { getHistory, getCompletionYears } = useItems();
+
+// Years offered by the switcher are derived from the data via the maintained
+// `meta/completionYears` aggregate (core design §15). Newest first; falls back to
+// the current calendar year before the aggregate loads or when it's empty.
+const currentYear = new Date().getFullYear();
+const { data: completionYears } = useAsyncData(
+  'completionYears',
+  () => getCompletionYears(),
+  { server: false, lazy: true, default: () => [] as number[] },
+);
+const years = computed<number[]>(() => {
+  const ys = completionYears.value.length
+    ? [...completionYears.value]
+    : [currentYear];
+  return ys.sort((a, b) => b - a);
+});
+
+const year = ref<number>(currentYear);
 const type = ref<MediaType>('book');
+
+// Once the year list loads, snap the selection to the newest available year if
+// the current one isn't offered (e.g. nothing completed yet this calendar year).
+watch(
+  years,
+  (ys) => {
+    if (!ys.includes(year.value)) year.value = ys[0]!;
+  },
+  { immediate: true },
+);
 
 // For shows, the series sort (show name + numeric season) replaces the title sort.
 const sortKeys = computed<SortKey[]>(() =>
@@ -28,8 +54,6 @@ const sortKeys = computed<SortKey[]>(() =>
     ? SORT_KEYS.map((k) => (k === 'title' ? 'series' : k))
     : SORT_KEYS,
 );
-
-const { getHistory } = useItems();
 
 const {
   data: items,
@@ -70,7 +94,7 @@ function datesInYear(item: Item): string[] {
     <label>
       Year:
       <select v-model.number="year">
-        <option v-for="y in YEARS" :key="y" :value="y">{{ y }}</option>
+        <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
       </select>
     </label>
 

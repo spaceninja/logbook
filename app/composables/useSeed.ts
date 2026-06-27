@@ -2,11 +2,13 @@ import {
   collection,
   doc,
   getDocs,
+  setDoc,
   writeBatch,
   type Firestore,
 } from 'firebase/firestore';
 import type { Item } from '~~/shared/types/item';
 import { deriveCompletedYears } from '~~/shared/utils/completedYears';
+import { deriveCompletionYears } from '~~/shared/utils/completionYears';
 import { deriveCreatorSort } from '~~/shared/utils/creatorSort';
 
 // Firestore caps a write batch at 500 operations.
@@ -63,6 +65,12 @@ export function useSeed() {
       }
       await batch.commit();
     }
+
+    // Rebuild the History year switcher's aggregate from the full dataset. A
+    // plain overwrite (not arrayUnion) drops years the new dataset no longer has.
+    await setDoc(doc(db, 'meta', 'completionYears'), {
+      years: deriveCompletionYears(dataset),
+    });
   }
 
   return { wipeAll, loadDataset };
