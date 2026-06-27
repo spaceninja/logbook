@@ -82,21 +82,5 @@ export function useSeed() {
     );
   }
 
-  /**
-   * Rebuild the History year switcher's aggregate from the items already in
-   * Firestore — non-destructive (no wipe). The backfill/repair path for data
-   * that predates the aggregate, or whenever it drifts. Returns the count of
-   * distinct years across all types.
-   */
-  async function rebuildCompletionYears(): Promise<number> {
-    const db = getDb();
-    const snapshot = await getDocs(collection(db, 'items'));
-    const items = snapshot.docs.map((d) => d.data() as Item);
-    await writeCompletionYears(db, items);
-    const byType = deriveCompletionYearsByType(items);
-    const distinct = new Set(Object.values(byType).flat());
-    return distinct.size;
-  }
-
-  return { wipeAll, loadDataset, rebuildCompletionYears };
+  return { wipeAll, loadDataset };
 }
