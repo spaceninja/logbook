@@ -441,7 +441,7 @@ function onSubmit() {
       </label>
       <label>
         Series number
-        <input v-model="form.series_number" type="number" min="0" />
+        <input v-model="form.series_number" type="number" min="0" step="any" />
       </label>
       <label>
         ISBN
@@ -457,7 +457,7 @@ function onSubmit() {
       </label>
       <label>
         Series number
-        <input v-model="form.series_number" type="number" min="0" />
+        <input v-model="form.series_number" type="number" min="0" step="any" />
       </label>
     </fieldset>
 
@@ -469,7 +469,7 @@ function onSubmit() {
       </label>
       <label>
         Season number
-        <input v-model="form.season_number" type="number" min="0" />
+        <input v-model="form.season_number" type="number" min="0" step="any" />
       </label>
       <label>
         Season title <small>(if different from the show name)</small>
@@ -493,7 +493,7 @@ function onSubmit() {
       </label>
       <label>
         Series number
-        <input v-model="form.series_number" type="number" min="0" />
+        <input v-model="form.series_number" type="number" min="0" step="any" />
       </label>
       <label>
         Platform
