@@ -177,6 +177,6 @@ async function onFormSubmit(item: Item) {
 }
 
 function onBatchDone() {
-  navigateTo('/backlog');
+  navigateTo('/');
 }
 </script>

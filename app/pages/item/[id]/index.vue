@@ -1,7 +1,7 @@
 <template>
   <section>
     <p>
-      <NuxtLink to="/backlog">← Backlog</NuxtLink> ·
+      <NuxtLink to="/">← Backlog</NuxtLink> ·
       <NuxtLink to="/history">History</NuxtLink>
     </p>
 
@@ -158,7 +158,7 @@ async function onDelete() {
   deleting.value = true;
   try {
     await deleteItem(id.value);
-    await navigateTo('/backlog');
+    await navigateTo('/');
   } finally {
     deleting.value = false;
   }

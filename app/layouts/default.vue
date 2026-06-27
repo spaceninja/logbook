@@ -2,8 +2,7 @@
   <div>
     <header>
       <nav>
-        <NuxtLink to="/">Home</NuxtLink>
-        <NuxtLink to="/backlog">Backlog</NuxtLink>
+        <NuxtLink to="/">Backlog</NuxtLink>
         <NuxtLink to="/history">History</NuxtLink>
         <NuxtLink v-if="showDev" to="/dev">Dev</NuxtLink>
 
