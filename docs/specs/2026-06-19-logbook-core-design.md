@@ -124,7 +124,7 @@ Type-specific fields live in a nested `metadata` map.
   "provider": "tmdb", // data origin: tmdb | igdb | goodreads | google-books | open-library | manual
   "recommended_by": "Chuck", // optional; person who recommended this item
 
-  "status": "backlog", // backlog | in_progress | inactive
+  "status": "backlog", // backlog | in_progress | complete | dnf
   "is_purchased": false,
   "is_prioritized": true,
   "completed_dates": [], // array of ISO dates; one entry per completion
@@ -149,21 +149,22 @@ special-case status:
 `status` describes _current intent only_; `completed_dates` is the record of what
 you've finished. Their combination expresses every state:
 
-| `completed_dates` | `status`      | Backlog? | History? | Meaning                        |
-| ----------------- | ------------- | :------: | :------: | ------------------------------ |
-| `[]`              | `backlog`     |    ✅    |    —     | want to; never started         |
-| `[]`              | `in_progress` |    ✅    |    —     | consuming for the first time   |
-| `[]`              | `inactive`    |    —     |    —     | abandoned / DNF ("Dropped")    |
-| `[d1]`            | `inactive`    |    —     |    ✅    | finished; no replay planned    |
-| `[d1]`            | `backlog`     |    ✅    |    ✅    | finished; want to repeat       |
-| `[d1]`            | `in_progress` |    ✅    |    ✅    | finished before; repeating now |
-| `[d1, d2]`        | `inactive`    |    —     |    ✅    | finished twice; done           |
+| `completed_dates` | `status`      | Backlog? | History? | Meaning                          |
+| ----------------- | ------------- | :------: | :------: | -------------------------------- |
+| `[]`              | `backlog`     |    ✅    |    —     | want to; never started           |
+| `[]`              | `in_progress` |    ✅    |    —     | consuming for the first time     |
+| `[]`              | `dnf`         |    —     |    —     | abandoned; no date recorded      |
+| `[d1]`            | `complete`    |    —     |    ✅    | finished; no replay planned      |
+| `[d1]`            | `dnf`         |    —     |    ✅    | gave up partway; logged the date |
+| `[d1]`            | `backlog`     |    ✅    |    ✅    | finished; want to repeat         |
+| `[d1]`            | `in_progress` |    ✅    |    ✅    | finished before; repeating now   |
+| `[d1, d2]`        | `complete`    |    —     |    ✅    | finished twice; done             |
 
 **Repeats:** marking an item complete appends today's date (or the source's date)
-to `completed_dates` and sets `status` to `inactive`. Wanting a repeat sets
-`status` back to `backlog`/`in_progress`; the prior completion dates remain. An
-item with multiple completion dates appears in History under **each** relevant
-year.
+to `completed_dates` and sets `status` to `complete` (or `dnf` if abandoned).
+Wanting a repeat sets `status` back to `backlog`/`in_progress`; the prior
+completion dates remain. An item with multiple completion dates appears in History
+under **each** relevant year.
 
 **`completed_years` is derived, not authored.** Whenever `completed_dates`
 changes, the write recomputes `completed_years` as the de-duplicated set of years
@@ -336,7 +337,7 @@ Firebase Admin SDK:
      `average_rating`. **Refresh `community_rating` on every run** while the book
      remains on the shelf (handles pre-release ratings "ripening" after release).
    - On **`read`** → append the feed's `user_read_at` to `completed_dates`,
-     recompute `completed_years`, set `status: inactive`, set `my_rating` from
+     recompute `completed_years`, set `status: complete`, set `my_rating` from
      `user_rating`.
 4. Write all changes for the run to Firestore (idempotent upserts by document id).
 
@@ -538,8 +539,9 @@ the backup.
 
 ## 15. Open threads & backlog
 
-Running list of work not yet done, so nothing gets lost. Status as of 2026-06-25
-(after the read-only, auth, and search-assisted-add milestones shipped).
+Running list of work not yet done, so nothing gets lost. Status as of 2026-06-27
+(after the read-only, auth, search-assisted-add, and client-side filter/sort
+milestones shipped).
 
 ### Remaining feature milestones (already designed above)
 
@@ -552,6 +554,15 @@ Running list of work not yet done, so nothing gets lost. Status as of 2026-06-25
 - **Streaming availability** (§12) — "what's it on?" on movie/show detail pages via
   TMDB watch providers; display-only, on-demand, not stored.
 
+### New: bulk import from other services' export files
+
+- **Import from export files** — a UI button that ingests export files from other
+  services and bulk-creates items. Have example exports on hand from **Goodreads**,
+  **Trakt**, **Letterboxd**, and **Infinite Backlog**. Each service has its own
+  format (CSV/JSON) and field mapping to the unified item schema, and items need
+  de-duplication against what's already in Firestore. Details (parsing, mapping,
+  conflict handling, dedupe keys) to be worked out when this is tackled.
+
 ### Known gaps & polish (surfaced during implementation)
 
 - **History year switcher is hardcoded** to `[2026, 2025]` (`app/pages/history.vue`).
@@ -559,20 +570,9 @@ Running list of work not yet done, so nothing gets lost. Status as of 2026-06-25
   intended approach is a small maintained aggregate doc (e.g. `meta/completionYears`)
   updated via `arrayUnion` on write and rebuilt by the seed loader — not a full
   scan. Items completed in other years are currently unreachable in the UI.
-- **Sort by author/creator last name** — `creator` is a display string (or array),
-  so reliable last-name sort needs a dedicated sort key (e.g. a `creator_sort`
-  field populated at add/sync time), not render-time parsing. Part of the
-  client-side filter/sort module (§4).
 - **IGDB search relevance** — IGDB orders search hits by text match, not popularity
   (e.g. "Hades" surfaces a 1995 game above the 2020 one). Tune the games search
   (e.g. sort/secondary-rank by rating or follows). Minor.
 - **SSR / hybrid reads** (§14) — reads are currently client-only, which causes an
   accepted brief "Loading…" flash on Backlog/History/Detail. SSR/hybrid reads would
   remove it. Cosmetic; deferred.
-
-### Documentation consistency
-
-- The status model changed from `backlog | in_progress | inactive` to
-  `backlog | in_progress | complete | dnf` (Milestone 3, "search-assisted add"
-  plan §2). The §3.2 table and surrounding prose above still describe the old
-  `inactive` status and should be reconciled.
