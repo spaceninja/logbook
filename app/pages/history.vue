@@ -32,36 +32,14 @@
       <p v-if="pending">Loading…</p>
       <p v-else-if="error">Failed to load history: {{ error.message }}</p>
       <p v-else-if="displayed.length === 0">Nothing completed in {{ year }}.</p>
-      <ul v-else>
-        <li v-for="item in displayed" :key="item.id">
-          <NuxtLink :to="`/item/${item.id}`">
-            <strong>{{ itemDisplayTitle(item) }}</strong>
-          </NuxtLink>
-          <span v-if="item.status === 'dnf'" data-status="dnf"> [DNF]</span>
-          <span> — {{ item.type }}</span>
-          <span v-if="item.creator"> · {{ formatCreator(item.creator) }}</span>
-          <span v-if="formatSeries(item)"> · {{ formatSeries(item) }}</span>
-          <span v-if="item.my_rating !== undefined">
-            · ★ {{ item.my_rating }}</span
-          >
-          <span>
-            · {{ item.status === 'dnf' ? 'stopped' : 'completed' }}
-            {{ datesInYear(item).join(', ') }}</span
-          >
-        </li>
-      </ul>
+      <ItemCardList v-else :items="displayed" />
     </ClientOnly>
   </section>
 </template>
 
 <script setup lang="ts">
-import type { Item, MediaType } from '~~/shared/types/item';
+import type { MediaType } from '~~/shared/types/item';
 import type { CompletionYearsByType } from '~~/shared/utils/completionYears';
-import {
-  itemDisplayTitle,
-  formatCreator,
-  formatSeries,
-} from '~~/shared/utils/itemDisplay';
 import type { SortKey } from '~~/shared/utils/itemSort';
 import { enumParam, flagParam, yearParam } from '~~/shared/utils/viewQuery';
 
@@ -168,9 +146,9 @@ watch(sortKeys, (keys) => {
 });
 
 /** The completion date(s) for this item that fall in the selected year. */
-function datesInYear(item: Item): string[] {
-  return item.completed_dates.filter(
-    (d) => Number.parseInt(d.slice(0, 4), 10) === year.value,
-  );
-}
+// function datesInYear(item: Item): string[] {
+//   return item.completed_dates.filter(
+//     (d) => Number.parseInt(d.slice(0, 4), 10) === year.value,
+//   );
+// }
 </script>

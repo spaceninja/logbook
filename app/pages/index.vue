@@ -27,37 +27,13 @@
       <p v-if="pending">Loading…</p>
       <p v-else-if="error">Failed to load backlog: {{ error.message }}</p>
       <p v-else-if="displayed.length === 0">Nothing in the backlog.</p>
-      <ul v-else>
-        <li v-for="item in displayed" :key="item.id">
-          <NuxtLink :to="`/item/${item.id}`">
-            <img
-              v-if="item.thumbnail"
-              :src="item.thumbnail"
-              :alt="`${itemDisplayTitle(item)} cover`"
-              width="40"
-            />
-            <strong>{{ itemDisplayTitle(item) }}</strong>
-          </NuxtLink>
-          <span> — {{ item.type }}</span>
-          <span v-if="item.creator"> · {{ formatCreator(item.creator) }}</span>
-          <span v-if="formatSeries(item)"> · {{ formatSeries(item) }}</span>
-          <span v-if="item.community_rating !== undefined">
-            · ★ {{ item.community_rating }}</span
-          >
-          <span> · {{ item.status }}</span>
-        </li>
-      </ul>
+      <ItemCardList v-else :items="displayed" />
     </ClientOnly>
   </section>
 </template>
 
 <script setup lang="ts">
 import type { MediaType } from '~~/shared/types/item';
-import {
-  itemDisplayTitle,
-  formatCreator,
-  formatSeries,
-} from '~~/shared/utils/itemDisplay';
 import type {
   FilterKey,
   FilterState,

@@ -29,3 +29,13 @@ const showDev = import.meta.dev;
 
 const { isOwner, login, logout } = useAuth();
 </script>
+
+<style>
+:root {
+  --width-thumb: 125px;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+}
+</style>
