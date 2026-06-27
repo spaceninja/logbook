@@ -592,3 +592,23 @@ milestones shipped).
     evaluate gitignoring it.
   - Already generic, leave alone: `.env.test` (dummy values), `.env.example`,
     `nuxt.config.ts` (owner UID + Firebase config all sourced from env).
+- **Surface read failures instead of an endless "Loading…"** — the Backlog/
+  History/Detail reads use `useAsyncData(..., { server: false })` over
+  `getDocs`, which has no timeout. When the Firestore connection stalls (the
+  forced long-polling is flaky under Safari/content blockers — see the
+  client-rendering notes), the promise never rejects, so `pending` stays `true`
+  forever and the existing `v-else-if="error"` branch never shows. The pages
+  already render "Failed to load …" on `error`; the gap is making a stall
+  _become_ an error. Add a timeout wrapper around the reads (a hang → reject) and
+  at minimum `console.error` the failure, so a slow/broken connection shows a
+  real error rather than a silent spinner.
+- **Stale-while-revalidate caching for snappy switching** — every content-type/
+  year switch refetches from Firestore (`useAsyncData` keyed `backlog`/`history`
+  re-runs on its `watch`), so rapid clicking pays a fresh round-trip each time
+  and re-triggers the "Loading…" state. Cache results client-side keyed by the
+  query (type, and year for History) and show the cached list immediately while
+  revalidating in the background. **Cache duration is TBD — discuss** (a short
+  TTL vs. revalidate-every-time-but-show-stale). Options to weigh: a simple
+  in-memory keyed cache in `useItems`, Firestore's own persistent/IndexedDB
+  cache, or a Nuxt payload-cache approach. Pairs naturally with the timeout work
+  above (cached data softens a slow revalidate).
