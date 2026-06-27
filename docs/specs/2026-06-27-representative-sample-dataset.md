@@ -1,6 +1,12 @@
 # Representative sample dataset (generated from real providers)
 
-Status: draft for review. Date: 2026-06-27.
+Status: implemented 2026-06-27.
+
+Implementation notes (deviations from the original draft): the generator and
+manifest shipped as plain ESM `.js` (Node 26 runs them directly — no `tsx`/`.ts`
+dependency); franchise items resolve by `query` + year rather than pinned ids
+(only Baldur's Gate 3 is pinned); the book DNF is _Pride and Prejudice_ (the
+_Eat, Pray, Love_ query matched an omnibus). Final size: 142 items.
 
 ## 1. Goal
 
@@ -39,9 +45,9 @@ data reliably; TMDB (movies + shows) is currently intermittently 5xx-ing — see
 
 ## 3. Generator architecture
 
-New: `scripts/generate-sample.ts`, run against a local `npm run dev` server
-(so it reuses the app's real mapping logic verbatim) via `tsx`
-(added as a devDependency) and an npm script `generate:sample`.
+New: `scripts/generate-sample.js` (plain ESM, run directly by Node), driven
+against a local `npm run dev` server so it reuses the app's real mapping logic
+verbatim, via the npm script `generate:sample`.
 
 ### 3.1 Inputs — the manifest
 
@@ -51,13 +57,13 @@ A curated list (`scripts/sample-manifest.ts`) of entries, one per intended item:
 interface ManifestEntry {
   type: MediaType;
   providerId?: string; // preferred: exact item
-  query?: string;      // fallback: generator resolves via /api/search, logs the pick
-  season?: number;     // shows only
+  query?: string; // fallback: generator resolves via /api/search, logs the pick
+  season?: number; // shows only
   // user-state overlay hints (optional; most are derived — see §4):
-  status?: ItemStatus;       // override the derived status
+  status?: ItemStatus; // override the derived status
   recommended_by?: string;
   notes?: string;
-  series?: string;           // for franchises where the provider lacks it
+  series?: string; // for franchises where the provider lacks it
   series_number?: number;
 }
 ```
@@ -117,9 +123,9 @@ Let `ry` = release year from the draft's `release_date`; today is `2026-06-27`.
 ### 4.3 Special states
 
 - **DNF** (4 total, one per type, off-genre): `status: 'dnf'` with a "stopped"
-  date so it surfaces in History with the `[DNF]` marker. Seeds: *Sex and the
-  City* (show), *Stardew Valley* (game), plus a book and a movie (e.g.
-  *Eat, Pray, Love*; *The Notebook*).
+  date so it surfaces in History with the `[DNF]` marker. Seeds: _Sex and the
+  City_ (show), _Stardew Valley_ (game), plus a book and a movie (e.g.
+  _Eat, Pray, Love_; _The Notebook_).
 - **in_progress** (~4–8): `status: 'in_progress'`, no completion date — appears
   in Backlog (e.g. currently reading the latest Expanse, mid-season on a show,
   playing Halo Infinite).
@@ -147,14 +153,14 @@ Modeling a fan with a deep, mostly-recent log. Franchises listed by the user are
 a starting point; the generator supplements with other mainstream titles and a
 deliberate mix of **singletons and franchises** in every type.
 
-| Bucket            | Target                                            |
-| ----------------- | ------------------------------------------------- |
-| Backlog           | ≥10 per type (~40)                                |
-| History           | ~10 per type per year across 2024–2026 (~80–120)  |
-| DNF               | 4 (one per type)                                  |
-| in_progress       | ~4–8                                              |
-| Repeats           | ~4                                                |
-| **Total**         | **~140–170**                                      |
+| Bucket      | Target                                           |
+| ----------- | ------------------------------------------------ |
+| Backlog     | ≥10 per type (~40)                               |
+| History     | ~10 per type per year across 2024–2026 (~80–120) |
+| DNF         | 4 (one per type)                                 |
+| in_progress | ~4–8                                             |
+| Repeats     | ~4                                               |
+| **Total**   | **~140–170**                                     |
 
 Source pools (franchise + supplements + singletons), per type:
 

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { Item } from '~~/shared/types/item';
-import { edgeSeed } from '~~/shared/seeds/edge';
 import { sampleSeed } from '~~/shared/seeds/sample';
 
 // This page exists only in dev. A built/deployed app must never expose seeding;
@@ -17,12 +16,15 @@ definePageMeta({
 const { loadDataset } = useSeed();
 const { isOwner, login } = useAuth();
 
-type DatasetKey = 'empty' | 'edge' | 'sample';
+type DatasetKey = 'empty' | 'sample';
 
 const datasets: { key: DatasetKey; label: string; items: Item[] }[] = [
   { key: 'empty', label: 'Empty', items: [] },
-  { key: 'edge', label: 'Edge (16 items)', items: edgeSeed },
-  { key: 'sample', label: 'Sample (~60 items)', items: sampleSeed },
+  {
+    key: 'sample',
+    label: `Sample (${sampleSeed.length} items)`,
+    items: sampleSeed,
+  },
 ];
 
 const busy = ref<DatasetKey | null>(null);

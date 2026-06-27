@@ -180,17 +180,19 @@ string in a query, so the year must be stored as a matchable value.
 | Type    | `metadata` fields                                                   | `length_unit` |
 | ------- | ------------------------------------------------------------------- | ------------- |
 | `book`  | `series`, `series_number`, `isbn`                                   | `pages`       |
-| `movie` | _(none)_                                                            | `min`         |
+| `movie` | `series`, `series_number`                                           | `min`         |
 | `show`  | `show_tmdb_id`, `season_number`, `episode_count`, `episode_runtime` | `min`         |
-| `game`  | `platform`                                                          | `hours`       |
+| `game`  | `platform`, `series`, `series_number`                               | `hours`       |
 
 Notes:
 
 - **`creator`** maps per provider: Goodreads `author`, TMDB movie director (from
   credits), TMDB show `created_by`, IGDB developer (involved companies). String, or
   array when there are multiple.
-- **`series_number`** pairs with `series` for books, mirroring `season_number` for
-  shows.
+- **`series`/`series_number`** apply to books, movies, and games (e.g. a film or
+  game franchise); `itemSeries()` reads them generically for the series sort. A
+  show is its own series — the show title is the series name and `season_number`
+  the position — so it needs no explicit `series` field.
 - **`show_tmdb_id`** is kept explicit (not derived from `id`) because grouping a
   show's seasons is a Firestore `where('metadata.show_tmdb_id','==',N)` query. The
   `show_` qualifier distinguishes the parent series id from a season's own TMDB id.

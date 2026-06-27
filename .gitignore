@@ -24,3 +24,6 @@ logs
 !.env.example
 # Committed: dummy (non-secret) config that the test runtime needs, incl. CI.
 !.env.test
+
+# Sample-dataset generator fetch cache (resumable; not committed)
+scripts/.sample-cache.json

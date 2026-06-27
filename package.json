@@ -22,6 +22,7 @@
     "type-check": "nuxt typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
+    "generate:sample": "node scripts/generate-sample.js",
     "validate": "run-s lint:check type-check test",
     "firebase": "firebase",
     "deploy:rules:dev": "firebase deploy --only firestore:rules --project dev --config firebase.dev.json",
