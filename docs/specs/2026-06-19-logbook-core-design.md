@@ -565,14 +565,12 @@ milestones shipped).
 
 ### Known gaps & polish (surfaced during implementation)
 
-- **History year switcher is hardcoded** to `[2026, 2025]` (`app/pages/history.vue`).
-  Must derive the selectable years from the data. Firestore has no DISTINCT, so the
-  intended approach is a small maintained aggregate doc (e.g. `meta/completionYears`)
-  updated via `arrayUnion` on write and rebuilt by the seed loader — not a full
-  scan. Items completed in other years are currently unreachable in the UI.
-- **IGDB search relevance** — IGDB orders search hits by text match, not popularity
-  (e.g. "Hades" surfaces a 1995 game above the 2020 one). Tune the games search
-  (e.g. sort/secondary-rank by rating or follows). Minor.
-- **SSR / hybrid reads** (§14) — reads are currently client-only, which causes an
-  accepted brief "Loading…" flash on Backlog/History/Detail. SSR/hybrid reads would
-  remove it. Cosmetic; deferred.
+- **SSR / hybrid reads (larger block of work, not polish)** (§14) — reads are
+  currently client-only, which causes an accepted brief "Loading…" flash on
+  Backlog/History/Detail. Removing it is **not** a quick fix: it depends on the
+  still-undecided Firestore client-vs-Admin-SDK boundary (§14) and would mean
+  standing up a server-side data path (Firebase Admin SDK, a Netlify
+  service-account credential), reworking the owner/auth boundary, and reintroducing
+  hydration the current `<ClientOnly>` wrapping avoids. The flash was explicitly
+  accepted (2026-06-23). Tackle as its own milestone, gated on the §14 decision —
+  do not "fix" it piecemeal.
