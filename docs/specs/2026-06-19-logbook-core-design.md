@@ -576,3 +576,19 @@ milestones shipped).
   hydration the current `<ClientOnly>` wrapping avoids. The flash was explicitly
   accepted (2026-06-23). Tackle as its own milestone, gated on the §14 decision —
   do not "fix" it piecemeal.
+- **Make the repo fork-friendly (de-hardwire the owner's Firebase)** — strip
+  setup-specific values so a fork needs only its own env/config, not edits to
+  tracked files. Offenders:
+  - `firestore.rules` / `firestore.dev.rules` carry the owner UID literally. The
+    hard part: rules can't read env, so this needs a templated rules file with a
+    deploy-time substitution (e.g. an `${OWNER_UID}` placeholder filled by the
+    deploy script) or, at minimum, a documented manual edit.
+  - `.firebaserc` hardcodes the project ids (`spaceninja-logbook-dev`/`-prod`) —
+    move to a gitignored real file plus a committed `.firebaserc.example`.
+  - The dev/prod split (two rules files, `firebase.json` + `firebase.dev.json`)
+    encodes the owner's two-project layout; reconsider whether a fork should
+    inherit it or start single-project.
+  - `.nuxtrc` is an auto-generated `@nuxt/test-utils` marker (not owner-specific);
+    evaluate gitignoring it.
+  - Already generic, leave alone: `.env.test` (dummy values), `.env.example`,
+    `nuxt.config.ts` (owner UID + Firebase config all sourced from env).
