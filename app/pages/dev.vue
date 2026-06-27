@@ -14,7 +14,7 @@ definePageMeta({
   ],
 });
 
-const { loadDataset } = useSeed();
+const { loadDataset, rebuildCompletionYears } = useSeed();
 const { isOwner, login } = useAuth();
 
 type DatasetKey = 'empty' | 'edge' | 'sample';
@@ -27,6 +27,7 @@ const datasets: { key: DatasetKey; label: string; items: Item[] }[] = [
 
 const busy = ref<DatasetKey | null>(null);
 const message = ref('');
+const rebuilding = ref(false);
 
 async function load(dataset: (typeof datasets)[number]) {
   const ok = window.confirm(
@@ -44,6 +45,19 @@ async function load(dataset: (typeof datasets)[number]) {
     message.value = `Failed to load "${dataset.label}": ${(error as Error).message}`;
   } finally {
     busy.value = null;
+  }
+}
+
+async function rebuildYears() {
+  rebuilding.value = true;
+  message.value = '';
+  try {
+    const count = await rebuildCompletionYears();
+    message.value = `Rebuilt the History year switcher — ${count} year(s).`;
+  } catch (error) {
+    message.value = `Failed to rebuild years: ${(error as Error).message}`;
+  } finally {
+    rebuilding.value = false;
   }
 }
 </script>
@@ -76,6 +90,20 @@ async function load(dataset: (typeof datasets)[number]) {
           </li>
         </ul>
         <p v-if="message">{{ message }}</p>
+
+        <h2>Maintenance</h2>
+        <p>
+          Rebuild the History year switcher's <code>meta/completionYears</code>
+          aggregate from the items already in Firestore. Non-destructive; use it
+          to backfill data that predates the aggregate.
+        </p>
+        <button
+          type="button"
+          :disabled="busy !== null || rebuilding"
+          @click="rebuildYears"
+        >
+          {{ rebuilding ? 'Rebuilding…' : 'Rebuild completion years' }}
+        </button>
       </template>
     </ClientOnly>
   </section>

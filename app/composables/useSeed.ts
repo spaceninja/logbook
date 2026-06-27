@@ -68,10 +68,31 @@ export function useSeed() {
 
     // Rebuild the History year switcher's aggregate from the full dataset. A
     // plain overwrite (not arrayUnion) drops years the new dataset no longer has.
+    await writeCompletionYears(db, dataset);
+  }
+
+  /**
+   * Overwrite the `meta/completionYears` aggregate from a set of items. A plain
+   * set (not `arrayUnion`) so years no longer present are dropped.
+   */
+  async function writeCompletionYears(db: Firestore, source: Item[]) {
     await setDoc(doc(db, 'meta', 'completionYears'), {
-      years: deriveCompletionYears(dataset),
+      years: deriveCompletionYears(source),
     });
   }
 
-  return { wipeAll, loadDataset };
+  /**
+   * Rebuild the History year switcher's aggregate from the items already in
+   * Firestore — non-destructive (no wipe). The backfill/repair path for data
+   * that predates the aggregate, or whenever it drifts. Returns the year count.
+   */
+  async function rebuildCompletionYears(): Promise<number> {
+    const db = getDb();
+    const snapshot = await getDocs(collection(db, 'items'));
+    const items = snapshot.docs.map((d) => d.data() as Item);
+    await writeCompletionYears(db, items);
+    return deriveCompletionYears(items).length;
+  }
+
+  return { wipeAll, loadDataset, rebuildCompletionYears };
 }
