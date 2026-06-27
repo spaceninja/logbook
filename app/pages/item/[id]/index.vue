@@ -1,52 +1,3 @@
-<script setup lang="ts">
-import { itemDisplayTitle, formatCreator } from '~~/shared/utils/itemDisplay';
-
-const route = useRoute();
-const id = computed(() => String(route.params.id));
-
-const { getItem, deleteItem } = useItems();
-const { isOwner } = useAuth();
-
-const {
-  data: item,
-  pending,
-  error,
-} = useAsyncData(
-  () => `item:${id.value}`,
-  () => getItem(id.value),
-  {
-    server: false,
-    lazy: true,
-    watch: [id],
-  },
-);
-
-// Entries of the type-specific metadata map, for display.
-const metadataEntries = computed(() =>
-  item.value ? Object.entries(item.value.metadata) : [],
-);
-
-const deleting = ref(false);
-
-async function onDelete() {
-  if (!item.value) return;
-  if (
-    !window.confirm(
-      `Delete "${itemDisplayTitle(item.value)}"? This cannot be undone.`,
-    )
-  ) {
-    return;
-  }
-  deleting.value = true;
-  try {
-    await deleteItem(id.value);
-    await navigateTo('/backlog');
-  } finally {
-    deleting.value = false;
-  }
-}
-</script>
-
 <template>
   <section>
     <p>
@@ -164,3 +115,52 @@ async function onDelete() {
     </ClientOnly>
   </section>
 </template>
+
+<script setup lang="ts">
+import { itemDisplayTitle, formatCreator } from '~~/shared/utils/itemDisplay';
+
+const route = useRoute();
+const id = computed(() => String(route.params.id));
+
+const { getItem, deleteItem } = useItems();
+const { isOwner } = useAuth();
+
+const {
+  data: item,
+  pending,
+  error,
+} = useAsyncData(
+  () => `item:${id.value}`,
+  () => getItem(id.value),
+  {
+    server: false,
+    lazy: true,
+    watch: [id],
+  },
+);
+
+// Entries of the type-specific metadata map, for display.
+const metadataEntries = computed(() =>
+  item.value ? Object.entries(item.value.metadata) : [],
+);
+
+const deleting = ref(false);
+
+async function onDelete() {
+  if (!item.value) return;
+  if (
+    !window.confirm(
+      `Delete "${itemDisplayTitle(item.value)}"? This cannot be undone.`,
+    )
+  ) {
+    return;
+  }
+  deleting.value = true;
+  try {
+    await deleteItem(id.value);
+    await navigateTo('/backlog');
+  } finally {
+    deleting.value = false;
+  }
+}
+</script>

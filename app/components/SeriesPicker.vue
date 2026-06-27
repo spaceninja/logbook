@@ -1,23 +1,3 @@
-<script setup lang="ts">
-import type { SearchResult } from '~~/shared/types/search';
-
-defineProps<{ title: string; members: SearchResult[] }>();
-const emit = defineEmits<{ confirm: [providerIds: string[]]; back: [] }>();
-
-const selected = ref<Set<string>>(new Set());
-
-function toggle(providerId: string) {
-  const next = new Set(selected.value);
-  if (next.has(providerId)) next.delete(providerId);
-  else next.add(providerId);
-  selected.value = next;
-}
-
-function confirm() {
-  if (selected.value.size) emit('confirm', [...selected.value]);
-}
-</script>
-
 <template>
   <div>
     <p>
@@ -50,3 +30,23 @@ function confirm() {
     </button>
   </div>
 </template>
+
+<script setup lang="ts">
+import type { SearchResult } from '~~/shared/types/search';
+
+defineProps<{ title: string; members: SearchResult[] }>();
+const emit = defineEmits<{ confirm: [providerIds: string[]]; back: [] }>();
+
+const selected = ref<Set<string>>(new Set());
+
+function toggle(providerId: string) {
+  const next = new Set(selected.value);
+  if (next.has(providerId)) next.delete(providerId);
+  else next.add(providerId);
+  selected.value = next;
+}
+
+function confirm() {
+  if (selected.value.size) emit('confirm', [...selected.value]);
+}
+</script>

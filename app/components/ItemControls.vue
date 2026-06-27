@@ -1,3 +1,30 @@
+<template>
+  <div class="item-controls">
+    <label>
+      Sort
+      <select v-model="sortKey">
+        <option v-for="k in sortKeys" :key="k" :value="k">
+          {{ SORT_LABELS[k] }}
+        </option>
+      </select>
+    </label>
+
+    <label>
+      <input v-model="reversed" type="checkbox" />
+      Reverse
+    </label>
+
+    <label v-for="k in filterKeys" :key="k">
+      {{ FILTER_LABELS[k] }}
+      <select :value="filters[k] ?? 'all'" @change="onFilterChange(k, $event)">
+        <option v-for="s in FILTER_STATES" :key="s.value" :value="s.value">
+          {{ s.label }}
+        </option>
+      </select>
+    </label>
+  </div>
+</template>
+
 <script setup lang="ts">
 import type {
   FilterKey,
@@ -46,30 +73,3 @@ function onFilterChange(key: FilterKey, event: Event) {
   emit('update:filter', key, state);
 }
 </script>
-
-<template>
-  <div class="item-controls">
-    <label>
-      Sort
-      <select v-model="sortKey">
-        <option v-for="k in sortKeys" :key="k" :value="k">
-          {{ SORT_LABELS[k] }}
-        </option>
-      </select>
-    </label>
-
-    <label>
-      <input v-model="reversed" type="checkbox" />
-      Reverse
-    </label>
-
-    <label v-for="k in filterKeys" :key="k">
-      {{ FILTER_LABELS[k] }}
-      <select :value="filters[k] ?? 'all'" @change="onFilterChange(k, $event)">
-        <option v-for="s in FILTER_STATES" :key="s.value" :value="s.value">
-          {{ s.label }}
-        </option>
-      </select>
-    </label>
-  </div>
-</template>

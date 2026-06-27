@@ -1,3 +1,30 @@
+<template>
+  <section>
+    <h1>Edit item</h1>
+    <ClientOnly>
+      <template #fallback><p>Loading…</p></template>
+      <p v-if="pending">Loading…</p>
+      <p v-else-if="error">Failed to load item: {{ error.message }}</p>
+      <p v-else-if="!item">Item not found.</p>
+      <template v-else>
+        <p v-if="canRefresh">
+          <button type="button" :disabled="refreshing" @click="onRefresh">
+            {{ refreshing ? 'Refreshing…' : 'Refresh metadata' }}
+          </button>
+          <span v-if="refreshError" role="alert"> {{ refreshError }}</span>
+        </p>
+        <p v-if="saveError" role="alert">Failed to save: {{ saveError }}</p>
+        <ItemForm
+          ref="formRef"
+          mode="edit"
+          :initial="item"
+          @submit="onSubmit"
+        />
+      </template>
+    </ClientOnly>
+  </section>
+</template>
+
 <script setup lang="ts">
 import type { Item, ShowMetadata } from '~~/shared/types/item';
 
@@ -72,30 +99,3 @@ async function onSubmit(updated: Item) {
   }
 }
 </script>
-
-<template>
-  <section>
-    <h1>Edit item</h1>
-    <ClientOnly>
-      <template #fallback><p>Loading…</p></template>
-      <p v-if="pending">Loading…</p>
-      <p v-else-if="error">Failed to load item: {{ error.message }}</p>
-      <p v-else-if="!item">Item not found.</p>
-      <template v-else>
-        <p v-if="canRefresh">
-          <button type="button" :disabled="refreshing" @click="onRefresh">
-            {{ refreshing ? 'Refreshing…' : 'Refresh metadata' }}
-          </button>
-          <span v-if="refreshError" role="alert"> {{ refreshError }}</span>
-        </p>
-        <p v-if="saveError" role="alert">Failed to save: {{ saveError }}</p>
-        <ItemForm
-          ref="formRef"
-          mode="edit"
-          :initial="item"
-          @submit="onSubmit"
-        />
-      </template>
-    </ClientOnly>
-  </section>
-</template>

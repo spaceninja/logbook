@@ -1,3 +1,56 @@
+<template>
+  <section>
+    <h1>Backlog</h1>
+
+    <fieldset>
+      <legend>Type</legend>
+      <label v-for="t in MEDIA_TYPES" :key="t">
+        <input v-model="type" type="radio" :value="t" />
+        {{ t }}
+      </label>
+    </fieldset>
+
+    <!-- Data comes from the client-only Firestore SDK, so render it client-side
+         to avoid hydrating against the empty SSR default. -->
+    <ClientOnly>
+      <template #fallback>
+        <p>Loading…</p>
+      </template>
+      <ItemControls
+        v-model:sort-key="sortKey"
+        v-model:reversed="reversed"
+        :sort-keys="sortKeys"
+        :filter-keys="FILTER_KEYS"
+        :filters="filters"
+        @update:filter="setFilter"
+      />
+      <p v-if="pending">Loading…</p>
+      <p v-else-if="error">Failed to load backlog: {{ error.message }}</p>
+      <p v-else-if="displayed.length === 0">Nothing in the backlog.</p>
+      <ul v-else>
+        <li v-for="item in displayed" :key="item.id">
+          <NuxtLink :to="`/item/${item.id}`">
+            <img
+              v-if="item.thumbnail"
+              :src="item.thumbnail"
+              :alt="`${itemDisplayTitle(item)} cover`"
+              width="40"
+            />
+            <strong>{{ itemDisplayTitle(item) }}</strong>
+          </NuxtLink>
+          <span> — {{ item.type }}</span>
+          <span v-if="item.creator"> · {{ formatCreator(item.creator) }}</span>
+          <span v-if="formatSeries(item)"> · {{ formatSeries(item) }}</span>
+          <span v-if="item.community_rating !== undefined">
+            · ★ {{ item.community_rating }}</span
+          >
+          <span> · {{ item.status }}</span>
+        </li>
+      </ul>
+    </ClientOnly>
+  </section>
+</template>
+
 <script setup lang="ts">
 import type { MediaType } from '~~/shared/types/item';
 import {
@@ -59,56 +112,3 @@ function setFilter(key: FilterKey, state: FilterState) {
   filters[key] = state;
 }
 </script>
-
-<template>
-  <section>
-    <h1>Backlog</h1>
-
-    <fieldset>
-      <legend>Type</legend>
-      <label v-for="t in MEDIA_TYPES" :key="t">
-        <input v-model="type" type="radio" :value="t" />
-        {{ t }}
-      </label>
-    </fieldset>
-
-    <!-- Data comes from the client-only Firestore SDK, so render it client-side
-         to avoid hydrating against the empty SSR default. -->
-    <ClientOnly>
-      <template #fallback>
-        <p>Loading…</p>
-      </template>
-      <ItemControls
-        v-model:sort-key="sortKey"
-        v-model:reversed="reversed"
-        :sort-keys="sortKeys"
-        :filter-keys="FILTER_KEYS"
-        :filters="filters"
-        @update:filter="setFilter"
-      />
-      <p v-if="pending">Loading…</p>
-      <p v-else-if="error">Failed to load backlog: {{ error.message }}</p>
-      <p v-else-if="displayed.length === 0">Nothing in the backlog.</p>
-      <ul v-else>
-        <li v-for="item in displayed" :key="item.id">
-          <NuxtLink :to="`/item/${item.id}`">
-            <img
-              v-if="item.thumbnail"
-              :src="item.thumbnail"
-              :alt="`${itemDisplayTitle(item)} cover`"
-              width="40"
-            />
-            <strong>{{ itemDisplayTitle(item) }}</strong>
-          </NuxtLink>
-          <span> — {{ item.type }}</span>
-          <span v-if="item.creator"> · {{ formatCreator(item.creator) }}</span>
-          <span v-if="formatSeries(item)"> · {{ formatSeries(item) }}</span>
-          <span v-if="item.community_rating !== undefined">
-            · ★ {{ item.community_rating }}</span
-          >
-          <span> · {{ item.status }}</span>
-        </li>
-      </ul>
-    </ClientOnly>
-  </section>
-</template>

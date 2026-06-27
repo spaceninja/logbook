@@ -1,3 +1,214 @@
+<template>
+  <form
+    :aria-label="mode === 'create' ? 'Add item' : 'Edit item'"
+    @submit.prevent="onSubmit"
+  >
+    <p v-if="error" role="alert">{{ error }}</p>
+
+    <label>
+      Type
+      <select v-model="form.type">
+        <option v-for="t in MEDIA_TYPES" :key="t" :value="t">{{ t }}</option>
+      </select>
+    </label>
+
+    <label>
+      Title
+      <input v-model="form.title" type="text" required />
+    </label>
+
+    <label>
+      Creator <small>(comma-separated for multiple)</small>
+      <input v-model="form.creator" type="text" />
+    </label>
+
+    <label>
+      Creator sort key <small>(surname first; blank = auto)</small>
+      <input v-model="form.creator_sort" type="text" />
+    </label>
+
+    <label>
+      Status
+      <select v-model="form.status">
+        <option v-for="s in STATUSES" :key="s" :value="s">{{ s }}</option>
+      </select>
+    </label>
+
+    <label>
+      Release date
+      <input v-model="form.release_date" type="date" />
+    </label>
+
+    <label>
+      Description
+      <textarea v-model="form.description" />
+    </label>
+
+    <label>
+      Cover URL
+      <input v-model="form.cover" type="url" />
+    </label>
+
+    <label>
+      Thumbnail URL
+      <input v-model="form.thumbnail" type="url" />
+    </label>
+
+    <label>
+      Backdrop URL
+      <input v-model="form.backdrop" type="url" />
+    </label>
+
+    <label>
+      Length
+      <input v-model="form.length" type="number" min="0" />
+    </label>
+
+    <label>
+      Length unit
+      <select v-model="form.length_unit">
+        <option v-for="u in LENGTH_UNITS" :key="u" :value="u">{{ u }}</option>
+      </select>
+    </label>
+
+    <label>
+      Community rating <small>(0–10)</small>
+      <input
+        v-model="form.community_rating"
+        type="number"
+        min="0"
+        max="10"
+        step="any"
+      />
+    </label>
+
+    <label>
+      My rating <small>(0–10)</small>
+      <input
+        v-model="form.my_rating"
+        type="number"
+        min="0"
+        max="10"
+        step="any"
+      />
+    </label>
+
+    <label>
+      Provider
+      <select v-model="form.provider">
+        <option v-for="p in PROVIDERS" :key="p" :value="p">{{ p }}</option>
+      </select>
+    </label>
+
+    <label>
+      Recommended by
+      <input v-model="form.recommended_by" type="text" />
+    </label>
+
+    <label>
+      <input v-model="form.is_purchased" type="checkbox" />
+      Purchased
+    </label>
+
+    <label>
+      <input v-model="form.is_prioritized" type="checkbox" />
+      Prioritized
+    </label>
+
+    <fieldset>
+      <legend>Completed dates</legend>
+      <div v-for="(date, index) in form.completed_dates" :key="index">
+        <input v-model="form.completed_dates[index]" type="date" />
+        <button type="button" @click="removeDate(index)">Remove</button>
+      </div>
+      <button type="button" @click="addDate">Add date</button>
+    </fieldset>
+
+    <label>
+      Notes
+      <textarea v-model="form.notes" />
+    </label>
+
+    <label>
+      Tags <small>(comma-separated)</small>
+      <input v-model="form.tags" type="text" />
+    </label>
+
+    <!-- Type-specific metadata -->
+    <fieldset v-if="form.type === 'book'">
+      <legend>Book details</legend>
+      <label>
+        Series
+        <input v-model="form.series" type="text" />
+      </label>
+      <label>
+        Series number
+        <input v-model="form.series_number" type="number" min="0" step="any" />
+      </label>
+      <label>
+        ISBN
+        <input v-model="form.isbn" type="text" />
+      </label>
+    </fieldset>
+
+    <fieldset v-else-if="form.type === 'movie'">
+      <legend>Movie details</legend>
+      <label>
+        Series
+        <input v-model="form.series" type="text" />
+      </label>
+      <label>
+        Series number
+        <input v-model="form.series_number" type="number" min="0" step="any" />
+      </label>
+    </fieldset>
+
+    <fieldset v-else-if="form.type === 'show'">
+      <legend>Show details</legend>
+      <label>
+        Show TMDB id
+        <input v-model="form.show_tmdb_id" type="number" min="0" />
+      </label>
+      <label>
+        Season number
+        <input v-model="form.season_number" type="number" min="0" step="any" />
+      </label>
+      <label>
+        Season title <small>(if different from the show name)</small>
+        <input v-model="form.season_title" type="text" />
+      </label>
+      <label>
+        Episode count
+        <input v-model="form.episode_count" type="number" min="0" />
+      </label>
+      <label>
+        Episode runtime <small>(min)</small>
+        <input v-model="form.episode_runtime" type="number" min="0" />
+      </label>
+    </fieldset>
+
+    <fieldset v-else-if="form.type === 'game'">
+      <legend>Game details</legend>
+      <label>
+        Series
+        <input v-model="form.series" type="text" />
+      </label>
+      <label>
+        Series number
+        <input v-model="form.series_number" type="number" min="0" step="any" />
+      </label>
+      <label>
+        Platform
+        <input v-model="form.platform" type="text" />
+      </label>
+    </fieldset>
+
+    <button type="submit">
+      {{ mode === 'create' ? 'Add item' : 'Save changes' }}
+    </button>
+  </form>
+</template>
+
 <script setup lang="ts">
 import type {
   Item,
@@ -295,214 +506,3 @@ function onSubmit() {
   emit('submit', assemble());
 }
 </script>
-
-<template>
-  <form
-    :aria-label="mode === 'create' ? 'Add item' : 'Edit item'"
-    @submit.prevent="onSubmit"
-  >
-    <p v-if="error" role="alert">{{ error }}</p>
-
-    <label>
-      Type
-      <select v-model="form.type">
-        <option v-for="t in MEDIA_TYPES" :key="t" :value="t">{{ t }}</option>
-      </select>
-    </label>
-
-    <label>
-      Title
-      <input v-model="form.title" type="text" required />
-    </label>
-
-    <label>
-      Creator <small>(comma-separated for multiple)</small>
-      <input v-model="form.creator" type="text" />
-    </label>
-
-    <label>
-      Creator sort key <small>(surname first; blank = auto)</small>
-      <input v-model="form.creator_sort" type="text" />
-    </label>
-
-    <label>
-      Status
-      <select v-model="form.status">
-        <option v-for="s in STATUSES" :key="s" :value="s">{{ s }}</option>
-      </select>
-    </label>
-
-    <label>
-      Release date
-      <input v-model="form.release_date" type="date" />
-    </label>
-
-    <label>
-      Description
-      <textarea v-model="form.description" />
-    </label>
-
-    <label>
-      Cover URL
-      <input v-model="form.cover" type="url" />
-    </label>
-
-    <label>
-      Thumbnail URL
-      <input v-model="form.thumbnail" type="url" />
-    </label>
-
-    <label>
-      Backdrop URL
-      <input v-model="form.backdrop" type="url" />
-    </label>
-
-    <label>
-      Length
-      <input v-model="form.length" type="number" min="0" />
-    </label>
-
-    <label>
-      Length unit
-      <select v-model="form.length_unit">
-        <option v-for="u in LENGTH_UNITS" :key="u" :value="u">{{ u }}</option>
-      </select>
-    </label>
-
-    <label>
-      Community rating <small>(0–10)</small>
-      <input
-        v-model="form.community_rating"
-        type="number"
-        min="0"
-        max="10"
-        step="any"
-      />
-    </label>
-
-    <label>
-      My rating <small>(0–10)</small>
-      <input
-        v-model="form.my_rating"
-        type="number"
-        min="0"
-        max="10"
-        step="any"
-      />
-    </label>
-
-    <label>
-      Provider
-      <select v-model="form.provider">
-        <option v-for="p in PROVIDERS" :key="p" :value="p">{{ p }}</option>
-      </select>
-    </label>
-
-    <label>
-      Recommended by
-      <input v-model="form.recommended_by" type="text" />
-    </label>
-
-    <label>
-      <input v-model="form.is_purchased" type="checkbox" />
-      Purchased
-    </label>
-
-    <label>
-      <input v-model="form.is_prioritized" type="checkbox" />
-      Prioritized
-    </label>
-
-    <fieldset>
-      <legend>Completed dates</legend>
-      <div v-for="(date, index) in form.completed_dates" :key="index">
-        <input v-model="form.completed_dates[index]" type="date" />
-        <button type="button" @click="removeDate(index)">Remove</button>
-      </div>
-      <button type="button" @click="addDate">Add date</button>
-    </fieldset>
-
-    <label>
-      Notes
-      <textarea v-model="form.notes" />
-    </label>
-
-    <label>
-      Tags <small>(comma-separated)</small>
-      <input v-model="form.tags" type="text" />
-    </label>
-
-    <!-- Type-specific metadata -->
-    <fieldset v-if="form.type === 'book'">
-      <legend>Book details</legend>
-      <label>
-        Series
-        <input v-model="form.series" type="text" />
-      </label>
-      <label>
-        Series number
-        <input v-model="form.series_number" type="number" min="0" step="any" />
-      </label>
-      <label>
-        ISBN
-        <input v-model="form.isbn" type="text" />
-      </label>
-    </fieldset>
-
-    <fieldset v-else-if="form.type === 'movie'">
-      <legend>Movie details</legend>
-      <label>
-        Series
-        <input v-model="form.series" type="text" />
-      </label>
-      <label>
-        Series number
-        <input v-model="form.series_number" type="number" min="0" step="any" />
-      </label>
-    </fieldset>
-
-    <fieldset v-else-if="form.type === 'show'">
-      <legend>Show details</legend>
-      <label>
-        Show TMDB id
-        <input v-model="form.show_tmdb_id" type="number" min="0" />
-      </label>
-      <label>
-        Season number
-        <input v-model="form.season_number" type="number" min="0" step="any" />
-      </label>
-      <label>
-        Season title <small>(if different from the show name)</small>
-        <input v-model="form.season_title" type="text" />
-      </label>
-      <label>
-        Episode count
-        <input v-model="form.episode_count" type="number" min="0" />
-      </label>
-      <label>
-        Episode runtime <small>(min)</small>
-        <input v-model="form.episode_runtime" type="number" min="0" />
-      </label>
-    </fieldset>
-
-    <fieldset v-else-if="form.type === 'game'">
-      <legend>Game details</legend>
-      <label>
-        Series
-        <input v-model="form.series" type="text" />
-      </label>
-      <label>
-        Series number
-        <input v-model="form.series_number" type="number" min="0" step="any" />
-      </label>
-      <label>
-        Platform
-        <input v-model="form.platform" type="text" />
-      </label>
-    </fieldset>
-
-    <button type="submit">
-      {{ mode === 'create' ? 'Add item' : 'Save changes' }}
-    </button>
-  </form>
-</template>

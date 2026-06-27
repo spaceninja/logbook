@@ -1,10 +1,3 @@
-<script setup lang="ts">
-// The Dev link only renders under `nuxt dev`; built apps never show it.
-const showDev = import.meta.dev;
-
-const { isOwner, login, logout } = useAuth();
-</script>
-
 <template>
   <div>
     <header>
@@ -30,3 +23,10 @@ const { isOwner, login, logout } = useAuth();
     </main>
   </div>
 </template>
+
+<script setup lang="ts">
+// The Dev link only renders under `nuxt dev`; built apps never show it.
+const showDev = import.meta.dev;
+
+const { isOwner, login, logout } = useAuth();
+</script>

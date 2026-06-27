@@ -1,3 +1,59 @@
+<template>
+  <section>
+    <h1>History</h1>
+    <label>
+      Year:
+      <select v-model.number="year">
+        <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
+      </select>
+    </label>
+
+    <fieldset>
+      <legend>Type</legend>
+      <label v-for="t in MEDIA_TYPES" :key="t">
+        <input v-model="type" type="radio" :value="t" />
+        {{ t }}
+      </label>
+    </fieldset>
+
+    <!-- Client-only Firestore data; render client-side to avoid hydrating
+         against the empty SSR default. -->
+    <ClientOnly>
+      <template #fallback>
+        <p>Loading…</p>
+      </template>
+      <ItemControls
+        v-model:sort-key="sortKey"
+        v-model:reversed="reversed"
+        :sort-keys="sortKeys"
+        :filter-keys="[]"
+        :filters="{}"
+      />
+      <p v-if="pending">Loading…</p>
+      <p v-else-if="error">Failed to load history: {{ error.message }}</p>
+      <p v-else-if="displayed.length === 0">Nothing completed in {{ year }}.</p>
+      <ul v-else>
+        <li v-for="item in displayed" :key="item.id">
+          <NuxtLink :to="`/item/${item.id}`">
+            <strong>{{ itemDisplayTitle(item) }}</strong>
+          </NuxtLink>
+          <span v-if="item.status === 'dnf'" data-status="dnf"> [DNF]</span>
+          <span> — {{ item.type }}</span>
+          <span v-if="item.creator"> · {{ formatCreator(item.creator) }}</span>
+          <span v-if="formatSeries(item)"> · {{ formatSeries(item) }}</span>
+          <span v-if="item.my_rating !== undefined">
+            · ★ {{ item.my_rating }}</span
+          >
+          <span>
+            · {{ item.status === 'dnf' ? 'stopped' : 'completed' }}
+            {{ datesInYear(item).join(', ') }}</span
+          >
+        </li>
+      </ul>
+    </ClientOnly>
+  </section>
+</template>
+
 <script setup lang="ts">
 import type { Item, MediaType } from '~~/shared/types/item';
 import type { CompletionYearsByType } from '~~/shared/utils/completionYears';
@@ -92,59 +148,3 @@ function datesInYear(item: Item): string[] {
   );
 }
 </script>
-
-<template>
-  <section>
-    <h1>History</h1>
-    <label>
-      Year:
-      <select v-model.number="year">
-        <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
-      </select>
-    </label>
-
-    <fieldset>
-      <legend>Type</legend>
-      <label v-for="t in MEDIA_TYPES" :key="t">
-        <input v-model="type" type="radio" :value="t" />
-        {{ t }}
-      </label>
-    </fieldset>
-
-    <!-- Client-only Firestore data; render client-side to avoid hydrating
-         against the empty SSR default. -->
-    <ClientOnly>
-      <template #fallback>
-        <p>Loading…</p>
-      </template>
-      <ItemControls
-        v-model:sort-key="sortKey"
-        v-model:reversed="reversed"
-        :sort-keys="sortKeys"
-        :filter-keys="[]"
-        :filters="{}"
-      />
-      <p v-if="pending">Loading…</p>
-      <p v-else-if="error">Failed to load history: {{ error.message }}</p>
-      <p v-else-if="displayed.length === 0">Nothing completed in {{ year }}.</p>
-      <ul v-else>
-        <li v-for="item in displayed" :key="item.id">
-          <NuxtLink :to="`/item/${item.id}`">
-            <strong>{{ itemDisplayTitle(item) }}</strong>
-          </NuxtLink>
-          <span v-if="item.status === 'dnf'" data-status="dnf"> [DNF]</span>
-          <span> — {{ item.type }}</span>
-          <span v-if="item.creator"> · {{ formatCreator(item.creator) }}</span>
-          <span v-if="formatSeries(item)"> · {{ formatSeries(item) }}</span>
-          <span v-if="item.my_rating !== undefined">
-            · ★ {{ item.my_rating }}</span
-          >
-          <span>
-            · {{ item.status === 'dnf' ? 'stopped' : 'completed' }}
-            {{ datesInYear(item).join(', ') }}</span
-          >
-        </li>
-      </ul>
-    </ClientOnly>
-  </section>
-</template>

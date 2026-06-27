@@ -1,3 +1,51 @@
+<template>
+  <section>
+    <h1>Add item</h1>
+    <p v-if="error" role="alert">{{ error }}</p>
+
+    <AddSearch
+      v-if="step === 'search'"
+      @select="onSelect"
+      @series="onSeries"
+      @manual="onManual"
+    />
+
+    <SeasonPicker
+      v-else-if="step === 'seasons' && showResult"
+      :show-id="showResult.providerId"
+      :show-title="showResult.title"
+      @confirm="onSeasonsConfirm"
+      @back="reset"
+    />
+
+    <SeriesPicker
+      v-else-if="step === 'series'"
+      :title="seriesTitle"
+      :members="seriesMembers"
+      @confirm="onSeriesConfirm"
+      @back="reset"
+    />
+
+    <BatchAddPanel
+      v-else-if="step === 'batch'"
+      :drafts="batchDrafts"
+      :unit="batchUnit"
+      @done="onBatchDone"
+      @back="reset"
+    />
+
+    <template v-else-if="step === 'form'">
+      <p><button type="button" @click="reset">← Back to search</button></p>
+      <ItemForm
+        mode="create"
+        :initial="formInitial"
+        :initial-type="manualType"
+        @submit="onFormSubmit"
+      />
+    </template>
+  </section>
+</template>
+
 <script setup lang="ts">
 import type { Item, MediaType } from '~~/shared/types/item';
 import type { SearchResult } from '~~/shared/types/search';
@@ -132,51 +180,3 @@ function onBatchDone() {
   navigateTo('/backlog');
 }
 </script>
-
-<template>
-  <section>
-    <h1>Add item</h1>
-    <p v-if="error" role="alert">{{ error }}</p>
-
-    <AddSearch
-      v-if="step === 'search'"
-      @select="onSelect"
-      @series="onSeries"
-      @manual="onManual"
-    />
-
-    <SeasonPicker
-      v-else-if="step === 'seasons' && showResult"
-      :show-id="showResult.providerId"
-      :show-title="showResult.title"
-      @confirm="onSeasonsConfirm"
-      @back="reset"
-    />
-
-    <SeriesPicker
-      v-else-if="step === 'series'"
-      :title="seriesTitle"
-      :members="seriesMembers"
-      @confirm="onSeriesConfirm"
-      @back="reset"
-    />
-
-    <BatchAddPanel
-      v-else-if="step === 'batch'"
-      :drafts="batchDrafts"
-      :unit="batchUnit"
-      @done="onBatchDone"
-      @back="reset"
-    />
-
-    <template v-else-if="step === 'form'">
-      <p><button type="button" @click="reset">← Back to search</button></p>
-      <ItemForm
-        mode="create"
-        :initial="formInitial"
-        :initial-type="manualType"
-        @submit="onFormSubmit"
-      />
-    </template>
-  </section>
-</template>

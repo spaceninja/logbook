@@ -1,3 +1,43 @@
+<template>
+  <div>
+    <p>
+      <button type="button" @click="emit('back')">← Back to search</button>
+    </p>
+    <h2>{{ showTitle }} — pick seasons</h2>
+
+    <ClientOnly>
+      <template #fallback><p>Loading seasons…</p></template>
+      <p v-if="pending">Loading seasons…</p>
+      <p v-else-if="error" role="alert">
+        Could not load seasons. Go back and try again.
+      </p>
+      <template v-else>
+        <label v-if="hasSpecials">
+          <input v-model="includeSpecials" type="checkbox" />
+          Include Specials (Season 0)
+        </label>
+        <ul>
+          <li v-for="season in visible" :key="season.season_number">
+            <label>
+              <input
+                type="checkbox"
+                :checked="selected.has(season.season_number)"
+                @change="toggle(season.season_number)"
+              />
+              {{ season.name }}
+              <span v-if="season.year"> · {{ season.year }}</span>
+              · {{ season.episode_count }} eps
+            </label>
+          </li>
+        </ul>
+        <button type="button" :disabled="selected.size === 0" @click="confirm">
+          Add {{ selected.size }} season(s)
+        </button>
+      </template>
+    </ClientOnly>
+  </div>
+</template>
+
 <script setup lang="ts">
 import type { SeasonSummary } from '~~/shared/types/search';
 
@@ -46,43 +86,3 @@ function confirm() {
   }
 }
 </script>
-
-<template>
-  <div>
-    <p>
-      <button type="button" @click="emit('back')">← Back to search</button>
-    </p>
-    <h2>{{ showTitle }} — pick seasons</h2>
-
-    <ClientOnly>
-      <template #fallback><p>Loading seasons…</p></template>
-      <p v-if="pending">Loading seasons…</p>
-      <p v-else-if="error" role="alert">
-        Could not load seasons. Go back and try again.
-      </p>
-      <template v-else>
-        <label v-if="hasSpecials">
-          <input v-model="includeSpecials" type="checkbox" />
-          Include Specials (Season 0)
-        </label>
-        <ul>
-          <li v-for="season in visible" :key="season.season_number">
-            <label>
-              <input
-                type="checkbox"
-                :checked="selected.has(season.season_number)"
-                @change="toggle(season.season_number)"
-              />
-              {{ season.name }}
-              <span v-if="season.year"> · {{ season.year }}</span>
-              · {{ season.episode_count }} eps
-            </label>
-          </li>
-        </ul>
-        <button type="button" :disabled="selected.size === 0" @click="confirm">
-          Add {{ selected.size }} season(s)
-        </button>
-      </template>
-    </ClientOnly>
-  </div>
-</template>

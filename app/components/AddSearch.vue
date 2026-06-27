@@ -1,3 +1,51 @@
+<template>
+  <div>
+    <fieldset role="radiogroup" aria-label="Media type">
+      <label v-for="t in TYPES" :key="t">
+        <input v-model="type" type="radio" name="add-type" :value="t" />
+        {{ t }}
+      </label>
+    </fieldset>
+
+    <label>
+      Search
+      <input v-model="query" type="search" placeholder="Title…" />
+    </label>
+
+    <p v-if="pending">Searching…</p>
+    <p v-else-if="error" role="alert">{{ error }}</p>
+    <ul v-else-if="results.length">
+      <li v-for="result in results" :key="result.providerId">
+        <button type="button" @click="emit('select', result)">
+          <img
+            v-if="result.thumbnail"
+            :src="result.thumbnail"
+            :alt="`${result.title} cover`"
+            width="40"
+          />
+          <strong>{{ result.title }}</strong>
+          <span v-if="result.year"> ({{ result.year }})</span>
+          <span v-if="result.subtitle"> · {{ result.subtitle }}</span>
+        </button>
+        <button
+          v-if="result.type === 'movie' || result.type === 'game'"
+          type="button"
+          @click="emit('series', result)"
+        >
+          Add series
+        </button>
+      </li>
+    </ul>
+    <p v-else-if="query.trim()">No results.</p>
+
+    <p>
+      <button type="button" @click="emit('manual', type)">
+        Enter manually instead
+      </button>
+    </p>
+  </div>
+</template>
+
 <script setup lang="ts">
 import type { MediaType } from '~~/shared/types/item';
 import type { SearchResult } from '~~/shared/types/search';
@@ -51,51 +99,3 @@ watch([query, type], () => {
   debounce = setTimeout(runSearch, 300);
 });
 </script>
-
-<template>
-  <div>
-    <fieldset role="radiogroup" aria-label="Media type">
-      <label v-for="t in TYPES" :key="t">
-        <input v-model="type" type="radio" name="add-type" :value="t" />
-        {{ t }}
-      </label>
-    </fieldset>
-
-    <label>
-      Search
-      <input v-model="query" type="search" placeholder="Title…" />
-    </label>
-
-    <p v-if="pending">Searching…</p>
-    <p v-else-if="error" role="alert">{{ error }}</p>
-    <ul v-else-if="results.length">
-      <li v-for="result in results" :key="result.providerId">
-        <button type="button" @click="emit('select', result)">
-          <img
-            v-if="result.thumbnail"
-            :src="result.thumbnail"
-            :alt="`${result.title} cover`"
-            width="40"
-          />
-          <strong>{{ result.title }}</strong>
-          <span v-if="result.year"> ({{ result.year }})</span>
-          <span v-if="result.subtitle"> · {{ result.subtitle }}</span>
-        </button>
-        <button
-          v-if="result.type === 'movie' || result.type === 'game'"
-          type="button"
-          @click="emit('series', result)"
-        >
-          Add series
-        </button>
-      </li>
-    </ul>
-    <p v-else-if="query.trim()">No results.</p>
-
-    <p>
-      <button type="button" @click="emit('manual', type)">
-        Enter manually instead
-      </button>
-    </p>
-  </div>
-</template>
