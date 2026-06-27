@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Item } from '../types/item';
-import { itemDisplayTitle, formatCreator } from './itemDisplay';
+import { itemDisplayTitle, formatCreator, formatSeries } from './itemDisplay';
 
 function makeShow(overrides: Partial<Item> = {}): Item {
   return {
@@ -61,5 +61,28 @@ describe('formatCreator', () => {
   it('returns a single creator as-is and empty for none', () => {
     expect(formatCreator('Andy Weir')).toBe('Andy Weir');
     expect(formatCreator(undefined)).toBe('');
+  });
+});
+
+describe('formatSeries', () => {
+  const book = (meta: object) =>
+    makeShow({ type: 'book', title: 'X', metadata: meta });
+
+  it('formats series name and number', () => {
+    expect(formatSeries(book({ series: 'Dune', series_number: 2 }))).toBe(
+      'Dune #2',
+    );
+  });
+
+  it('omits the number when absent', () => {
+    expect(formatSeries(book({ series: 'Discworld' }))).toBe('Discworld');
+  });
+
+  it('is empty when there is no series', () => {
+    expect(formatSeries(book({}))).toBe('');
+  });
+
+  it('is empty for shows (the season is in the title)', () => {
+    expect(formatSeries(makeShow())).toBe('');
   });
 });

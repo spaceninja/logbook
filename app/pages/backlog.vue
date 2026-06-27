@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import type { MediaType } from '~~/shared/types/item';
-import { itemDisplayTitle, formatCreator } from '~~/shared/utils/itemDisplay';
+import {
+  itemDisplayTitle,
+  formatCreator,
+  formatSeries,
+} from '~~/shared/utils/itemDisplay';
 import type { FilterKey, FilterState } from '~~/shared/utils/itemFilter';
 import type { SortKey } from '~~/shared/utils/itemSort';
 
@@ -98,6 +102,10 @@ function setFilter(key: FilterKey, state: FilterState) {
           </NuxtLink>
           <span> — {{ item.type }}</span>
           <span v-if="item.creator"> · {{ formatCreator(item.creator) }}</span>
+          <span v-if="formatSeries(item)"> · {{ formatSeries(item) }}</span>
+          <span v-if="item.community_rating !== undefined">
+            · ★ {{ item.community_rating }}</span
+          >
           <span> · {{ item.status }}</span>
         </li>
       </ul>

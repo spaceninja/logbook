@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import type { Item, MediaType } from '~~/shared/types/item';
-import { itemDisplayTitle, formatCreator } from '~~/shared/utils/itemDisplay';
+import {
+  itemDisplayTitle,
+  formatCreator,
+  formatSeries,
+} from '~~/shared/utils/itemDisplay';
 import type { SortKey } from '~~/shared/utils/itemSort';
 
 const MEDIA_TYPES: MediaType[] = ['book', 'movie', 'show', 'game'];
@@ -102,6 +106,10 @@ function datesInYear(item: Item): string[] {
           <span v-if="item.status === 'dnf'" data-status="dnf"> [DNF]</span>
           <span> — {{ item.type }}</span>
           <span v-if="item.creator"> · {{ formatCreator(item.creator) }}</span>
+          <span v-if="formatSeries(item)"> · {{ formatSeries(item) }}</span>
+          <span v-if="item.my_rating !== undefined">
+            · ★ {{ item.my_rating }}</span
+          >
           <span>
             · {{ item.status === 'dnf' ? 'stopped' : 'completed' }}
             {{ datesInYear(item).join(', ') }}</span

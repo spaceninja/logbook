@@ -1,4 +1,5 @@
 import type { Item, ShowMetadata } from '../types/item';
+import { itemSeries } from './series';
 
 /**
  * Display title. Shows are stored per-season with the show name in `title`, so
@@ -18,4 +19,16 @@ export function itemDisplayTitle(item: Item): string {
 export function formatCreator(creator: Item['creator']): string {
   if (Array.isArray(creator)) return creator.join(', ');
   return creator ?? '';
+}
+
+/**
+ * "Series Name #N" for an item in a series (or just the name when unnumbered).
+ * Empty when there is no series. Shows are skipped — their season is already in
+ * the display title.
+ */
+export function formatSeries(item: Item): string {
+  if (item.type === 'show') return '';
+  const { name, number } = itemSeries(item);
+  if (!name) return '';
+  return number !== undefined ? `${name} #${number}` : name;
 }
