@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { mapIgdbDraft, mapIgdbSearch, type IgdbGame } from './igdb';
+import {
+  mapIgdbDraft,
+  mapIgdbSearch,
+  rankIgdbGames,
+  type IgdbGame,
+} from './igdb';
 
 const game: IgdbGame = {
   id: 1020,
@@ -61,5 +66,46 @@ describe('mapIgdbDraft', () => {
   it('omits the backdrop when there is no artwork or screenshot', () => {
     const item = mapIgdbDraft({ ...game, artworks: [], screenshots: [] });
     expect(item.backdrop).toBeUndefined();
+  });
+});
+
+describe('rankIgdbGames', () => {
+  const named = (
+    id: number,
+    name: string,
+    total_rating_count?: number,
+  ): IgdbGame => ({ id, name, total_rating_count });
+
+  const names = (games: IgdbGame[]) => games.map((g) => g.id);
+
+  it('breaks ties between equal-name matches by popularity', () => {
+    // IGDB returns the obscure 1995 game first; popularity should reorder it.
+    const games = [named(1, 'Hades', 3), named(2, 'Hades', 900)];
+    expect(names(rankIgdbGames(games, 'Hades'))).toEqual([2, 1]);
+  });
+
+  it('keeps closer name matches ahead of more popular incidental ones', () => {
+    // A popular sibling must not displace the exact title the user typed.
+    const games = [named(1, 'Hades', 900), named(2, 'Hades II', 10)];
+    expect(names(rankIgdbGames(games, 'Hades II'))).toEqual([2, 1]);
+  });
+
+  it('orders exact over prefix over substring matches', () => {
+    const games = [
+      named(3, 'Super Mario Odyssey'),
+      named(2, 'Mario Kart'),
+      named(1, 'Mario'),
+    ];
+    expect(names(rankIgdbGames(games, 'Mario'))).toEqual([1, 2, 3]);
+  });
+
+  it('preserves IGDB order when tier and popularity are equal (stable)', () => {
+    const games = [named(1, 'Doom'), named(2, 'Doom')];
+    expect(names(rankIgdbGames(games, 'Doom'))).toEqual([1, 2]);
+  });
+
+  it('is case- and whitespace-insensitive on the query', () => {
+    const games = [named(1, 'Halo', 5), named(2, 'Halo', 50)];
+    expect(names(rankIgdbGames(games, '  hALo  '))).toEqual([2, 1]);
   });
 });

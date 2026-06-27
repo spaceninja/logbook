@@ -19,6 +19,7 @@ export interface IgdbGame {
   first_release_date?: number; // unix seconds
   summary?: string;
   rating?: number; // 0–100
+  total_rating_count?: number; // # of critic + user ratings — a popularity proxy
   cover?: { image_id?: string };
   artworks?: { image_id?: string }[];
   screenshots?: { image_id?: string }[];
@@ -50,6 +51,43 @@ function developers(game: IgdbGame): string[] {
   return (game.involved_companies ?? [])
     .filter((c) => c.developer && c.company?.name)
     .map((c) => c.company!.name!);
+}
+
+/**
+ * How closely a game's name matches the query (lower = closer): exact, prefix,
+ * substring, then everything else. Keeps literal matches ahead of incidental
+ * ones so specific searches (e.g. "Hades II") aren't displaced by a more popular
+ * sibling.
+ */
+function nameTier(name: string, query: string): number {
+  const n = name.toLowerCase();
+  const q = query.trim().toLowerCase();
+  if (n === q) return 0;
+  if (n.startsWith(q)) return 1;
+  if (n.includes(q)) return 2;
+  return 3;
+}
+
+/**
+ * Re-rank IGDB search hits. IGDB's `search` orders purely by text match and
+ * ignores popularity, and APICalypse forbids combining `search` with `sort`, so
+ * we re-rank in code (core design §15): by name-match tier first, then by
+ * popularity (`total_rating_count`) as a tiebreaker — e.g. surfacing the 2020
+ * "Hades" over the obscure 1995 game. IGDB's original order is the final
+ * tiebreaker (stable).
+ */
+export function rankIgdbGames(games: IgdbGame[], query: string): IgdbGame[] {
+  return games
+    .map((game, index) => ({ game, index }))
+    .sort((a, b) => {
+      const tier = nameTier(a.game.name, query) - nameTier(b.game.name, query);
+      if (tier !== 0) return tier;
+      const pop =
+        (b.game.total_rating_count ?? 0) - (a.game.total_rating_count ?? 0);
+      if (pop !== 0) return pop;
+      return a.index - b.index;
+    })
+    .map((entry) => entry.game);
 }
 
 export function mapIgdbSearch(games: IgdbGame[]): SearchResult[] {

@@ -3,12 +3,13 @@ import { $fetch } from 'ofetch';
 import {
   mapIgdbDraft,
   mapIgdbSearch,
+  rankIgdbGames,
   type IgdbGame,
 } from '../../shared/providers/igdb';
 import { getIgdbToken } from './igdbToken';
 
 const FIELDS =
-  'name,first_release_date,summary,rating,cover.image_id,artworks.image_id,screenshots.image_id,genres.name,themes.name,involved_companies.developer,involved_companies.company.name';
+  'name,first_release_date,summary,rating,total_rating_count,cover.image_id,artworks.image_id,screenshots.image_id,genres.name,themes.name,involved_companies.developer,involved_companies.company.name';
 
 async function igdbQuery(body: string): Promise<IgdbGame[]> {
   const { twitchClientId } = useRuntimeConfig();
@@ -27,10 +28,12 @@ async function igdbQuery(body: string): Promise<IgdbGame[]> {
 export async function igdbSearch(q: string) {
   // Strip quotes to keep the APICalypse search literal well-formed.
   const safe = q.replace(/"/g, '');
+  // Over-fetch by relevance, then re-rank by popularity and trim — IGDB ignores
+  // popularity in `search` and won't let us `sort` alongside it (see igdb.ts).
   const games = await igdbQuery(
-    `search "${safe}"; fields ${FIELDS}; limit 10;`,
+    `search "${safe}"; fields ${FIELDS}; limit 20;`,
   );
-  return mapIgdbSearch(games);
+  return mapIgdbSearch(rankIgdbGames(games, q).slice(0, 10));
 }
 
 export async function igdbDraft(id: string) {
