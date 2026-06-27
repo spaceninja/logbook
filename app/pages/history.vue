@@ -63,6 +63,7 @@ import {
   formatSeries,
 } from '~~/shared/utils/itemDisplay';
 import type { SortKey } from '~~/shared/utils/itemSort';
+import { enumParam, flagParam, yearParam } from '~~/shared/utils/viewQuery';
 
 const MEDIA_TYPES: MediaType[] = ['book', 'movie', 'show', 'game'];
 const SORT_KEYS: SortKey[] = [
@@ -75,14 +76,23 @@ const SORT_KEYS: SortKey[] = [
 ];
 
 const { getHistory, getCompletionYears } = useItems();
+const route = useRoute();
+const router = useRouter();
+
+// View state is bound to the URL so the view is bookmarkable. Content type and
+// year each push a browser-history entry (back button steps through them like
+// separate pages); sort and direction update the URL in place (core design §4).
+const type = useQueryParam('type', enumParam(MEDIA_TYPES, 'book'), 'push');
+const sortKey = useQueryParam('sort', enumParam(SORT_KEYS, 'completion_date'));
+const reversed = useQueryParam('reverse', flagParam());
+const urlYear = useQueryParam('year', yearParam(), 'push');
 
 // Years offered by the switcher come from the maintained `meta/completionYears`
 // aggregate (core design §15), scoped to the selected type so we never offer a
-// year that has nothing for it. The whole per-type map loads once; switching
-// type just re-reads it locally. Newest first; falls back to the current
-// calendar year before the aggregate loads or when the type has no completions.
+// year that has nothing for it. Newest first; falls back to the current calendar
+// year before the aggregate loads or when the type has no completions.
 const currentYear = new Date().getFullYear();
-const { data: completionYears } = useAsyncData(
+const { data: completionYears, status: yearsStatus } = useAsyncData(
   'completionYears',
   () => getCompletionYears(),
   {
@@ -96,15 +106,31 @@ const years = computed<number[]>(() => {
   return ys.length ? [...ys].sort((a, b) => b - a) : [currentYear];
 });
 
-const year = ref<number>(currentYear);
-const type = ref<MediaType>('book');
+// An absent `year` param means "newest available", so the default view writes
+// nothing to the URL. Selecting the newest year clears the param (clean URL);
+// any other selection sets it (and pushes, per the binding).
+const newestAvailable = computed<number>(() => years.value[0] ?? currentYear);
+const year = computed<number>({
+  get: () => urlYear.value ?? newestAvailable.value,
+  set: (y) => {
+    urlYear.value = y === newestAvailable.value ? null : y;
+  },
+});
 
-// Once the year list loads, snap the selection to the newest available year if
-// the current one isn't offered (e.g. nothing completed yet this calendar year).
+// Self-correct a bookmarked year that has no entries for the current type: drop
+// the param (replace, not push) so the view falls back to newest. Only after the
+// aggregate has actually loaded, and client-side, to avoid clearing valid years
+// prematurely or replacing during SSR.
 watch(
-  years,
-  (ys) => {
-    if (!ys.includes(year.value)) year.value = ys[0]!;
+  [yearsStatus, type, urlYear],
+  () => {
+    if (!import.meta.client || yearsStatus.value !== 'success') return;
+    const available = completionYears.value[type.value] ?? [];
+    if (urlYear.value != null && !available.includes(urlYear.value)) {
+      const query = { ...route.query };
+      delete query.year;
+      router.replace({ query });
+    }
   },
   { immediate: true },
 );
@@ -127,11 +153,11 @@ const {
   watch: [year, type],
 });
 
-const { sortKey, reversed, displayed } = useItemList(items, {
-  sortKeys: SORT_KEYS,
-  defaultSort: 'completion_date',
+const { displayed } = useItemList(items, {
+  sortKey,
+  reversed,
+  filters: () => ({}),
   ratingField: 'my_rating',
-  filterKeys: [],
   year,
 });
 

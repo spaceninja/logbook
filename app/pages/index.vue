@@ -58,8 +58,13 @@ import {
   formatCreator,
   formatSeries,
 } from '~~/shared/utils/itemDisplay';
-import type { FilterKey, FilterState } from '~~/shared/utils/itemFilter';
+import type {
+  FilterKey,
+  FilterState,
+  ItemFilters,
+} from '~~/shared/utils/itemFilter';
 import type { SortKey } from '~~/shared/utils/itemSort';
+import { enumParam, flagParam } from '~~/shared/utils/viewQuery';
 
 const MEDIA_TYPES: MediaType[] = ['book', 'movie', 'show', 'game'];
 const SORT_KEYS: SortKey[] = [
@@ -71,11 +76,29 @@ const SORT_KEYS: SortKey[] = [
   'release_date',
 ];
 const FILTER_KEYS: FilterKey[] = ['purchased', 'prioritized', 'released'];
+const FILTER_STATES: FilterState[] = ['all', 'yes', 'no'];
 
 const { getBacklog } = useItems();
 
-// Content type drives the coarse query; default to books (core design §4.1).
-const type = ref<MediaType>('book');
+// View state is bound to the URL so the view is bookmarkable. Content type pushes
+// a browser-history entry (back button treats it like a separate page); sort,
+// direction, and filters update the URL in place (core design §4).
+const type = useQueryParam('type', enumParam(MEDIA_TYPES, 'book'), 'push');
+const sortKey = useQueryParam('sort', enumParam(SORT_KEYS, 'rating'));
+const reversed = useQueryParam('reverse', flagParam());
+const purchased = useQueryParam('purchased', enumParam(FILTER_STATES, 'all'));
+const prioritized = useQueryParam(
+  'prioritized',
+  enumParam(FILTER_STATES, 'all'),
+);
+const released = useQueryParam('released', enumParam(FILTER_STATES, 'all'));
+
+const filterRefs = { purchased, prioritized, released };
+const filters = computed<ItemFilters>(() => ({
+  purchased: purchased.value,
+  prioritized: prioritized.value,
+  released: released.value,
+}));
 
 // For shows, the series sort (show name + numeric season) supersedes the title
 // sort — it groups seasons and orders them numerically — so offer Series, not Title.
@@ -95,20 +118,20 @@ const {
   watch: [type],
 });
 
-const { sortKey, reversed, filters, displayed } = useItemList(items, {
-  sortKeys: SORT_KEYS,
-  defaultSort: 'rating',
+const { displayed } = useItemList(items, {
+  sortKey,
+  reversed,
+  filters,
   ratingField: 'community_rating',
-  filterKeys: FILTER_KEYS,
 });
 
-// If the active sort is no longer offered (e.g. series → switched to shows),
+// If the active sort is no longer offered (e.g. title → switched to shows),
 // fall back to the default.
 watch(sortKeys, (keys) => {
   if (!keys.includes(sortKey.value)) sortKey.value = 'rating';
 });
 
 function setFilter(key: FilterKey, state: FilterState) {
-  filters[key] = state;
+  filterRefs[key].value = state;
 }
 </script>
