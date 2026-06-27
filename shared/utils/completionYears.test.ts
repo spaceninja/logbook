@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Item } from '../types/item';
-import { deriveCompletionYears } from './completionYears';
+import { deriveCompletionYearsByType } from './completionYears';
 
 function makeItem(overrides: Partial<Item> = {}): Item {
   return {
@@ -18,30 +18,55 @@ function makeItem(overrides: Partial<Item> = {}): Item {
   };
 }
 
-describe('deriveCompletionYears', () => {
-  it('returns an empty array for no items', () => {
-    expect(deriveCompletionYears([])).toStrictEqual([]);
+describe('deriveCompletionYearsByType', () => {
+  it('returns an empty map for no items', () => {
+    expect(deriveCompletionYearsByType([])).toStrictEqual({});
   });
 
-  it('returns an empty array when no item has a completion date', () => {
+  it('omits types with no completion dates', () => {
     expect(
-      deriveCompletionYears([makeItem({ id: 'a' }), makeItem({ id: 'b' })]),
-    ).toStrictEqual([]);
+      deriveCompletionYearsByType([
+        makeItem({ id: 'a', type: 'book' }),
+        makeItem({ id: 'b', type: 'movie' }),
+      ]),
+    ).toStrictEqual({});
   });
 
-  it('collects distinct years across items, sorted ascending', () => {
+  it('groups distinct years per type, sorted ascending', () => {
     const items = [
-      makeItem({ id: 'a', completed_dates: ['2026-02-14', '2024-01-02'] }),
-      makeItem({ id: 'b', completed_dates: ['2025-07-01'] }),
-      makeItem({ id: 'c', completed_dates: ['2024-12-31'] }),
+      makeItem({
+        id: 'a',
+        type: 'book',
+        completed_dates: ['2026-02-14', '2024-01-02'],
+      }),
+      makeItem({ id: 'b', type: 'book', completed_dates: ['2024-12-31'] }),
+      makeItem({ id: 'c', type: 'game', completed_dates: ['2025-07-01'] }),
     ];
-    expect(deriveCompletionYears(items)).toStrictEqual([2024, 2025, 2026]);
+    expect(deriveCompletionYearsByType(items)).toStrictEqual({
+      book: [2024, 2026],
+      game: [2025],
+    });
+  });
+
+  it('does not leak one type’s years into another', () => {
+    const items = [
+      makeItem({ id: 'a', type: 'movie', completed_dates: ['2025-05-05'] }),
+      makeItem({ id: 'b', type: 'show', completed_dates: ['2023-03-03'] }),
+    ];
+    expect(deriveCompletionYearsByType(items)).toStrictEqual({
+      movie: [2025],
+      show: [2023],
+    });
   });
 
   it('ignores unparseable dates', () => {
     const items = [
-      makeItem({ id: 'a', completed_dates: ['not-a-date', '2023-05-05'] }),
+      makeItem({
+        id: 'a',
+        type: 'game',
+        completed_dates: ['not-a-date', '2023-05-05'],
+      }),
     ];
-    expect(deriveCompletionYears(items)).toStrictEqual([2023]);
+    expect(deriveCompletionYearsByType(items)).toStrictEqual({ game: [2023] });
   });
 });

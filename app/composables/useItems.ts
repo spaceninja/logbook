@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import type { Item, MediaType } from '~~/shared/types/item';
 import { deriveCompletedYears } from '~~/shared/utils/completedYears';
+import type { CompletionYearsByType } from '~~/shared/utils/completionYears';
 import { deriveCreatorSort } from '~~/shared/utils/creatorSort';
 
 /**
@@ -55,15 +56,15 @@ export function useItems() {
   }
 
   /**
-   * The set of years that have at least one completion, for the History year
-   * switcher. Read from the maintained `meta/completionYears` aggregate (a
-   * collection-wide DISTINCT is impossible in Firestore). Ascending; empty when
-   * the aggregate has not been written yet.
+   * Years that have at least one completion, grouped by media type, for the
+   * History year switcher. Read from the maintained `meta/completionYears`
+   * aggregate (a collection-wide DISTINCT is impossible in Firestore). Empty
+   * when the aggregate has not been written yet.
    */
-  async function getCompletionYears(): Promise<number[]> {
+  async function getCompletionYears(): Promise<CompletionYearsByType> {
     const snapshot = await getDoc(completionYearsDoc());
-    if (!snapshot.exists()) return [];
-    return ((snapshot.data().years as number[] | undefined) ?? []).slice();
+    if (!snapshot.exists()) return {};
+    return snapshot.data() as CompletionYearsByType;
   }
 
   /** A single item by id, or null when the document does not exist. */
@@ -87,13 +88,14 @@ export function useItems() {
     };
     await setDoc(doc(items(), item.id), record);
 
-    // Fold this item's years into the aggregate so the History switcher offers
-    // them. arrayUnion only adds, so a year that loses its last item stays until
-    // the next reseed rebuilds the doc — an accepted trade-off (core design §15).
+    // Fold this item's years into its type's bucket so the History switcher
+    // offers them for that type. arrayUnion only adds, so a year that loses its
+    // last item stays until the next reseed rebuilds the doc — an accepted
+    // trade-off (core design §15).
     if (record.completed_years.length > 0) {
       await setDoc(
         completionYearsDoc(),
-        { years: arrayUnion(...record.completed_years) },
+        { [record.type]: arrayUnion(...record.completed_years) },
         { merge: true },
       );
     }

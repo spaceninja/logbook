@@ -8,7 +8,7 @@ import {
 } from 'firebase/firestore';
 import type { Item } from '~~/shared/types/item';
 import { deriveCompletedYears } from '~~/shared/utils/completedYears';
-import { deriveCompletionYears } from '~~/shared/utils/completionYears';
+import { deriveCompletionYearsByType } from '~~/shared/utils/completionYears';
 import { deriveCreatorSort } from '~~/shared/utils/creatorSort';
 
 // Firestore caps a write batch at 500 operations.
@@ -73,25 +73,29 @@ export function useSeed() {
 
   /**
    * Overwrite the `meta/completionYears` aggregate from a set of items. A plain
-   * set (not `arrayUnion`) so years no longer present are dropped.
+   * set (not `arrayUnion`) so types/years no longer present are dropped.
    */
   async function writeCompletionYears(db: Firestore, source: Item[]) {
-    await setDoc(doc(db, 'meta', 'completionYears'), {
-      years: deriveCompletionYears(source),
-    });
+    await setDoc(
+      doc(db, 'meta', 'completionYears'),
+      deriveCompletionYearsByType(source),
+    );
   }
 
   /**
    * Rebuild the History year switcher's aggregate from the items already in
    * Firestore — non-destructive (no wipe). The backfill/repair path for data
-   * that predates the aggregate, or whenever it drifts. Returns the year count.
+   * that predates the aggregate, or whenever it drifts. Returns the count of
+   * distinct years across all types.
    */
   async function rebuildCompletionYears(): Promise<number> {
     const db = getDb();
     const snapshot = await getDocs(collection(db, 'items'));
     const items = snapshot.docs.map((d) => d.data() as Item);
     await writeCompletionYears(db, items);
-    return deriveCompletionYears(items).length;
+    const byType = deriveCompletionYearsByType(items);
+    const distinct = new Set(Object.values(byType).flat());
+    return distinct.size;
   }
 
   return { wipeAll, loadDataset, rebuildCompletionYears };

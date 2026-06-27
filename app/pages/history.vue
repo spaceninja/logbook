@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Item, MediaType } from '~~/shared/types/item';
+import type { CompletionYearsByType } from '~~/shared/utils/completionYears';
 import {
   itemDisplayTitle,
   formatCreator,
@@ -19,20 +20,24 @@ const SORT_KEYS: SortKey[] = [
 
 const { getHistory, getCompletionYears } = useItems();
 
-// Years offered by the switcher are derived from the data via the maintained
-// `meta/completionYears` aggregate (core design §15). Newest first; falls back to
-// the current calendar year before the aggregate loads or when it's empty.
+// Years offered by the switcher come from the maintained `meta/completionYears`
+// aggregate (core design §15), scoped to the selected type so we never offer a
+// year that has nothing for it. The whole per-type map loads once; switching
+// type just re-reads it locally. Newest first; falls back to the current
+// calendar year before the aggregate loads or when the type has no completions.
 const currentYear = new Date().getFullYear();
 const { data: completionYears } = useAsyncData(
   'completionYears',
   () => getCompletionYears(),
-  { server: false, lazy: true, default: () => [] as number[] },
+  {
+    server: false,
+    lazy: true,
+    default: (): CompletionYearsByType => ({}),
+  },
 );
 const years = computed<number[]>(() => {
-  const ys = completionYears.value.length
-    ? [...completionYears.value]
-    : [currentYear];
-  return ys.sort((a, b) => b - a);
+  const ys = completionYears.value[type.value] ?? [];
+  return ys.length ? [...ys].sort((a, b) => b - a) : [currentYear];
 });
 
 const year = ref<number>(currentYear);
