@@ -7,6 +7,7 @@ import {
 } from 'firebase/firestore';
 import type { Item } from '~~/shared/types/item';
 import { deriveCompletedYears } from '~~/shared/utils/completedYears';
+import { deriveCreatorSort } from '~~/shared/utils/creatorSort';
 
 // Firestore caps a write batch at 500 operations.
 const BATCH_LIMIT = 500;
@@ -51,9 +52,12 @@ export function useSeed() {
     for (let i = 0; i < dataset.length; i += BATCH_LIMIT) {
       const batch = writeBatch(db);
       for (const item of dataset.slice(i, i + BATCH_LIMIT)) {
+        const creatorSort =
+          item.creator_sort ?? deriveCreatorSort(item.creator, item.type);
         const record: Item = {
           ...item,
           completed_years: deriveCompletedYears(item.completed_dates),
+          ...(creatorSort ? { creator_sort: creatorSort } : {}),
         };
         batch.set(doc(items, item.id), record);
       }

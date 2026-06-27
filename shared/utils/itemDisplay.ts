@@ -3,7 +3,8 @@ import type { Item, ShowMetadata } from '../types/item';
 /**
  * Display title. Shows are stored per-season with the show name in `title`, so
  * the season is composed at render time as "<title> — Season <n>" (core design
- * §3.4). All other types use `title` verbatim.
+ * §3.4). A season's own name (`season_title`, e.g. "Book One: Water") is shown
+ * separately, not folded into this title. All other types use `title` verbatim.
  */
 export function itemDisplayTitle(item: Item): string {
   if (item.type === 'show') {

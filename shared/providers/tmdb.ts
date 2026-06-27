@@ -59,6 +59,7 @@ export interface TmdbShowDetails {
   seasons?: TmdbSeasonSummary[];
 }
 export interface TmdbSeasonDetails {
+  name?: string;
   air_date?: string | null;
   poster_path?: string | null;
   episodes?: { runtime?: number | null }[];
@@ -161,6 +162,11 @@ export function mapTmdbSeasonDraft(
     : 0;
   const episodeCount = summary?.episode_count ?? season.episodes?.length ?? 0;
 
+  // Keep a season's own name only when it's not the generic "Season N".
+  const seasonName = season.name?.trim();
+  const seasonTitle =
+    seasonName && !/^season\s+\d+$/i.test(seasonName) ? seasonName : undefined;
+
   const item: Item = {
     id: makeShowId('tmdb', show.id, seasonNumber),
     type: 'show',
@@ -173,6 +179,7 @@ export function mapTmdbSeasonDraft(
       season_number: seasonNumber,
       episode_count: episodeCount,
       episode_runtime: typicalRuntime,
+      ...(seasonTitle ? { season_title: seasonTitle } : {}),
     },
   };
   const creator = toCreator(show.created_by?.map((c) => c.name) ?? []);

@@ -29,18 +29,30 @@ export interface BookMetadata {
   isbn?: string;
 }
 
-// Movies carry no type-specific metadata; `creator` (top-level) holds the director.
-export type MovieMetadata = Record<string, never>;
+// Movies carry only optional series/franchise info; `creator` holds the director.
+export interface MovieMetadata {
+  /** Franchise/series name (e.g. "The Lord of the Rings"). */
+  series?: string;
+  series_number?: number;
+}
 
 export interface ShowMetadata {
   show_tmdb_id: number;
   season_number: number;
   episode_count: number;
   episode_runtime: number;
+  /**
+   * The season's own name when it differs from the generic "Season N" (e.g.
+   * "Book One: Water"). Recorded for display; not used for sorting/filtering.
+   */
+  season_title?: string;
 }
 
 export interface GameMetadata {
   platform?: string;
+  /** Franchise/series name (e.g. "The Legend of Zelda"). */
+  series?: string;
+  series_number?: number;
 }
 
 export type ItemMetadata =
@@ -56,6 +68,13 @@ export interface Item {
   title: string;
   /** Unified author | director | created_by | developer. */
   creator?: string | string[];
+  /**
+   * Surname-first sort key for the "creator" sort, since `creator` is a display
+   * string with no structured last name. Auto-derived at add/save time
+   * (see `deriveCreatorSort`) but editable so awkward names ("Le Guin", particles)
+   * can be hand-fixed. Absent on legacy docs; the comparator re-derives a fallback.
+   */
+  creator_sort?: string;
   /** Large image for the detail view. */
   cover?: string;
   /** Small image for list views. */

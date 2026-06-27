@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Item, ItemStatus } from '~~/shared/types/item';
+import type { Item, ItemMetadata, ItemStatus } from '~~/shared/types/item';
 import { itemDisplayTitle } from '~~/shared/utils/itemDisplay';
 
 const props = withDefaults(defineProps<{ drafts: Item[]; unit?: string }>(), {
@@ -16,6 +16,12 @@ const isPurchased = ref(false);
 const recommendedBy = ref('');
 const tags = ref('');
 const notes = ref('');
+
+// Movie/game series batches let you stamp one series name on every item, so they
+// sort together — the metadata APIs don't return series info. Seasons already
+// share the show name, so the input is hidden for shows.
+const seriesTitle = ref('');
+const isSeries = computed(() => props.drafts[0]?.type !== 'show');
 
 const fullEdit = ref(false);
 const fullEditIndex = ref(0);
@@ -44,6 +50,15 @@ function applyShared(draft: Item): Item {
     .map((t) => t.trim())
     .filter(Boolean);
   if (userTags.length) item.tags = [...new Set([...draft.tags, ...userTags])];
+  // Stamp the shared series name (movie/game batches) so they group under the
+  // series sort.
+  const series = seriesTitle.value.trim();
+  if (series && draft.type !== 'show') {
+    item.metadata = {
+      ...(draft.metadata as Record<string, unknown>),
+      series,
+    } as ItemMetadata;
+  }
   return item;
 }
 
@@ -106,6 +121,11 @@ async function onFullEditSubmit(item: Item) {
       </ul>
 
       <p v-if="error" role="alert">{{ error }}</p>
+
+      <label v-if="isSeries">
+        Series title <small>(optional; applied to every {{ unit }})</small>
+        <input v-model="seriesTitle" type="text" />
+      </label>
 
       <label>
         Status

@@ -6,8 +6,10 @@ import type {
   LengthUnit,
   MediaType,
   Provider,
+  ShowMetadata,
 } from '~~/shared/types/item';
 import { deriveCompletedYears } from '~~/shared/utils/completedYears';
+import { deriveCreatorSort } from '~~/shared/utils/creatorSort';
 import { makeManualId } from '~~/shared/utils/itemId';
 
 const props = defineProps<{
@@ -37,6 +39,7 @@ interface FormState {
   type: MediaType;
   title: string;
   creator: string;
+  creator_sort: string;
   cover: string;
   thumbnail: string;
   backdrop: string;
@@ -60,6 +63,7 @@ interface FormState {
   isbn: string;
   show_tmdb_id: string;
   season_number: string;
+  season_title: string;
   episode_count: string;
   episode_runtime: string;
   platform: string;
@@ -85,6 +89,7 @@ function initialForm(): FormState {
     type,
     title: i?.title ?? '',
     creator: creatorStr(i?.creator),
+    creator_sort: i?.creator_sort ?? deriveCreatorSort(i?.creator, type) ?? '',
     cover: i?.cover ?? '',
     thumbnail: i?.thumbnail ?? '',
     backdrop: i?.backdrop ?? '',
@@ -107,6 +112,7 @@ function initialForm(): FormState {
     isbn: str(m.isbn),
     show_tmdb_id: numStr(m.show_tmdb_id),
     season_number: numStr(m.season_number),
+    season_title: str(m.season_title),
     episode_count: numStr(m.episode_count),
     episode_runtime: numStr(m.episode_runtime),
     platform: str(m.platform),
@@ -125,6 +131,8 @@ function applyProviderFields(source: Item) {
   const m = source.metadata as Record<string, unknown>;
   form.title = source.title;
   form.creator = creatorStr(source.creator);
+  form.creator_sort =
+    source.creator_sort ?? deriveCreatorSort(source.creator, source.type) ?? '';
   form.cover = source.cover ?? '';
   form.thumbnail = source.thumbnail ?? '';
   form.backdrop = source.backdrop ?? '';
@@ -133,11 +141,16 @@ function applyProviderFields(source: Item) {
   form.length = numStr(source.length);
   form.length_unit = source.length_unit ?? defaultUnit(form.type);
   form.community_rating = numStr(source.community_rating);
-  form.series = str(m.series);
-  form.series_number = numStr(m.series_number);
+  // series and series_number are user-maintained (no provider returns them yet),
+  // so a refresh must not wipe them — only overwrite when the fresh draft carries
+  // the value.
+  if (m.series) form.series = str(m.series);
+  if (m.series_number !== undefined)
+    form.series_number = numStr(m.series_number);
   form.isbn = str(m.isbn);
   form.show_tmdb_id = numStr(m.show_tmdb_id);
   form.season_number = numStr(m.season_number);
+  form.season_title = str(m.season_title);
   form.episode_count = numStr(m.episode_count);
   form.episode_runtime = numStr(m.episode_runtime);
   form.platform = str(m.platform);
@@ -183,25 +196,37 @@ function parseCreator(value: string): string | string[] | undefined {
   return parts;
 }
 
+// Series name/number, shared by the types that support it (book/movie/game).
+function seriesMeta(): { series?: string; series_number?: number } {
+  const meta: { series?: string; series_number?: number } = {};
+  if (form.series.trim()) meta.series = form.series.trim();
+  const seriesNumber = num(form.series_number);
+  if (seriesNumber !== undefined) meta.series_number = seriesNumber;
+  return meta;
+}
+
 function assembleMetadata(): ItemMetadata {
   switch (form.type) {
     case 'book': {
-      const meta: Record<string, string | number> = {};
-      if (form.series.trim()) meta.series = form.series.trim();
-      const seriesNumber = num(form.series_number);
-      if (seriesNumber !== undefined) meta.series_number = seriesNumber;
+      const meta: Record<string, string | number> = { ...seriesMeta() };
       if (form.isbn.trim()) meta.isbn = form.isbn.trim();
       return meta;
     }
-    case 'show':
-      return {
+    case 'movie':
+      return seriesMeta();
+    case 'show': {
+      const meta: ShowMetadata = {
         show_tmdb_id: num(form.show_tmdb_id) ?? 0,
         season_number: num(form.season_number) ?? 0,
         episode_count: num(form.episode_count) ?? 0,
         episode_runtime: num(form.episode_runtime) ?? 0,
       };
+      if (form.season_title.trim())
+        meta.season_title = form.season_title.trim();
+      return meta;
+    }
     case 'game': {
-      const meta: Record<string, string> = {};
+      const meta: Record<string, string | number> = { ...seriesMeta() };
       if (form.platform.trim()) meta.platform = form.platform.trim();
       return meta;
     }
@@ -236,6 +261,10 @@ function assemble(): Item {
   // explicit `undefined`).
   const creator = parseCreator(form.creator);
   if (creator !== undefined) item.creator = creator;
+  // Persist a manual sort key when given, else fall back to the derived one.
+  const creatorSort =
+    form.creator_sort.trim() || deriveCreatorSort(creator, form.type);
+  if (creatorSort) item.creator_sort = creatorSort;
   if (form.cover.trim()) item.cover = form.cover.trim();
   if (form.thumbnail.trim()) item.thumbnail = form.thumbnail.trim();
   if (form.backdrop.trim()) item.backdrop = form.backdrop.trim();
@@ -289,6 +318,11 @@ function onSubmit() {
     <label>
       Creator <small>(comma-separated for multiple)</small>
       <input v-model="form.creator" type="text" />
+    </label>
+
+    <label>
+      Creator sort key <small>(surname first; blank = auto)</small>
+      <input v-model="form.creator_sort" type="text" />
     </label>
 
     <label>
@@ -415,6 +449,18 @@ function onSubmit() {
       </label>
     </fieldset>
 
+    <fieldset v-else-if="form.type === 'movie'">
+      <legend>Movie details</legend>
+      <label>
+        Series
+        <input v-model="form.series" type="text" />
+      </label>
+      <label>
+        Series number
+        <input v-model="form.series_number" type="number" min="0" />
+      </label>
+    </fieldset>
+
     <fieldset v-else-if="form.type === 'show'">
       <legend>Show details</legend>
       <label>
@@ -424,6 +470,10 @@ function onSubmit() {
       <label>
         Season number
         <input v-model="form.season_number" type="number" min="0" />
+      </label>
+      <label>
+        Season title <small>(if different from the show name)</small>
+        <input v-model="form.season_title" type="text" />
       </label>
       <label>
         Episode count
@@ -437,6 +487,14 @@ function onSubmit() {
 
     <fieldset v-else-if="form.type === 'game'">
       <legend>Game details</legend>
+      <label>
+        Series
+        <input v-model="form.series" type="text" />
+      </label>
+      <label>
+        Series number
+        <input v-model="form.series_number" type="number" min="0" />
+      </label>
       <label>
         Platform
         <input v-model="form.platform" type="text" />

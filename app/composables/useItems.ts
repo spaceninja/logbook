@@ -9,8 +9,9 @@ import {
   where,
   type Firestore,
 } from 'firebase/firestore';
-import type { Item } from '~~/shared/types/item';
+import type { Item, MediaType } from '~~/shared/types/item';
 import { deriveCompletedYears } from '~~/shared/utils/completedYears';
+import { deriveCreatorSort } from '~~/shared/utils/creatorSort';
 
 /**
  * Read access to the `items` collection. Each method runs a coarse Firestore
@@ -25,18 +26,26 @@ export function useItems() {
   const nuxtApp = useNuxtApp();
   const items = () => collection(nuxtApp.$firestore as Firestore, 'items');
 
-  /** Backlog membership: status is `backlog` or `in_progress`. */
-  async function getBacklog(): Promise<Item[]> {
+  /** Backlog membership for one media type: status is `backlog` or `in_progress`. */
+  async function getBacklog(type: MediaType): Promise<Item[]> {
     const snapshot = await getDocs(
-      query(items(), where('status', 'in', ['backlog', 'in_progress'])),
+      query(
+        items(),
+        where('type', '==', type),
+        where('status', 'in', ['backlog', 'in_progress']),
+      ),
     );
     return snapshot.docs.map((d) => d.data() as Item);
   }
 
-  /** History membership for a given year, via the derived `completed_years`. */
-  async function getHistory(year: number): Promise<Item[]> {
+  /** History for one media type in a given year, via the derived `completed_years`. */
+  async function getHistory(year: number, type: MediaType): Promise<Item[]> {
     const snapshot = await getDocs(
-      query(items(), where('completed_years', 'array-contains', year)),
+      query(
+        items(),
+        where('completed_years', 'array-contains', year),
+        where('type', '==', type),
+      ),
     );
     return snapshot.docs.map((d) => d.data() as Item);
   }
@@ -53,9 +62,12 @@ export function useItems() {
    * by Firestore rules; callers gate the UI on `isOwner`.
    */
   async function saveItem(item: Item): Promise<void> {
+    const creatorSort =
+      item.creator_sort ?? deriveCreatorSort(item.creator, item.type);
     const record: Item = {
       ...item,
       completed_years: deriveCompletedYears(item.completed_dates),
+      ...(creatorSort ? { creator_sort: creatorSort } : {}),
     };
     await setDoc(doc(items(), item.id), record);
   }
