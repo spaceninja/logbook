@@ -32,7 +32,7 @@
       <p v-if="pending">Loading…</p>
       <p v-else-if="error">Failed to load history: {{ error.message }}</p>
       <p v-else-if="displayed.length === 0">Nothing completed in {{ year }}.</p>
-      <ItemCardList v-else :items="displayed" />
+      <ItemCardList v-else :items="displayed" view="history" :year="year" />
     </ClientOnly>
   </section>
 </template>
@@ -144,11 +144,4 @@ const { displayed } = useItemList(items, {
 watch(sortKeys, (keys) => {
   if (!keys.includes(sortKey.value)) sortKey.value = 'completion_date';
 });
-
-/** The completion date(s) for this item that fall in the selected year. */
-// function datesInYear(item: Item): string[] {
-//   return item.completed_dates.filter(
-//     (d) => Number.parseInt(d.slice(0, 4), 10) === year.value,
-//   );
-// }
 </script>

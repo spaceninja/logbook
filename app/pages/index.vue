@@ -27,7 +27,7 @@
       <p v-if="pending">Loading…</p>
       <p v-else-if="error">Failed to load backlog: {{ error.message }}</p>
       <p v-else-if="displayed.length === 0">Nothing in the backlog.</p>
-      <ItemCardList v-else :items="displayed" />
+      <ItemCardList v-else :items="displayed" view="backlog" />
     </ClientOnly>
   </section>
 </template>

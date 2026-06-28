@@ -1,12 +1,20 @@
 <template>
   <ol>
-    <ItemCard v-for="item in items" :key="item.id" :item="item" />
+    <ItemCard
+      v-for="item in items"
+      :key="item.id"
+      :item="item"
+      :view="view"
+      :year="year"
+    />
   </ol>
 </template>
 
 <script setup lang="ts">
 defineProps<{
   items: Item[];
+  view: 'history' | 'backlog';
+  year?: number;
 }>();
 </script>
 

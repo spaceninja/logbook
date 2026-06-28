@@ -32,3 +32,18 @@ export function formatSeries(item: Item): string {
   if (!name) return '';
   return number !== undefined ? `${name} #${number}` : name;
 }
+
+/**
+ * Formats an ISO completion date (`YYYY-MM-DD`) as a short "Mon D" label, e.g.
+ * "Jan 30". Parsed and formatted in UTC so the calendar day never shifts under
+ * the viewer's local timezone (date-only strings parse as UTC midnight, which a
+ * local-time formatter would render as the previous day west of UTC).
+ */
+export function formatCompletedDate(isoDate: string): string {
+  const date = new Date(`${isoDate.slice(0, 10)}T00:00:00Z`);
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  }).format(date);
+}

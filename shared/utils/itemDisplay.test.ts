@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { Item } from '../types/item';
-import { itemDisplayTitle, formatCreator, formatSeries } from './itemDisplay';
+import {
+  itemDisplayTitle,
+  formatCreator,
+  formatSeries,
+  formatCompletedDate,
+} from './itemDisplay';
 
 function makeShow(overrides: Partial<Item> = {}): Item {
   return {
@@ -84,5 +89,19 @@ describe('formatSeries', () => {
 
   it('is empty for shows (the season is in the title)', () => {
     expect(formatSeries(makeShow())).toBe('');
+  });
+});
+
+describe('formatCompletedDate', () => {
+  it('formats an ISO date as a short "Mon D" label', () => {
+    expect(formatCompletedDate('2026-01-30')).toBe('Jan 30');
+  });
+
+  it('keeps the calendar day stable regardless of viewer timezone', () => {
+    expect(formatCompletedDate('2026-12-01')).toBe('Dec 1');
+  });
+
+  it('tolerates a full ISO timestamp', () => {
+    expect(formatCompletedDate('2026-07-04T13:45:00Z')).toBe('Jul 4');
   });
 });

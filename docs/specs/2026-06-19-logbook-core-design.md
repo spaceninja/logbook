@@ -612,3 +612,11 @@ milestones shipped).
   in-memory keyed cache in `useItems`, Firestore's own persistent/IndexedDB
   cache, or a Nuxt payload-cache approach. Pairs naturally with the timeout work
   above (cached data softens a slow revalidate).
+- **Look up game length on add (HowLongToBeat)** — when adding a `game`, IGDB
+  (§5 metadata sources) doesn't carry a reliable playtime, so the `length` /
+  `length_unit: 'hours'` fields are left blank. Fetch an estimated completion
+  time from a service like **howlongtobeat.com** (e.g. its "Main Story" hours)
+  during the add flow and pre-fill `length`. The hard part: HLTB has no official
+  API, so this means an unofficial/community client or scraping, proxied through
+  a Nitro route like the other sources, with the value editable before save and
+  graceful fallback to blank when no match is found.

@@ -32,6 +32,10 @@ export default [
       'no-undef': 'off',
       // Conflicts with Nuxt file conventions like `[slug].vue`.
       'vue/multi-word-component-names': 'off',
+      // Optionality is expressed by TypeScript's `?` on type-based props; a
+      // runtime default would be redundant and wrong for genuinely-absent
+      // props (e.g. `year` is undefined in the backlog view).
+      'vue/require-default-prop': 'off',
       // Dead-code detection in SFCs.
       'vue/no-unused-properties': [
         'error',
