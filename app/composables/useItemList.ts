@@ -2,22 +2,22 @@ import { toValue, type MaybeRefOrGetter, type Ref } from 'vue';
 import type { Item } from '~~/shared/types/item';
 import { applyItemFilters, type ItemFilters } from '~~/shared/utils/itemFilter';
 import {
-  makeItemComparator,
-  type RatingField,
-  type SortKey,
+	makeItemComparator,
+	type RatingField,
+	type SortKey,
 } from '~~/shared/utils/itemSort';
 
 export interface ItemListConfig {
-  /** The active sort key (owned by the page; e.g. URL-bound via useViewQuery). */
-  sortKey: Ref<SortKey>;
-  /** Whether the sort is reversed. */
-  reversed: Ref<boolean>;
-  /** Active filter states; an empty object means no filtering. */
-  filters: MaybeRefOrGetter<ItemFilters>;
-  /** Which rating the `rating` sort uses on this view. */
-  ratingField: RatingField;
-  /** Scopes `completion_date` to the selected History year. */
-  year?: Ref<number>;
+	/** The active sort key (owned by the page; e.g. URL-bound via useViewQuery). */
+	sortKey: Ref<SortKey>;
+	/** Whether the sort is reversed. */
+	reversed: Ref<boolean>;
+	/** Active filter states; an empty object means no filtering. */
+	filters: MaybeRefOrGetter<ItemFilters>;
+	/** Which rating the `rating` sort uses on this view. */
+	ratingField: RatingField;
+	/** Scopes `completion_date` to the selected History year. */
+	year?: Ref<number>;
 }
 
 /**
@@ -27,15 +27,15 @@ export interface ItemListConfig {
  * derives `displayed`.
  */
 export function useItemList(items: Ref<Item[]>, config: ItemListConfig) {
-  const displayed = computed(() => {
-    const filtered = applyItemFilters(items.value, toValue(config.filters));
-    const comparator = makeItemComparator(
-      config.sortKey.value,
-      config.reversed.value,
-      { ratingField: config.ratingField, year: config.year?.value },
-    );
-    return [...filtered].sort(comparator);
-  });
+	const displayed = computed(() => {
+		const filtered = applyItemFilters(items.value, toValue(config.filters));
+		const comparator = makeItemComparator(
+			config.sortKey.value,
+			config.reversed.value,
+			{ ratingField: config.ratingField, year: config.year?.value },
+		);
+		return [...filtered].sort(comparator);
+	});
 
-  return { displayed };
+	return { displayed };
 }

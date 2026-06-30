@@ -6,33 +6,33 @@
  * returns `null`) to keep URLs clean.
  */
 export interface ParamCodec<T> {
-  /** Value when the param is absent or invalid. */
-  default: T;
-  /** Raw query string → typed value, or `undefined` when invalid. */
-  parse: (raw: string) => T | undefined;
-  /** Typed value → query string, or `null` to omit the param. */
-  serialize: (value: T) => string | null;
+	/** Value when the param is absent or invalid. */
+	default: T;
+	/** Raw query string → typed value, or `undefined` when invalid. */
+	parse: (raw: string) => T | undefined;
+	/** Typed value → query string, or `null` to omit the param. */
+	serialize: (value: T) => string | null;
 }
 
 /** One of a fixed set of string values (e.g. media type, sort key, filter state). */
 export function enumParam<T extends string>(
-  allowed: readonly T[],
-  def: T,
+	allowed: readonly T[],
+	def: T,
 ): ParamCodec<T> {
-  return {
-    default: def,
-    parse: (raw) => (allowed.includes(raw as T) ? (raw as T) : undefined),
-    serialize: (value) => (value === def ? null : value),
-  };
+	return {
+		default: def,
+		parse: (raw) => (allowed.includes(raw as T) ? (raw as T) : undefined),
+		serialize: (value) => (value === def ? null : value),
+	};
 }
 
 /** A boolean flag encoded as `1` (true) / absent (false by default). */
 export function flagParam(def = false): ParamCodec<boolean> {
-  return {
-    default: def,
-    parse: (raw) => (raw === '1' ? true : raw === '0' ? false : undefined),
-    serialize: (value) => (value === def ? null : value ? '1' : '0'),
-  };
+	return {
+		default: def,
+		parse: (raw) => (raw === '1' ? true : raw === '0' ? false : undefined),
+		serialize: (value) => (value === def ? null : value ? '1' : '0'),
+	};
 }
 
 /**
@@ -41,12 +41,12 @@ export function flagParam(def = false): ParamCodec<boolean> {
  * page), so the default is `null` and any positive integer is valid.
  */
 export function yearParam(): ParamCodec<number | null> {
-  return {
-    default: null,
-    parse: (raw) => {
-      const n = Number(raw);
-      return Number.isInteger(n) && n > 0 ? n : undefined;
-    },
-    serialize: (value) => (value == null ? null : String(value)),
-  };
+	return {
+		default: null,
+		parse: (raw) => {
+			const n = Number(raw);
+			return Number.isInteger(n) && n > 0 ? n : undefined;
+		},
+		serialize: (value) => (value == null ? null : String(value)),
+	};
 }

@@ -1,55 +1,55 @@
 <template>
-  <section>
-    <h1>Backlog</h1>
+	<section>
+		<h1>Backlog</h1>
 
-    <fieldset>
-      <legend>Type</legend>
-      <label v-for="t in MEDIA_TYPES" :key="t">
-        <input v-model="type" type="radio" :value="t" />
-        {{ t }}
-      </label>
-    </fieldset>
+		<fieldset>
+			<legend>Type</legend>
+			<label v-for="t in MEDIA_TYPES" :key="t">
+				<input v-model="type" type="radio" :value="t" />
+				{{ t }}
+			</label>
+		</fieldset>
 
-    <!-- Data comes from the client-only Firestore SDK, so render it client-side
+		<!-- Data comes from the client-only Firestore SDK, so render it client-side
          to avoid hydrating against the empty SSR default. -->
-    <ClientOnly>
-      <template #fallback>
-        <p>Loading…</p>
-      </template>
-      <ItemControls
-        v-model:sort-key="sortKey"
-        v-model:reversed="reversed"
-        :sort-keys="sortKeys"
-        :filter-keys="FILTER_KEYS"
-        :filters="filters"
-        @update:filter="setFilter"
-      />
-      <p v-if="pending">Loading…</p>
-      <p v-else-if="error">Failed to load backlog: {{ error.message }}</p>
-      <p v-else-if="displayed.length === 0">Nothing in the backlog.</p>
-      <ItemCardList v-else :items="displayed" view="backlog" />
-    </ClientOnly>
-  </section>
+		<ClientOnly>
+			<template #fallback>
+				<p>Loading…</p>
+			</template>
+			<ItemControls
+				v-model:sort-key="sortKey"
+				v-model:reversed="reversed"
+				:sort-keys="sortKeys"
+				:filter-keys="FILTER_KEYS"
+				:filters="filters"
+				@update:filter="setFilter"
+			/>
+			<p v-if="pending">Loading…</p>
+			<p v-else-if="error">Failed to load backlog: {{ error.message }}</p>
+			<p v-else-if="displayed.length === 0">Nothing in the backlog.</p>
+			<ItemCardList v-else :items="displayed" view="backlog" />
+		</ClientOnly>
+	</section>
 </template>
 
 <script setup lang="ts">
 import type { MediaType } from '~~/shared/types/item';
 import type {
-  FilterKey,
-  FilterState,
-  ItemFilters,
+	FilterKey,
+	FilterState,
+	ItemFilters,
 } from '~~/shared/utils/itemFilter';
 import type { SortKey } from '~~/shared/utils/itemSort';
 import { enumParam, flagParam } from '~~/shared/utils/viewQuery';
 
 const MEDIA_TYPES: MediaType[] = ['book', 'movie', 'show', 'game'];
 const SORT_KEYS: SortKey[] = [
-  'rating',
-  'title',
-  'creator',
-  'series',
-  'length',
-  'release_date',
+	'rating',
+	'title',
+	'creator',
+	'series',
+	'length',
+	'release_date',
 ];
 const FILTER_KEYS: FilterKey[] = ['purchased', 'prioritized', 'released'];
 const FILTER_STATES: FilterState[] = ['all', 'yes', 'no'];
@@ -64,22 +64,22 @@ const sortKey = useQueryParam('sort', enumParam(SORT_KEYS, 'rating'));
 const reversed = useQueryParam('reverse', flagParam());
 const purchased = useQueryParam('purchased', enumParam(FILTER_STATES, 'all'));
 const prioritized = useQueryParam(
-  'prioritized',
-  enumParam(FILTER_STATES, 'all'),
+	'prioritized',
+	enumParam(FILTER_STATES, 'all'),
 );
 const released = useQueryParam('released', enumParam(FILTER_STATES, 'all'));
 
 const filterRefs = { purchased, prioritized, released };
 const filters = computed<ItemFilters>(() => ({
-  purchased: purchased.value,
-  prioritized: prioritized.value,
-  released: released.value,
+	purchased: purchased.value,
+	prioritized: prioritized.value,
+	released: released.value,
 }));
 
 // For shows, the series sort (show name + numeric season) supersedes the title
 // sort — it groups seasons and orders them numerically — so offer Series, not Title.
 const sortKeys = computed<SortKey[]>(() =>
-  type.value === 'show' ? SORT_KEYS.filter((k) => k !== 'title') : SORT_KEYS,
+	type.value === 'show' ? SORT_KEYS.filter((k) => k !== 'title') : SORT_KEYS,
 );
 
 // Client-only: the Firestore plugin runs in the browser this milestone. Keyed by
@@ -87,31 +87,31 @@ const sortKeys = computed<SortKey[]>(() =>
 // instead of re-reading Firestore; writes invalidate the cache via useItems.
 const backlogKey = computed(() => `backlog:${type.value}`);
 const {
-  data: items,
-  pending,
-  error,
+	data: items,
+	pending,
+	error,
 } = useAsyncData(backlogKey, () => getBacklog(type.value), {
-  server: false,
-  lazy: true,
-  default: () => [],
-  watch: [type],
-  ...readCacheOptions(),
+	server: false,
+	lazy: true,
+	default: () => [],
+	watch: [type],
+	...readCacheOptions(),
 });
 
 const { displayed } = useItemList(items, {
-  sortKey,
-  reversed,
-  filters,
-  ratingField: 'community_rating',
+	sortKey,
+	reversed,
+	filters,
+	ratingField: 'community_rating',
 });
 
 // If the active sort is no longer offered (e.g. title → switched to shows),
 // fall back to the default.
 watch(sortKeys, (keys) => {
-  if (!keys.includes(sortKey.value)) sortKey.value = 'rating';
+	if (!keys.includes(sortKey.value)) sortKey.value = 'rating';
 });
 
 function setFilter(key: FilterKey, state: FilterState) {
-  filterRefs[key].value = state;
+	filterRefs[key].value = state;
 }
 </script>

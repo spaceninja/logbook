@@ -1,21 +1,21 @@
 {
-  "indexes": [
-    {
-      "collectionGroup": "items",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "type", "order": "ASCENDING" },
-        { "fieldPath": "status", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "items",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "completed_years", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "type", "order": "ASCENDING" }
-      ]
-    }
-  ],
-  "fieldOverrides": []
+	"indexes": [
+		{
+			"collectionGroup": "items",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{ "fieldPath": "type", "order": "ASCENDING" },
+				{ "fieldPath": "status", "order": "ASCENDING" }
+			]
+		},
+		{
+			"collectionGroup": "items",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{ "fieldPath": "completed_years", "arrayConfig": "CONTAINS" },
+				{ "fieldPath": "type", "order": "ASCENDING" }
+			]
+		}
+	],
+	"fieldOverrides": []
 }

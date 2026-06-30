@@ -1,36 +1,36 @@
 import { describe, expect, it } from 'vitest';
 import {
-  makeBookId,
-  makeGameId,
-  makeManualId,
-  makeMovieId,
-  makeShowId,
+	makeBookId,
+	makeGameId,
+	makeManualId,
+	makeMovieId,
+	makeShowId,
 } from './itemId';
 
 describe('item id helpers', () => {
-  it('builds a book id from provider and source id', () => {
-    expect(makeBookId('goodreads', 20518872)).toBe('book-goodreads-20518872');
-  });
+	it('builds a book id from provider and source id', () => {
+		expect(makeBookId('goodreads', 20518872)).toBe('book-goodreads-20518872');
+	});
 
-  it('builds a movie id from provider and source id', () => {
-    expect(makeMovieId('tmdb', 27205)).toBe('movie-tmdb-27205');
-  });
+	it('builds a movie id from provider and source id', () => {
+		expect(makeMovieId('tmdb', 27205)).toBe('movie-tmdb-27205');
+	});
 
-  it('builds a game id from provider and source id', () => {
-    expect(makeGameId('igdb', 119133)).toBe('game-igdb-119133');
-  });
+	it('builds a game id from provider and source id', () => {
+		expect(makeGameId('igdb', 119133)).toBe('game-igdb-119133');
+	});
 
-  it('encodes show id and season number into a show id', () => {
-    expect(makeShowId('tmdb', 95396, 1)).toBe('show-tmdb-95396-s1');
-  });
+	it('encodes show id and season number into a show id', () => {
+		expect(makeShowId('tmdb', 95396, 1)).toBe('show-tmdb-95396-s1');
+	});
 
-  it('builds a manual id with the type prefix and a uuid', () => {
-    expect(makeManualId('movie')).toMatch(
-      /^movie-manual-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-    );
-  });
+	it('builds a manual id with the type prefix and a uuid', () => {
+		expect(makeManualId('movie')).toMatch(
+			/^movie-manual-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+		);
+	});
 
-  it('builds a unique manual id on each call', () => {
-    expect(makeManualId('book')).not.toBe(makeManualId('book'));
-  });
+	it('builds a unique manual id on each call', () => {
+		expect(makeManualId('book')).not.toBe(makeManualId('book'));
+	});
 });

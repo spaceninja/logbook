@@ -16,11 +16,11 @@ import type { NuxtApp } from '#app';
 
 /** True for keys this cache owns, so clears never touch unrelated asyncData. */
 function isReadCacheKey(key: string): boolean {
-  return (
-    key.startsWith('backlog:') ||
-    key.startsWith('history:') ||
-    key === 'completionYears'
-  );
+	return (
+		key.startsWith('backlog:') ||
+		key.startsWith('history:') ||
+		key === 'completionYears'
+	);
 }
 
 /**
@@ -30,12 +30,12 @@ function isReadCacheKey(key: string): boolean {
  * a key change) reuses the payload when present.
  */
 export function readCacheOptions() {
-  return {
-    getCachedData(key: string, nuxtApp: NuxtApp, ctx: { cause: string }) {
-      if (ctx.cause === 'refresh:manual') return undefined;
-      return nuxtApp.payload.data[key] ?? nuxtApp.static.data[key];
-    },
-  };
+	return {
+		getCachedData(key: string, nuxtApp: NuxtApp, ctx: { cause: string }) {
+			if (ctx.cause === 'refresh:manual') return undefined;
+			return nuxtApp.payload.data[key] ?? nuxtApp.static.data[key];
+		},
+	};
 }
 
 /**
@@ -44,5 +44,5 @@ export function readCacheOptions() {
  * through there, so coarse invalidation is correct and cheap).
  */
 export function clearReadCache(): void {
-  clearNuxtData((key) => isReadCacheKey(key));
+	clearNuxtData((key) => isReadCacheKey(key));
 }

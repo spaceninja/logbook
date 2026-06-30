@@ -15,20 +15,20 @@ import type { ParamCodec } from '~~/shared/utils/viewQuery';
  * place (sort, direction, filters).
  */
 export function useQueryParam<T>(
-  param: string,
-  codec: ParamCodec<T>,
-  mode: 'push' | 'replace' = 'replace',
+	param: string,
+	codec: ParamCodec<T>,
+	mode: 'push' | 'replace' = 'replace',
 ): WritableComputedRef<T> {
-  const raw = useRouteQuery<string | string[] | null>(param, null, { mode });
+	const raw = useRouteQuery<string | string[] | null>(param, null, { mode });
 
-  return computed<T>({
-    get() {
-      const value = Array.isArray(raw.value) ? raw.value[0] : raw.value;
-      if (value == null) return codec.default;
-      return codec.parse(value) ?? codec.default;
-    },
-    set(value) {
-      raw.value = codec.serialize(value);
-    },
-  });
+	return computed<T>({
+		get() {
+			const value = Array.isArray(raw.value) ? raw.value[0] : raw.value;
+			if (value == null) return codec.default;
+			return codec.parse(value) ?? codec.default;
+		},
+		set(value) {
+			raw.value = codec.serialize(value);
+		},
+	});
 }

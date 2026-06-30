@@ -24,99 +24,99 @@ const MAX_RETRIES = 6;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const cache = existsSync(CACHE_PATH)
-  ? JSON.parse(readFileSync(CACHE_PATH, 'utf8'))
-  : {};
+	? JSON.parse(readFileSync(CACHE_PATH, 'utf8'))
+	: {};
 const saveCache = () =>
-  writeFileSync(CACHE_PATH, JSON.stringify(cache, null, 2));
+	writeFileSync(CACHE_PATH, JSON.stringify(cache, null, 2));
 
 let lastCall = 0;
 async function paced() {
-  const wait = PACE_MS - (Date.now() - lastCall);
-  if (wait > 0) await sleep(wait);
-  lastCall = Date.now();
+	const wait = PACE_MS - (Date.now() - lastCall);
+	if (wait > 0) await sleep(wait);
+	lastCall = Date.now();
 }
 
 async function fetchJson(path) {
-  let lastErr;
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    await paced();
-    try {
-      const res = await fetch(`${BASE}${path}`);
-      if (res.ok) return await res.json();
-      lastErr = new Error(`HTTP ${res.status}`);
-      // 4xx (bad id/query) won't improve with retries.
-      if (res.status >= 400 && res.status < 500) break;
-    } catch (err) {
-      lastErr = err;
-    }
-    const backoff =
-      Math.min(8000, 500 * 2 ** (attempt - 1)) + Math.random() * 300;
-    process.stdout.write(
-      `  retry ${attempt}/${MAX_RETRIES} (${lastErr.message}) …\n`,
-    );
-    await sleep(backoff);
-  }
-  throw lastErr;
+	let lastErr;
+	for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+		await paced();
+		try {
+			const res = await fetch(`${BASE}${path}`);
+			if (res.ok) return await res.json();
+			lastErr = new Error(`HTTP ${res.status}`);
+			// 4xx (bad id/query) won't improve with retries.
+			if (res.status >= 400 && res.status < 500) break;
+		} catch (err) {
+			lastErr = err;
+		}
+		const backoff =
+			Math.min(8000, 500 * 2 ** (attempt - 1)) + Math.random() * 300;
+		process.stdout.write(
+			`  retry ${attempt}/${MAX_RETRIES} (${lastErr.message}) …\n`,
+		);
+		await sleep(backoff);
+	}
+	throw lastErr;
 }
 
 /** Expand a show entry with `seasons: [..]` into one entry per season. */
 function expand(entries) {
-  const out = [];
-  for (const e of entries) {
-    if (e.type === 'show' && Array.isArray(e.seasons)) {
-      for (const season of e.seasons)
-        out.push({ ...e, season, seasons: undefined });
-    } else {
-      out.push(e);
-    }
-  }
-  return out;
+	const out = [];
+	for (const e of entries) {
+		if (e.type === 'show' && Array.isArray(e.seasons)) {
+			for (const season of e.seasons)
+				out.push({ ...e, season, seasons: undefined });
+		} else {
+			out.push(e);
+		}
+	}
+	return out;
 }
 
 async function resolveProviderId(entry) {
-  if (entry.providerId) return entry.providerId;
-  const q = encodeURIComponent(entry.query);
-  const results = await fetchJson(`/api/search?type=${entry.type}&q=${q}`);
-  if (!results.length) throw new Error(`no search hit for "${entry.query}"`);
-  const hit = entry.year
-    ? (results.find((r) => r.year === String(entry.year)) ?? results[0])
-    : results[0];
-  return hit.providerId;
+	if (entry.providerId) return entry.providerId;
+	const q = encodeURIComponent(entry.query);
+	const results = await fetchJson(`/api/search?type=${entry.type}&q=${q}`);
+	if (!results.length) throw new Error(`no search hit for "${entry.query}"`);
+	const hit = entry.year
+		? (results.find((r) => r.year === String(entry.year)) ?? results[0])
+		: results[0];
+	return hit.providerId;
 }
 
 function cacheKey(entry, providerId) {
-  return entry.type === 'show'
-    ? `show:${providerId}:s${entry.season}`
-    : `${entry.type}:${providerId}`;
+	return entry.type === 'show'
+		? `show:${providerId}:s${entry.season}`
+		: `${entry.type}:${providerId}`;
 }
 
 async function getDraft(entry) {
-  const providerId = await resolveProviderId(entry);
-  const key = cacheKey(entry, providerId);
-  if (cache[key]) return cache[key];
-  const seasonParam = entry.type === 'show' ? `&season=${entry.season}` : '';
-  const draft = await fetchJson(
-    `/api/draft?type=${entry.type}&id=${encodeURIComponent(providerId)}${seasonParam}`,
-  );
-  cache[key] = draft;
-  saveCache();
-  return draft;
+	const providerId = await resolveProviderId(entry);
+	const key = cacheKey(entry, providerId);
+	if (cache[key]) return cache[key];
+	const seasonParam = entry.type === 'show' ? `&season=${entry.season}` : '';
+	const draft = await fetchJson(
+		`/api/draft?type=${entry.type}&id=${encodeURIComponent(providerId)}${seasonParam}`,
+	);
+	cache[key] = draft;
+	saveCache();
+	return draft;
 }
 
 function toItem(draft, entry) {
-  const overlay = buildOverlay(draft, entry, makeRng(draft.id));
-  return { ...draft, ...overlay };
+	const overlay = buildOverlay(draft, entry, makeRng(draft.id));
+	return { ...draft, ...overlay };
 }
 
 const TYPE_ORDER = { book: 0, movie: 1, show: 2, game: 3 };
 
 function render(items) {
-  items.sort(
-    (a, b) =>
-      TYPE_ORDER[a.type] - TYPE_ORDER[b.type] || a.title.localeCompare(b.title),
-  );
-  const body = items.map((it) => JSON.stringify(it, null, 2)).join(',\n');
-  return `import type { Item } from '../types/item';
+	items.sort(
+		(a, b) =>
+			TYPE_ORDER[a.type] - TYPE_ORDER[b.type] || a.title.localeCompare(b.title),
+	);
+	const body = items.map((it) => JSON.stringify(it, null, 2)).join(',\n');
+	return `import type { Item } from '../types/item';
 
 /**
  * Representative sample dataset modeling a mainstream sci-fi / action fan.
@@ -132,42 +132,42 @@ ${body}
 }
 
 async function main() {
-  const entries = expand(manifest);
-  console.log(`Generating ${entries.length} items from ${BASE} …`);
-  const items = [];
-  const failures = [];
-  for (const entry of entries) {
-    const label = entry.query ?? entry.providerId;
-    try {
-      const draft = await getDraft(entry);
-      items.push(toItem(draft, entry));
-      const flags = [];
-      if (!draft.cover) flags.push('NO COVER');
-      if (draft.community_rating === undefined) flags.push('no rating');
-      console.log(
-        `  ok  ${entry.type.padEnd(5)} ${draft.title}${entry.season ? ` S${entry.season}` : ''}${flags.length ? `  [${flags.join(', ')}]` : ''}`,
-      );
-    } catch (err) {
-      failures.push({ entry, message: err.message });
-      console.log(`  FAIL ${entry.type.padEnd(5)} ${label}: ${err.message}`);
-    }
-  }
+	const entries = expand(manifest);
+	console.log(`Generating ${entries.length} items from ${BASE} …`);
+	const items = [];
+	const failures = [];
+	for (const entry of entries) {
+		const label = entry.query ?? entry.providerId;
+		try {
+			const draft = await getDraft(entry);
+			items.push(toItem(draft, entry));
+			const flags = [];
+			if (!draft.cover) flags.push('NO COVER');
+			if (draft.community_rating === undefined) flags.push('no rating');
+			console.log(
+				`  ok  ${entry.type.padEnd(5)} ${draft.title}${entry.season ? ` S${entry.season}` : ''}${flags.length ? `  [${flags.join(', ')}]` : ''}`,
+			);
+		} catch (err) {
+			failures.push({ entry, message: err.message });
+			console.log(`  FAIL ${entry.type.padEnd(5)} ${label}: ${err.message}`);
+		}
+	}
 
-  writeFileSync(OUT_PATH, render(items));
-  console.log(`\nWrote ${items.length} items to ${OUT_PATH}`);
+	writeFileSync(OUT_PATH, render(items));
+	console.log(`\nWrote ${items.length} items to ${OUT_PATH}`);
 
-  const byType = {};
-  for (const it of items) byType[it.type] = (byType[it.type] ?? 0) + 1;
-  console.log('Per type:', byType);
+	const byType = {};
+	for (const it of items) byType[it.type] = (byType[it.type] ?? 0) + 1;
+	console.log('Per type:', byType);
 
-  if (failures.length) {
-    console.log(`\n${failures.length} unresolved (re-run to resume):`);
-    for (const f of failures)
-      console.log(
-        `  - ${f.entry.type} ${f.entry.query ?? f.entry.providerId}: ${f.message}`,
-      );
-    process.exitCode = 1;
-  }
+	if (failures.length) {
+		console.log(`\n${failures.length} unresolved (re-run to resume):`);
+		for (const f of failures)
+			console.log(
+				`  - ${f.entry.type} ${f.entry.query ?? f.entry.providerId}: ${f.message}`,
+			);
+		process.exitCode = 1;
+	}
 }
 
 main();

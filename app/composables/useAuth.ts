@@ -1,9 +1,9 @@
 import {
-  GithubAuthProvider,
-  signInWithPopup,
-  signOut,
-  type Auth,
-  type User,
+	GithubAuthProvider,
+	signInWithPopup,
+	signOut,
+	type Auth,
+	type User,
 } from 'firebase/auth';
 
 /**
@@ -15,23 +15,23 @@ import {
  * from browser event handlers).
  */
 export function useAuth() {
-  const nuxtApp = useNuxtApp();
-  const user = useState<User | null>('auth-user', () => null);
-  const ownerUid = useRuntimeConfig().public.ownerUid;
+	const nuxtApp = useNuxtApp();
+	const user = useState<User | null>('auth-user', () => null);
+	const ownerUid = useRuntimeConfig().public.ownerUid;
 
-  const isOwner = computed(
-    () => !!user.value && !!ownerUid && user.value.uid === ownerUid,
-  );
+	const isOwner = computed(
+		() => !!user.value && !!ownerUid && user.value.uid === ownerUid,
+	);
 
-  async function login(): Promise<void> {
-    const auth = nuxtApp.$auth as Auth;
-    await signInWithPopup(auth, new GithubAuthProvider());
-  }
+	async function login(): Promise<void> {
+		const auth = nuxtApp.$auth as Auth;
+		await signInWithPopup(auth, new GithubAuthProvider());
+	}
 
-  async function logout(): Promise<void> {
-    const auth = nuxtApp.$auth as Auth;
-    await signOut(auth);
-  }
+	async function logout(): Promise<void> {
+		const auth = nuxtApp.$auth as Auth;
+		await signOut(auth);
+	}
 
-  return { user, isOwner, login, logout };
+	return { user, isOwner, login, logout };
 }

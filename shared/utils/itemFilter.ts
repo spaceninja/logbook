@@ -10,20 +10,20 @@ export type ItemFilters = Partial<Record<FilterKey, FilterState>>;
 
 /** Released = has a release date that is today or earlier. */
 function isReleased(item: Item): boolean {
-  if (!item.release_date) return false;
-  const today = new Date().toISOString().slice(0, 10);
-  return item.release_date <= today;
+	if (!item.release_date) return false;
+	const today = new Date().toISOString().slice(0, 10);
+	return item.release_date <= today;
 }
 
 function matches(item: Item, key: FilterKey): boolean {
-  switch (key) {
-    case 'purchased':
-      return item.is_purchased;
-    case 'prioritized':
-      return item.is_prioritized;
-    case 'released':
-      return isReleased(item);
-  }
+	switch (key) {
+		case 'purchased':
+			return item.is_purchased;
+		case 'prioritized':
+			return item.is_prioritized;
+		case 'released':
+			return isReleased(item);
+	}
 }
 
 /**
@@ -31,13 +31,13 @@ function matches(item: Item, key: FilterKey): boolean {
  * matching items, `no` keeps non-matching items.
  */
 export function applyItemFilters(items: Item[], filters: ItemFilters): Item[] {
-  const active = (Object.entries(filters) as [FilterKey, FilterState][]).filter(
-    ([, state]) => state === 'yes' || state === 'no',
-  );
-  if (active.length === 0) return items;
-  return items.filter((item) =>
-    active.every(([key, state]) =>
-      state === 'yes' ? matches(item, key) : !matches(item, key),
-    ),
-  );
+	const active = (Object.entries(filters) as [FilterKey, FilterState][]).filter(
+		([, state]) => state === 'yes' || state === 'no',
+	);
+	if (active.length === 0) return items;
+	return items.filter((item) =>
+		active.every(([key, state]) =>
+			state === 'yes' ? matches(item, key) : !matches(item, key),
+		),
+	);
 }

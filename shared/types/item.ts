@@ -16,96 +16,96 @@ export type ItemStatus = 'backlog' | 'in_progress' | 'complete' | 'dnf';
 export type LengthUnit = 'pages' | 'min' | 'episodes' | 'hours';
 
 export type Provider =
-  | 'tmdb'
-  | 'igdb'
-  | 'goodreads'
-  | 'google-books'
-  | 'open-library'
-  | 'manual';
+	| 'tmdb'
+	| 'igdb'
+	| 'goodreads'
+	| 'google-books'
+	| 'open-library'
+	| 'manual';
 
 export interface BookMetadata {
-  series?: string;
-  series_number?: number;
-  isbn?: string;
+	series?: string;
+	series_number?: number;
+	isbn?: string;
 }
 
 // Movies carry only optional series/franchise info; `creator` holds the director.
 export interface MovieMetadata {
-  /** Franchise/series name (e.g. "The Lord of the Rings"). */
-  series?: string;
-  series_number?: number;
+	/** Franchise/series name (e.g. "The Lord of the Rings"). */
+	series?: string;
+	series_number?: number;
 }
 
 export interface ShowMetadata {
-  show_tmdb_id: number;
-  season_number: number;
-  episode_count: number;
-  episode_runtime: number;
-  /**
-   * The season's own name when it differs from the generic "Season N" (e.g.
-   * "Book One: Water"). Recorded for display; not used for sorting/filtering.
-   */
-  season_title?: string;
+	show_tmdb_id: number;
+	season_number: number;
+	episode_count: number;
+	episode_runtime: number;
+	/**
+	 * The season's own name when it differs from the generic "Season N" (e.g.
+	 * "Book One: Water"). Recorded for display; not used for sorting/filtering.
+	 */
+	season_title?: string;
 }
 
 export interface GameMetadata {
-  platform?: string;
-  /** Franchise/series name (e.g. "The Legend of Zelda"). */
-  series?: string;
-  series_number?: number;
+	platform?: string;
+	/** Franchise/series name (e.g. "The Legend of Zelda"). */
+	series?: string;
+	series_number?: number;
 }
 
 export type ItemMetadata =
-  | BookMetadata
-  | MovieMetadata
-  | ShowMetadata
-  | GameMetadata;
+	| BookMetadata
+	| MovieMetadata
+	| ShowMetadata
+	| GameMetadata;
 
 export interface Item {
-  /** Unique id; also the Firestore document id. */
-  id: string;
-  type: MediaType;
-  title: string;
-  /** Unified author | director | created_by | developer. */
-  creator?: string | string[];
-  /**
-   * Surname-first sort key for the "creator" sort, since `creator` is a display
-   * string with no structured last name. Auto-derived at add/save time
-   * (see `deriveCreatorSort`) but editable so awkward names ("Le Guin", particles)
-   * can be hand-fixed. Absent on legacy docs; the comparator re-derives a fallback.
-   */
-  creator_sort?: string;
-  /** Large image for the detail view. */
-  cover?: string;
-  /** Small image for list views. */
-  thumbnail?: string;
-  /** Large landscape art (16:9) for the detail view. Movies/shows/games only. */
-  backdrop?: string;
-  /** ISO date; for shows, the season air date. */
-  release_date?: string;
-  description?: string;
-  /** Numeric size of the work, paired with `length_unit`. */
-  length?: number;
-  length_unit?: LengthUnit;
-  /**
-   * Aggregate rating from the provider, normalized to a 0–10 scale (matching
-   * `my_rating`). Sources are normalized at the boundary: Goodreads (0–5) ×2,
-   * TMDB (0–10) as-is, IGDB (0–100) ÷10.
-   */
-  community_rating?: number;
-  /** The owner's rating, on a 0–10 scale. */
-  my_rating?: number;
-  provider?: Provider;
-  recommended_by?: string;
-  /** Current intent only; History membership is driven by `completed_dates`. */
-  status: ItemStatus;
-  is_purchased: boolean;
-  is_prioritized: boolean;
-  /** One ISO date per completion. */
-  completed_dates: string[];
-  /** Derived from `completed_dates`; enables History year queries. */
-  completed_years: number[];
-  notes?: string;
-  tags: string[];
-  metadata: ItemMetadata;
+	/** Unique id; also the Firestore document id. */
+	id: string;
+	type: MediaType;
+	title: string;
+	/** Unified author | director | created_by | developer. */
+	creator?: string | string[];
+	/**
+	 * Surname-first sort key for the "creator" sort, since `creator` is a display
+	 * string with no structured last name. Auto-derived at add/save time
+	 * (see `deriveCreatorSort`) but editable so awkward names ("Le Guin", particles)
+	 * can be hand-fixed. Absent on legacy docs; the comparator re-derives a fallback.
+	 */
+	creator_sort?: string;
+	/** Large image for the detail view. */
+	cover?: string;
+	/** Small image for list views. */
+	thumbnail?: string;
+	/** Large landscape art (16:9) for the detail view. Movies/shows/games only. */
+	backdrop?: string;
+	/** ISO date; for shows, the season air date. */
+	release_date?: string;
+	description?: string;
+	/** Numeric size of the work, paired with `length_unit`. */
+	length?: number;
+	length_unit?: LengthUnit;
+	/**
+	 * Aggregate rating from the provider, normalized to a 0–10 scale (matching
+	 * `my_rating`). Sources are normalized at the boundary: Goodreads (0–5) ×2,
+	 * TMDB (0–10) as-is, IGDB (0–100) ÷10.
+	 */
+	community_rating?: number;
+	/** The owner's rating, on a 0–10 scale. */
+	my_rating?: number;
+	provider?: Provider;
+	recommended_by?: string;
+	/** Current intent only; History membership is driven by `completed_dates`. */
+	status: ItemStatus;
+	is_purchased: boolean;
+	is_prioritized: boolean;
+	/** One ISO date per completion. */
+	completed_dates: string[];
+	/** Derived from `completed_dates`; enables History year queries. */
+	completed_years: number[];
+	notes?: string;
+	tags: string[];
+	metadata: ItemMetadata;
 }

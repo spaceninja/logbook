@@ -16,19 +16,19 @@ const PERSON_TYPES: ReadonlySet<MediaType> = new Set(['book', 'movie', 'show']);
  *   land wrong and need a manual override.
  */
 export function deriveCreatorSort(
-  creator: Item['creator'],
-  type: MediaType,
+	creator: Item['creator'],
+	type: MediaType,
 ): string | undefined {
-  const primary = Array.isArray(creator) ? creator[0] : creator;
-  const name = primary?.trim();
-  if (!name) return undefined;
+	const primary = Array.isArray(creator) ? creator[0] : creator;
+	const name = primary?.trim();
+	if (!name) return undefined;
 
-  if (!PERSON_TYPES.has(type)) return name;
+	if (!PERSON_TYPES.has(type)) return name;
 
-  const tokens = name.split(/\s+/);
-  if (tokens.length < 2) return name;
+	const tokens = name.split(/\s+/);
+	if (tokens.length < 2) return name;
 
-  const last = tokens[tokens.length - 1];
-  const rest = tokens.slice(0, -1).join(' ');
-  return `${last} ${rest}`;
+	const last = tokens[tokens.length - 1];
+	const rest = tokens.slice(0, -1).join(' ');
+	return `${last} ${rest}`;
 }

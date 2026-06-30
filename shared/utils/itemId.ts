@@ -14,32 +14,32 @@ import type { MediaType, Provider } from '../types/item';
  */
 
 export function makeBookId(
-  provider: Provider,
-  sourceId: string | number,
+	provider: Provider,
+	sourceId: string | number,
 ): string {
-  return `book-${provider}-${sourceId}`;
+	return `book-${provider}-${sourceId}`;
 }
 
 export function makeMovieId(
-  provider: Provider,
-  sourceId: string | number,
+	provider: Provider,
+	sourceId: string | number,
 ): string {
-  return `movie-${provider}-${sourceId}`;
+	return `movie-${provider}-${sourceId}`;
 }
 
 export function makeGameId(
-  provider: Provider,
-  sourceId: string | number,
+	provider: Provider,
+	sourceId: string | number,
 ): string {
-  return `game-${provider}-${sourceId}`;
+	return `game-${provider}-${sourceId}`;
 }
 
 export function makeShowId(
-  provider: Provider,
-  showId: string | number,
-  seasonNumber: number,
+	provider: Provider,
+	showId: string | number,
+	seasonNumber: number,
 ): string {
-  return `show-${provider}-${showId}-s${seasonNumber}`;
+	return `show-${provider}-${showId}-s${seasonNumber}`;
 }
 
 /**
@@ -49,5 +49,5 @@ export function makeShowId(
  * arrive with the future lookup flow; manual items keep this id permanently.
  */
 export function makeManualId(type: MediaType): string {
-  return `${type}-manual-${crypto.randomUUID()}`;
+	return `${type}-manual-${crypto.randomUUID()}`;
 }

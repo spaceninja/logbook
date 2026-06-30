@@ -8,11 +8,11 @@ import '@testing-library/jest-dom/vitest';
 // renderSuspended/mountSuspended mount async components), so the notice is noise.
 const originalInfo = console.info.bind(console);
 console.info = (...args: unknown[]) => {
-  if (
-    typeof args[0] === 'string' &&
-    args[0].includes('<Suspense> is an experimental feature')
-  ) {
-    return;
-  }
-  originalInfo(...args);
+	if (
+		typeof args[0] === 'string' &&
+		args[0].includes('<Suspense> is an experimental feature')
+	) {
+		return;
+	}
+	originalInfo(...args);
 };

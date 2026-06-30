@@ -7,15 +7,15 @@ import type { Item, ShowMetadata } from '../types/item';
  * — so seasons group under the show and order numerically.
  */
 export function itemSeries(item: Pick<Item, 'type' | 'metadata' | 'title'>): {
-  name?: string;
-  number?: number;
+	name?: string;
+	number?: number;
 } {
-  if (item.type === 'show') {
-    return {
-      name: item.title,
-      number: (item.metadata as ShowMetadata).season_number,
-    };
-  }
-  const m = item.metadata as { series?: string; series_number?: number };
-  return { name: m.series, number: m.series_number };
+	if (item.type === 'show') {
+		return {
+			name: item.title,
+			number: (item.metadata as ShowMetadata).season_number,
+		};
+	}
+	const m = item.metadata as { series?: string; series_number?: number };
+	return { name: m.series, number: m.series_number };
 }

@@ -9,22 +9,22 @@ import { $fetch } from 'ofetch';
 let cached: { token: string; expiresAt: number } | null = null;
 
 export async function getIgdbToken(): Promise<string> {
-  const now = Date.now();
-  if (cached && cached.expiresAt > now + 60_000) return cached.token;
+	const now = Date.now();
+	if (cached && cached.expiresAt > now + 60_000) return cached.token;
 
-  const { twitchClientId, twitchClientSecret } = useRuntimeConfig();
-  const res = await $fetch<{ access_token: string; expires_in: number }>(
-    'https://id.twitch.tv/oauth2/token',
-    {
-      method: 'POST',
-      params: {
-        client_id: twitchClientId,
-        client_secret: twitchClientSecret,
-        grant_type: 'client_credentials',
-      },
-    },
-  );
+	const { twitchClientId, twitchClientSecret } = useRuntimeConfig();
+	const res = await $fetch<{ access_token: string; expires_in: number }>(
+		'https://id.twitch.tv/oauth2/token',
+		{
+			method: 'POST',
+			params: {
+				client_id: twitchClientId,
+				client_secret: twitchClientSecret,
+				grant_type: 'client_credentials',
+			},
+		},
+	);
 
-  cached = { token: res.access_token, expiresAt: now + res.expires_in * 1000 };
-  return res.access_token;
+	cached = { token: res.access_token, expiresAt: now + res.expires_in * 1000 };
+	return res.access_token;
 }

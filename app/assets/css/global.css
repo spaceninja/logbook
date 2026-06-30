@@ -1,0 +1,15 @@
+/* Respect OS preference by default */
+html {
+	color-scheme: light dark;
+}
+
+body {
+	/* Set a --bg custom property using light-dark() */
+	--bg: light-dark(lightblue, black);
+	background: var(--bg);
+}
+
+/* Force a section to dark regardless of OS preference */
+.t-dark {
+	color-scheme: dark;
+}

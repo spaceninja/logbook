@@ -7,12 +7,12 @@
  * redirect the owner before their session is restored.
  */
 export default defineNuxtRouteMiddleware(async () => {
-  if (import.meta.server) return;
+	if (import.meta.server) return;
 
-  await useNuxtApp().$authReady;
+	await useNuxtApp().$authReady;
 
-  const { isOwner } = useAuth();
-  if (!isOwner.value) {
-    return navigateTo('/');
-  }
+	const { isOwner } = useAuth();
+	if (!isOwner.value) {
+		return navigateTo('/');
+	}
 });

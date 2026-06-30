@@ -14,20 +14,20 @@ export type CompletionYearsByType = Partial<Record<MediaType, number[]>>;
  * Types with no completions are omitted.
  */
 export function deriveCompletionYearsByType(
-  items: Item[],
+	items: Item[],
 ): CompletionYearsByType {
-  const sets: Partial<Record<MediaType, Set<number>>> = {};
+	const sets: Partial<Record<MediaType, Set<number>>> = {};
 
-  for (const item of items) {
-    const years = deriveCompletedYears(item.completed_dates);
-    if (years.length === 0) continue;
-    const set = (sets[item.type] ??= new Set<number>());
-    for (const year of years) set.add(year);
-  }
+	for (const item of items) {
+		const years = deriveCompletedYears(item.completed_dates);
+		if (years.length === 0) continue;
+		const set = (sets[item.type] ??= new Set<number>());
+		for (const year of years) set.add(year);
+	}
 
-  const result: CompletionYearsByType = {};
-  for (const type of Object.keys(sets) as MediaType[]) {
-    result[type] = [...sets[type]!].sort((a, b) => a - b);
-  }
-  return result;
+	const result: CompletionYearsByType = {};
+	for (const type of Object.keys(sets) as MediaType[]) {
+		result[type] = [...sets[type]!].sort((a, b) => a - b);
+	}
+	return result;
 }

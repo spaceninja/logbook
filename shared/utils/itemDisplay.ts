@@ -8,17 +8,17 @@ import { itemSeries } from './series';
  * separately, not folded into this title. All other types use `title` verbatim.
  */
 export function itemDisplayTitle(item: Item): string {
-  if (item.type === 'show') {
-    const { season_number } = item.metadata as ShowMetadata;
-    return `${item.title} — Season ${season_number}`;
-  }
-  return item.title;
+	if (item.type === 'show') {
+		const { season_number } = item.metadata as ShowMetadata;
+		return `${item.title} — Season ${season_number}`;
+	}
+	return item.title;
 }
 
 /** Joins multi-value creators into a single readable string. */
 export function formatCreator(creator: Item['creator']): string {
-  if (Array.isArray(creator)) return creator.join(', ');
-  return creator ?? '';
+	if (Array.isArray(creator)) return creator.join(', ');
+	return creator ?? '';
 }
 
 /**
@@ -27,10 +27,10 @@ export function formatCreator(creator: Item['creator']): string {
  * the display title.
  */
 export function formatSeries(item: Item): string {
-  if (item.type === 'show') return '';
-  const { name, number } = itemSeries(item);
-  if (!name) return '';
-  return number !== undefined ? `${name} #${number}` : name;
+	if (item.type === 'show') return '';
+	const { name, number } = itemSeries(item);
+	if (!name) return '';
+	return number !== undefined ? `${name} #${number}` : name;
 }
 
 /**
@@ -40,10 +40,10 @@ export function formatSeries(item: Item): string {
  * local-time formatter would render as the previous day west of UTC).
  */
 export function formatCompletedDate(isoDate: string): string {
-  const date = new Date(`${isoDate.slice(0, 10)}T00:00:00Z`);
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  }).format(date);
+	const date = new Date(`${isoDate.slice(0, 10)}T00:00:00Z`);
+	return new Intl.DateTimeFormat('en-US', {
+		month: 'short',
+		day: 'numeric',
+		timeZone: 'UTC',
+	}).format(date);
 }

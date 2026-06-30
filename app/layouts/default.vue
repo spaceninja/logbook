@@ -1,26 +1,26 @@
 <template>
-  <div>
-    <header>
-      <nav>
-        <NuxtLink to="/">Backlog</NuxtLink>
-        <NuxtLink to="/history">History</NuxtLink>
-        <NuxtLink v-if="showDev" to="/dev">Dev</NuxtLink>
+	<div>
+		<header>
+			<nav>
+				<NuxtLink to="/">Backlog</NuxtLink>
+				<NuxtLink to="/history">History</NuxtLink>
+				<NuxtLink v-if="showDev" to="/dev">Dev</NuxtLink>
 
-        <!-- Auth state is client-only; render it client-side to avoid a
+				<!-- Auth state is client-only; render it client-side to avoid a
              hydration mismatch against the logged-out SSR markup. -->
-        <ClientOnly>
-          <NuxtLink v-if="isOwner" to="/add">Add</NuxtLink>
-          <button v-if="isOwner" type="button" @click="logout">Log out</button>
-          <button v-else type="button" @click="login">
-            Log in with GitHub
-          </button>
-        </ClientOnly>
-      </nav>
-    </header>
-    <main>
-      <slot />
-    </main>
-  </div>
+				<ClientOnly>
+					<NuxtLink v-if="isOwner" to="/add">Add</NuxtLink>
+					<button v-if="isOwner" type="button" @click="logout">Log out</button>
+					<button v-else type="button" @click="login">
+						Log in with GitHub
+					</button>
+				</ClientOnly>
+			</nav>
+		</header>
+		<main>
+			<slot />
+		</main>
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -32,10 +32,10 @@ const { isOwner, login, logout } = useAuth();
 
 <style>
 :root {
-  --width-thumb: 125px;
+	--width-thumb: 125px;
 }
 
 body {
-  font-family: system-ui, sans-serif;
+	font-family: system-ui, sans-serif;
 }
 </style>
