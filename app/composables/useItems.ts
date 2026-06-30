@@ -15,6 +15,28 @@ import { deriveCompletedYears } from '~~/shared/utils/completedYears';
 import type { CompletionYearsByType } from '~~/shared/utils/completionYears';
 import { deriveCreatorSort } from '~~/shared/utils/creatorSort';
 
+/** ms to wait on a Firestore read before treating a stall as a failure (#23). */
+const READ_TIMEOUT_MS = 10_000;
+
+/**
+ * Reject if `promise` hasn't settled within `READ_TIMEOUT_MS`. The modular
+ * Firestore SDK can't be aborted, so on a stalled long-poll the underlying read
+ * never settles; racing a timer turns that silent hang into the pages' existing
+ * `error` branch instead of an endless "Loading…" (#23). The orphaned read
+ * resolving late is harmless — Nuxt has already taken the rejection.
+ */
+function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      const message = `${label} timed out — a content blocker or network issue may be interfering with the connection.`;
+      console.error(`[logbook] ${message}`);
+      reject(new Error(message));
+    }, READ_TIMEOUT_MS);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 /**
  * Read access to the `items` collection. Each method runs a coarse Firestore
  * query (core design §4); fine filtering and sorting happen client-side in the
@@ -33,24 +55,30 @@ export function useItems() {
 
   /** Backlog membership for one media type: status is `backlog` or `in_progress`. */
   async function getBacklog(type: MediaType): Promise<Item[]> {
-    const snapshot = await getDocs(
-      query(
-        items(),
-        where('type', '==', type),
-        where('status', 'in', ['backlog', 'in_progress']),
+    const snapshot = await withTimeout(
+      getDocs(
+        query(
+          items(),
+          where('type', '==', type),
+          where('status', 'in', ['backlog', 'in_progress']),
+        ),
       ),
+      'Loading the backlog',
     );
     return snapshot.docs.map((d) => d.data() as Item);
   }
 
   /** History for one media type in a given year, via the derived `completed_years`. */
   async function getHistory(year: number, type: MediaType): Promise<Item[]> {
-    const snapshot = await getDocs(
-      query(
-        items(),
-        where('completed_years', 'array-contains', year),
-        where('type', '==', type),
+    const snapshot = await withTimeout(
+      getDocs(
+        query(
+          items(),
+          where('completed_years', 'array-contains', year),
+          where('type', '==', type),
+        ),
       ),
+      'Loading history',
     );
     return snapshot.docs.map((d) => d.data() as Item);
   }
@@ -62,14 +90,20 @@ export function useItems() {
    * when the aggregate has not been written yet.
    */
   async function getCompletionYears(): Promise<CompletionYearsByType> {
-    const snapshot = await getDoc(completionYearsDoc());
+    const snapshot = await withTimeout(
+      getDoc(completionYearsDoc()),
+      'Loading media types',
+    );
     if (!snapshot.exists()) return {};
     return snapshot.data() as CompletionYearsByType;
   }
 
   /** A single item by id, or null when the document does not exist. */
   async function getItem(id: string): Promise<Item | null> {
-    const snapshot = await getDoc(doc(items(), id));
+    const snapshot = await withTimeout(
+      getDoc(doc(items(), id)),
+      'Loading this item',
+    );
     return snapshot.exists() ? (snapshot.data() as Item) : null;
   }
 
