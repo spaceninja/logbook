@@ -82,16 +82,20 @@ const sortKeys = computed<SortKey[]>(() =>
   type.value === 'show' ? SORT_KEYS.filter((k) => k !== 'title') : SORT_KEYS,
 );
 
-// Client-only: the Firestore plugin runs in the browser this milestone.
+// Client-only: the Firestore plugin runs in the browser this milestone. Keyed by
+// type and cached per key (#24) so re-selecting a type shows its list instantly
+// instead of re-reading Firestore; writes invalidate the cache via useItems.
+const backlogKey = computed(() => `backlog:${type.value}`);
 const {
   data: items,
   pending,
   error,
-} = useAsyncData('backlog', () => getBacklog(type.value), {
+} = useAsyncData(backlogKey, () => getBacklog(type.value), {
   server: false,
   lazy: true,
   default: () => [],
   watch: [type],
+  ...readCacheOptions(),
 });
 
 const { displayed } = useItemList(items, {

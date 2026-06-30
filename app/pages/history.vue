@@ -77,6 +77,7 @@ const { data: completionYears, status: yearsStatus } = useAsyncData(
     server: false,
     lazy: true,
     default: (): CompletionYearsByType => ({}),
+    ...readCacheOptions(),
   },
 );
 const years = computed<number[]>(() => {
@@ -120,15 +121,19 @@ const sortKeys = computed<SortKey[]>(() =>
     : SORT_KEYS,
 );
 
+// Keyed by year + type and cached per key (#24) so re-selecting a year/type
+// shows its list instantly; writes invalidate the cache via useItems.
+const historyKey = computed(() => `history:${year.value}:${type.value}`);
 const {
   data: items,
   pending,
   error,
-} = useAsyncData('history', () => getHistory(year.value, type.value), {
+} = useAsyncData(historyKey, () => getHistory(year.value, type.value), {
   server: false,
   lazy: true,
   default: () => [],
   watch: [year, type],
+  ...readCacheOptions(),
 });
 
 const { displayed } = useItemList(items, {

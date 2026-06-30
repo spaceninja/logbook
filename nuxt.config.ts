@@ -42,7 +42,12 @@ export default defineNuxtConfig({
   // https://vite.dev/guide/dep-pre-bundling.html
   vite: {
     optimizeDeps: {
-      include: ['firebase/app', 'firebase/firestore', 'firebase/auth'],
+      include: [
+        '@vueuse/router',
+        'firebase/app',
+        'firebase/firestore',
+        'firebase/auth',
+      ],
     },
   },
 });

@@ -99,11 +99,15 @@ export function useItems() {
         { merge: true },
       );
     }
+
+    // Drop cached list reads so the next Backlog/History view reflects this write.
+    clearReadCache();
   }
 
   /** Delete an item by id. Owner-only by Firestore rules. */
   async function deleteItem(id: string): Promise<void> {
     await deleteDoc(doc(items(), id));
+    clearReadCache();
   }
 
   return {
