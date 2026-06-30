@@ -93,6 +93,10 @@ li {
 	text-wrap: balance;
 }
 
+img {
+	outline: 1px solid light-dark(hotpink, cyan);
+}
+
 .title {
 	margin: 0.33em;
 }

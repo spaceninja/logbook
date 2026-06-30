@@ -3,6 +3,12 @@ html {
 	color-scheme: light dark;
 }
 
+@property --contrast-color {
+	inherits: true;
+	initial-value: white;
+	syntax: '<color>';
+}
+
 body {
 	/* Set a --bg custom property using light-dark() */
 	--bg: light-dark(lightblue, black);
@@ -12,4 +18,30 @@ body {
 /* Force a section to dark regardless of OS preference */
 .t-dark {
 	color-scheme: dark;
+}
+
+.card {
+	--bg: var(--brand-color);
+	--contrast-color: contrast-color(var(--bg));
+	background: var(--bg);
+	color: var(--contrast-color);
+}
+
+/* If contrast-color is white, its on a dark background:
+   Use warmer light colors */
+@container style(--contrast-color: white) {
+	.card-label,
+	.card-body {
+		/* Relative color palette for body and label text */
+		color: oklch(from var(--bg) 90% 0.1 h);
+	}
+}
+
+/* If contrast-color is black, it's on a light background:
+   Use deep tones derived from the card's hue */
+@container style(--contrast-color: black) {
+	.card-label,
+	.card-body {
+		color: oklch(from var(--bg) 30% 0.1 h);
+	}
 }

@@ -3,6 +3,12 @@ export default defineNuxtConfig({
 	compatibilityDate: '2025-07-15',
 	css: ['~/assets/css/global.css'],
 	devtools: { enabled: false },
+	router: {
+		options: {
+			linkActiveClass: 'is-active',
+			linkExactActiveClass: 'is-exact-active',
+		},
+	},
 	// Firebase web config, sourced from NUXT_PUBLIC_FIREBASE_* env vars.
 	// Locally these point at logbook-dev (.env); prod values are set in Netlify.
 	runtimeConfig: {
