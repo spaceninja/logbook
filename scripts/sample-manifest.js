@@ -82,6 +82,8 @@ export const manifest = [
 	},
 	{
 		type: 'book',
+		// Pinned: the bare query's top volume has no cover art.
+		providerId: 'IqCdnDe9ZOQC',
 		query: 'Use of Weapons Iain Banks',
 		series: 'Culture',
 		series_number: 3,
@@ -166,7 +168,13 @@ export const manifest = [
 		state: 'backlog',
 	},
 	{ type: 'book', query: 'The Three-Body Problem Liu Cixin', state: 'backlog' },
-	{ type: 'book', query: 'Blindsight Peter Watts', state: 'backlog' },
+	// Pinned: the bare query's top volume has no cover art.
+	{
+		type: 'book',
+		providerId: 'FVMzz-xINLsC',
+		query: 'Blindsight Peter Watts',
+		state: 'backlog',
+	},
 	{
 		type: 'book',
 		query: 'A Fire Upon the Deep Vernor Vinge',

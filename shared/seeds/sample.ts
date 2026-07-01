@@ -35,8 +35,10 @@ export const sampleSeed: Item[] = [
 		length: 624,
 		length_unit: 'pages',
 		community_rating: 9,
-		cover: 'https://covers.openlibrary.org/b/id/9261466-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/id/9261466-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=fCCWWgZ7d6UC&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=fCCWWgZ7d6UC&printsec=frontcover&img=1&fife=w180',
 	},
 	{
 		id: 'book-google-books-rIWWl_bA0z4C',
@@ -69,8 +71,10 @@ export const sampleSeed: Item[] = [
 		length: 576,
 		length_unit: 'pages',
 		community_rating: 7,
-		cover: 'https://covers.openlibrary.org/b/id/8624248-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/id/8624248-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=rIWWl_bA0z4C&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=rIWWl_bA0z4C&printsec=frontcover&img=1&fife=w180',
 		my_rating: 9,
 	},
 	{
@@ -103,12 +107,14 @@ export const sampleSeed: Item[] = [
 			"With over 10 million copies sold, The Expanse has become one of the biggest science fiction phenomenons of the decade.\n\n The sixth book in the *New York Times* bestselling Expanse series, *Babylon's Ashes* has the galaxy in full revolution and it's up to the crew of the Rocinante to make a desperate mission to the gate network and thin hope of victory. Now a Prime Original series.\n\n A revolution brewing for generations has begun in fire. It will end in blood. The Free Navy—a violent group of Belters in black-market military ships—has crippled the Earth and begun a campaign of piracy and violence among the outer planets. The colony ships heading for the thousand new worlds on the far side of the alien ring gates are easy prey, and no single navy remains strong enough to protect them. \n\n James Holden and his crew know the strengths and weaknesses of this new force better than anyone. Outnumbered and outgunned, the embattled remnants of the old political powers call on the Rocinante for a desperate mission to reach Medina Station at the heart of the gate network. But the new alliances are as flawed as the old, and the struggle for power has only just begun.\n\n*Babylon's Ashes* is a breakneck science fiction adventure following the bestselling *Nemesis Games*.\n\n\"Interplanetary adventure the way it ought to be written.\" —George R. R. Martin\n\n Hugo Award Winner for Best Series\n\n**The Expanse**\nLeviathan Wakes \n Caliban's War \n Abaddon's Gate \n Cibola Burn \n Nemesis Games \n Babylon's Ashes \n Persepolis Rising \n Tiamat's Wrath ​\n Leviathan Falls \n Memory's Legion\n\n**The Expanse Short Fiction**\nDrive \n The Butcher of Anderson Station\n Gods of Risk\n The Churn\n The Vital Abyss\n Strange Dogs\n Auberon \n The Sins of Our Fathers​",
 		length: 544,
 		length_unit: 'pages',
-		cover: 'https://covers.openlibrary.org/b/isbn/9780316217637-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/isbn/9780316217637-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=3jsYCwAAQBAJ&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=3jsYCwAAQBAJ&printsec=frontcover&img=1&fife=w180',
 		my_rating: 10,
 	},
 	{
-		id: 'book-google-books-SeqIzwEACAAJ',
+		id: 'book-google-books-FVMzz-xINLsC',
 		type: 'book',
 		title: 'Blindsight',
 		provider: 'google-books',
@@ -117,15 +123,27 @@ export const sampleSeed: Item[] = [
 		is_prioritized: true,
 		completed_dates: [],
 		completed_years: [],
-		tags: [],
+		tags: [
+			'fiction',
+			'science fiction',
+			'hard science fiction',
+			'alien contact',
+		],
 		metadata: {
-			isbn: '9789635273669',
+			isbn: '9781429955195',
 		},
 		creator: 'Peter Watts',
-		release_date: '2015',
-		cover: 'https://covers.openlibrary.org/b/id/524560-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/id/524560-M.jpg',
-		notes: 'Heard the payoff is worth it.',
+		release_date: '2006-10-03',
+		description:
+			"**Hugo and Shirley Jackson award-winning Peter Watts stands on the cutting edge of hard SF with his acclaimed novel, *Blindsight***\n\nTwo months since the stars fell...\n\nTwo months of silence, while a world held its breath.\n\nNow some half-derelict space probe, sparking fitfully past Neptune's orbit, hears a whisper from the edge of the solar system: a faint signal sweeping the cosmos like a lighthouse beam. Whatever's out there isn't talking to us. It's talking to some distant star, perhaps. Or perhaps to something closer, something *en route*.\n\nSo who do you send to force introductions with unknown and unknowable alien intellect that doesn't wish to be met?\n\nYou send a linguist with multiple personalities, her brain surgically partitioned into separate, sentient processing cores. You send a biologist so radically interfaced with machinery that he sees x-rays and tastes ultrasound. You send a pacifist warrior in the faint hope she won't be needed. You send a monster to command them all, an extinct hominid predator once called *vampire*, recalled from the grave with the voodoo of recombinant genetics and the blood of sociopaths. And you send a *synthesist*—an informational topologist with half his mind gone—as an interface between *here* and *there*.\n\nPray they can be trusted with the fate of a world. They may be more alien than the thing they've been sent to find.\n\nAt the Publisher's request, this title is being sold without Digital Rights Management Software (DRM) applied.",
+		length: 384,
+		length_unit: 'pages',
+		community_rating: 8,
+		cover:
+			'https://books.google.com/books/content?id=FVMzz-xINLsC&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=FVMzz-xINLsC&printsec=frontcover&img=1&fife=w180',
+		notes: 'Need to finish the previous one first.',
 	},
 	{
 		id: 'book-google-books-tXGRBgwxAHIC',
@@ -158,8 +176,10 @@ export const sampleSeed: Item[] = [
 		length: 624,
 		length_unit: 'pages',
 		community_rating: 9,
-		cover: 'https://covers.openlibrary.org/b/id/7314238-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/id/7314238-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=tXGRBgwxAHIC&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=tXGRBgwxAHIC&printsec=frontcover&img=1&fife=w180',
 		my_rating: 8,
 	},
 	{
@@ -191,8 +211,10 @@ export const sampleSeed: Item[] = [
 			'**Book Three in the Magnificent Dune Chronicles—the Bestselling Science Fiction Adventure of All Time**\n\nThe Children of Dune are twin siblings Leto and Ghanima Atreides, whose father, the Emperor Paul Muad’Dib, disappeared in the desert wastelands of Arrakis nine years ago. Like their father, the twins possess supernormal abilities—making them valuable to their manipulative aunt Alia, who rules the Empire in the name of House Atreides.\n\nFacing treason and rebellion on two fronts, Alia’s rule is not absolute. The displaced House Corrino is plotting to regain the throne while the fanatical Fremen are being provoked into open revolt by the enigmatic figure known only as The Preacher. Alia believes that by obtaining the secrets of the twins’ prophetic visions, she can maintain control over her dynasty.\n\nBut Leto and Ghanima have their own plans for their visions—and their destinies....',
 		length: 496,
 		length_unit: 'pages',
-		cover: 'https://covers.openlibrary.org/b/isbn/9780593201749-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/isbn/9780593201749-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=IpLqDwAAQBAJ&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=IpLqDwAAQBAJ&printsec=frontcover&img=1&fife=w180',
 		notes: 'Everyone keeps telling me to get to this one.',
 	},
 	{
@@ -226,8 +248,10 @@ export const sampleSeed: Item[] = [
 		length: 592,
 		length_unit: 'pages',
 		community_rating: 8,
-		cover: 'https://covers.openlibrary.org/b/id/7610576-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/id/7610576-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=Hn41AgAAQBAJ&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=Hn41AgAAQBAJ&printsec=frontcover&img=1&fife=w180',
 		my_rating: 8,
 		notes: 'Would happily revisit this.',
 	},
@@ -260,8 +284,10 @@ export const sampleSeed: Item[] = [
 		length: 544,
 		length_unit: 'pages',
 		community_rating: 9,
-		cover: 'https://covers.openlibrary.org/b/isbn/9780316095839-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/isbn/9780316095839-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=3_bJKlAOecEC&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=3_bJKlAOecEC&printsec=frontcover&img=1&fife=w180',
 		my_rating: 8,
 	},
 	{
@@ -292,8 +318,10 @@ export const sampleSeed: Item[] = [
 			'**NOW A MAJOR MOTION PICTURE directed by Denis Villeneuve, starring Timothée Chalamet, Zendaya,** Jason Momoa, Rebecca Ferguson, Oscar Isaac, **Josh Brolin, Stellan Skarsgård, Dave Bautista, David Dastmalchian, Stephen McKinley Henderson, Chang Chen,** Sharon Duncan-Brewster, **Charlotte Rampling, and Javier Bardem.**\n\nFrank Herbert’s classic masterpiece—a triumph of the imagination and one of the bestselling science fiction novels of all time.\n\nA mythic and emotionally charged hero’s journey, *Dune* tells the story of Paul Atreides, a brilliant and gifted young man born into a great destiny beyond his understanding, who must travel to the most dangerous planet in the universe to ensure the future of his family and his people. As malevolent forces explode into conflict over the planet’s exclusive supply of the most precious resource in existence—a commodity capable of unlocking humanity’s greatest potential—only those who can conquer their fear will survive.',
 		length: 704,
 		length_unit: 'pages',
-		cover: 'https://covers.openlibrary.org/b/isbn/9780593438374-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/isbn/9780593438374-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=AQk_EAAAQBAJ&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=AQk_EAAAQBAJ&printsec=frontcover&img=1&fife=w180',
 		my_rating: 10,
 	},
 	{
@@ -325,8 +353,10 @@ export const sampleSeed: Item[] = [
 			'**Book Two in the Magnificent Dune Chronicles—the Bestselling Science Fiction Adventure of All Time**\n\n*Dune Messiah* continues the story of Paul Atreides, better known—and feared—as the man christened Muad’Dib. As Emperor of the known universe, he possesses more power than a single man was ever meant to wield. Worshipped as a religious icon by the fanatical Fremen, Paul faces the enmity of the political houses he displaced when he assumed the throne—and a conspiracy conducted within his own sphere of influence.\n\nAnd even as House Atreides begins to crumble around him from the machinations of his enemies, the true threat to Paul comes to his lover, Chani, and the unborn heir to his family’s dynasty...',
 		length: 352,
 		length_unit: 'pages',
-		cover: 'https://covers.openlibrary.org/b/isbn/9780593098233-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/isbn/9780593098233-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=uryWDwAAQBAJ&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=uryWDwAAQBAJ&printsec=frontcover&img=1&fife=w180',
 		my_rating: 8,
 	},
 	{
@@ -357,8 +387,10 @@ export const sampleSeed: Item[] = [
 			'**The novels of Iain M. Banks have forever changed the face of modern science fiction. His Culture books combine breathtaking imagination with exceptional storytelling, and have secured his reputation as one of the most extraordinary and influential writers in the genre.**\n\n**"Banks is a phenomenon." –– William Gibson**\n\n Two and a half millennia ago in a remote corner of space, beside a trillion-year-old dying sun from a different universe, the artifact appeared.\n\n It was a perfect black-body sphere, and it did nothing. Then it disappeared.\n\n Now it is back.\n\n Diplomat Genar-Hofoen of Special Circumstances is sent to investigate but, sidetracked by an old flame and the spoiled-brat operative Ulver Seich, and faced with the systematic depravities of a race who call themselves the A­ffront, it\'s anyone\'s guess whether he\'ll succeed . . .\n\n**Praise for the Culture series:**\n\n "Epic in scope, ambitious in its ideas and absorbing in its execution." –*Independent on Sunday*\n "Banks has created one of the most enduring and endearing visions of the future." –*Guardian*\n\n "Jam-packed with extraordinary invention." –*Scotsman*\n\n "Compulsive reading." –*Sunday Telegraph*\n\n**The Culture series:**\n Consider Phlebas\n The Player of Games\n Use of Weapons\n Excession\n Inversions\n Look to Windward\n The State of the Art\n\n**Other books by Iain M. Banks:**\n Against a Dark Background\n Feersum Endjinn\n The Algebraist\n\n**Also now available:**\n The Culture: The Drawings- an extraordinary collection of original illustrations faithfully reproduced from sketchbooks Banks kept in the 1970s and 80s, depicting the ships, habitats, geography, weapons and language of Banks\' Culture series of novels in incredible detail.',
 		length: 464,
 		length_unit: 'pages',
-		cover: 'https://covers.openlibrary.org/b/id/5276044-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/id/5276044-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=zJNLEQAAQBAJ&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=zJNLEQAAQBAJ&printsec=frontcover&img=1&fife=w180',
 		recommended_by: 'Jo',
 	},
 	{
@@ -382,8 +414,10 @@ export const sampleSeed: Item[] = [
 		length: 227,
 		length_unit: 'pages',
 		community_rating: 10,
-		cover: 'https://covers.openlibrary.org/b/id/9261324-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/id/9261324-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=EUPyAAAAMAAJ&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=EUPyAAAAMAAJ&printsec=frontcover&img=1&fife=w180',
 		my_rating: 10,
 	},
 	{
@@ -412,8 +446,10 @@ export const sampleSeed: Item[] = [
 			'**A stunning tour de force filled with transcendent awe and wonder, *Hyperion* is a masterwork of science fiction that resonates with excitement and invention, the first volume in a remarkable epic by the multiple-award-winning author of *The Hollow Man*.**\n\n On the world called Hyperion, beyond the reach of galactic law, waits a creature called the Shrike. There are those who worship it. There are those who fear it. And there are those who have vowed to destroy it. In the Valley of the Time Tombs, where huge, brooding structures move backward through time, the Shrike waits for them all.\n\n On the eve of Armageddon, with the entire galaxy at war, seven pilgrims set forth on a final voyage to Hyperion seeking the answers to the unsolved riddles of their lives. Each carries a desperate hope—and a terrible secret. And one may hold the fate of humanity in his hands.\n\n **Praise for Dan Simmons and *Hyperion***\n\n “Dan Simmons has brilliantly conceptualized a future 700 years distant. In sheer scope and complexity it matches, and perhaps even surpasses, those of Isaac Asimov and James Blish.”**—*The Washington Post Book World***\n\n “An unfailingly inventive narrative . . . generously conceived and stylistically sure-handed.”**—*The* *New York Times Book Review***\n\n “Simmons’s own genius transforms space opera into a new kind of poetry.”**—*The Denver Post***\n\n “An essential part of any science fiction collection.”**—*Booklist***',
 		length: 496,
 		length_unit: 'pages',
-		cover: 'https://covers.openlibrary.org/b/isbn/9780385263481-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/isbn/9780385263481-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=8nsmEAAAQBAJ&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=8nsmEAAAQBAJ&printsec=frontcover&img=1&fife=w180',
 		my_rating: 10,
 	},
 	{
@@ -446,8 +482,10 @@ export const sampleSeed: Item[] = [
 			"With over 10 million copies sold, The Expanse has become one of the biggest science fiction phenomenons of the decade.\n\n The biggest science fiction series of the decade comes to an incredible conclusion in the ninth and final novel in James S.A. Corey’s Hugo-award winning space opera that inspired the Prime Original series. \n\n The Laconian Empire has fallen, setting the thirteen hundred solar systems free from the rule of Winston Duarte. But the ancient enemy that killed the gate builders is awake, and the war against our universe has begun again.   \n\n In the dead system of Adro, Elvi Okoye leads a desperate scientific mission to understand what the gate builders were and what destroyed them, even if it means compromising herself and the half-alien children who bear the weight of her investigation. Through the wide-flung systems of humanity, Colonel Aliana Tanaka hunts for Duarte’s missing daughter. . . and the shattered emperor himself. And on the Rocinante, James Holden and his crew struggle to build a future for humanity out of the shards and ruins of all that has come before.   \n\n As nearly unimaginable forces prepare to annihilate all human life, Holden and a group of unlikely allies discover a last, desperate chance to unite all of humanity, with the promise of a vast galactic civilization free from wars, factions, lies, and secrets if they win. But the price of victory may be worse than the cost of defeat.\n\n\"Interplanetary adventure the way it ought to be written.\" —George R. R. Martin\n\n Hugo Award Winner for Best Series\n\n**The Expanse**\nLeviathan Wakes \n Caliban's War \n Abaddon's Gate \n Cibola Burn \n Nemesis Games \n Babylon's Ashes \n Persepolis \n Rising Tiamat's Wrath ​\n Leviathan Falls \n Memory's Legion\n\n**The Expanse Short Fiction**\nDrive \n The Butcher of Anderson Station\n Gods of Risk\n The Churn\n The Vital Abyss\n Strange Dogs\n Auberon \n The Sins of Our Fathers​",
 		length: 528,
 		length_unit: 'pages',
-		cover: 'https://covers.openlibrary.org/b/id/14424717-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/id/14424717-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=XA4iEAAAQBAJ&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=XA4iEAAAQBAJ&printsec=frontcover&img=1&fife=w180',
 		notes: 'Everyone keeps telling me to get to this one.',
 	},
 	{
@@ -481,8 +519,10 @@ export const sampleSeed: Item[] = [
 		length: 592,
 		length_unit: 'pages',
 		community_rating: 8,
-		cover: 'https://covers.openlibrary.org/b/id/7314237-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/id/7314237-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=yud-foXqGUEC&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=yud-foXqGUEC&printsec=frontcover&img=1&fife=w180',
 		my_rating: 10,
 	},
 	{
@@ -513,8 +553,10 @@ export const sampleSeed: Item[] = [
 			'**This “sophisticated space opera” (*The New York Times*), filled with suspense and humor, masterfully explores the horrors of war—from the acclaimed author of *The Wasp Factory*.**\n\nThe Twin Novae battle had been one of the last of the Idiran war—and one of the most horrific. Desperate to avert their inevitable defeat, the Idirans had induced not one but two suns to explode, snuffing out worlds and biospheres teeming with sentient life. They were attacks of incredible proportion—gigadeathcrimes. But the war ended, and life went on.\n\nNow, eight hundred years later, light from the first explosion is about to reach the Masaq’ Orbital, home to the Culture’s most adventurous and decadent souls. There it will fall upon Masaq’s 50 billion inhabitants, gathered to commemorate the deaths of the innocent and to reflect, if only for a moment, on what some call the Culture’s own complicity in the terrible event.\n\nAlso journeying to Masaq’ is Major Quilan, an emissary from the war-ravaged world of Chel. In the aftermath of the conflict that split his world apart, most believe he has come to Masaq’ to bring home Chel’s most brilliant star and self-exiled dissident, the honored Composer Ziller.\n\nZiller claims he will do anything to avoid a meeting with Major Quilan, who he suspects has come to murder him. But the Major’s true assignment will have far greater consequences than the death of a mere political dissident, as part of a conspiracy more ambitious than even he can know—a mission his superiors have buried so deeply in his mind that even he cannot remember it.\n\nHailed by *SFX Magazine* as “an excellent hopping-on point if you’ve never read a Banks science fiction novel before”, *Look to Windward* is an awe-inspiring immersion into the wildly original, vividly realized civilization that Banks calls the Culture.',
 		length: 416,
 		length_unit: 'pages',
-		cover: 'https://covers.openlibrary.org/b/id/476421-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/id/476421-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=OtPhEAAAQBAJ&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=OtPhEAAAQBAJ&printsec=frontcover&img=1&fife=w180',
 		my_rating: 10,
 	},
 	{
@@ -548,8 +590,10 @@ export const sampleSeed: Item[] = [
 		length: 544,
 		length_unit: 'pages',
 		community_rating: 10,
-		cover: 'https://covers.openlibrary.org/b/id/8036735-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/id/8036735-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=A_-zBAAAQBAJ&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=A_-zBAAAQBAJ&printsec=frontcover&img=1&fife=w180',
 		my_rating: 9,
 		notes: 'Instant favorite.',
 	},
@@ -581,18 +625,20 @@ export const sampleSeed: Item[] = [
 		length: 288,
 		length_unit: 'pages',
 		community_rating: 10,
-		cover: 'https://covers.openlibrary.org/b/isbn/9781101146460-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/isbn/9781101146460-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=Bd_UZAdvUDIC&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=Bd_UZAdvUDIC&printsec=frontcover&img=1&fife=w180',
 		my_rating: 8,
 	},
 	{
-		id: 'book-google-books-qdKMEQAAQBAJ',
+		id: 'book-google-books-iaM7DwAAQBAJ',
 		type: 'book',
-		title: "Old Man's War Boxed Set I",
+		title: "Old Man's War",
 		provider: 'google-books',
 		status: 'backlog',
-		is_purchased: false,
-		is_prioritized: true,
+		is_purchased: true,
+		is_prioritized: false,
 		completed_dates: [],
 		completed_years: [],
 		tags: [
@@ -602,16 +648,21 @@ export const sampleSeed: Item[] = [
 			'action & adventure',
 			'space opera',
 			'military',
+			'alien contact',
 		],
 		metadata: {
-			isbn: '9780765379382',
+			isbn: '9780765394859',
 		},
 		creator: 'John Scalzi',
-		release_date: '2014-08-26',
+		release_date: '2017-10-17',
 		description:
-			"***New York Times* bestselling author John Scalzi takes readers on an epic romp of galactic conquest and exploration in the Old Man's War series.**\n\n**This box set includes: *Old Man's War, The Ghost Brigades,* and *The Last Colony***  Earth itself is a backwater. The bulk of humanity's resources are in the hands of the Colonial Defense Force, which shields the home planet from too much knowledge of the situation. What's known to everybody is that when you reach retirement age, you can join the CDF. They don't want young people; they want people who carry the knowledge and skills of decades of living. *Old Man's War* John Perry did two things on his 75th birthday. First he visited his wife's grave. Then he joined the army, with only the vaguest idea what to expect. Because the actual fight is far more difficult than he can imagine--and what he will become is far stranger. *The Ghost Brigades* At first, Jared is a perfect soldier, but as another man's memories slowly surface, Jared begins to intuit the reasons for their betrayal. Time is running out: The alliance is preparing its offensive, and some of them plan worse things than humanity's mere military defeat. *The Last Colony*  Retired from his fighting days, John Perry and his wife, Jane, are pulled back into the political arena, and into the thick of interstellar politics, betrayal, and war. **Old Man's War Series**\n#1 *Old Man's War*\n#2 *The Ghost Brigades*\n#3 *The Last Colony*\n#4 *Zoe's Tale*\n#5 *The Human Division*\n#6 *The End of All Things*\nShort fiction: \"After the Coup\"",
-		cover: 'https://covers.openlibrary.org/b/isbn/9780765379382-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/isbn/9780765379382-M.jpg',
+			"**Perfect for an entry-level sci-fi reader and the ideal addition to a veteran fan’s collection, John Scalzi's *Old Man’s War* will take audiences on a heart-stopping adventure into the far corners of the universe.**\n\nJohn Perry did two things on his 75th birthday. First he visited his wife’s grave. Then he joined the army.\n\nThe good news is that humanity finally made it to the stars. The bad news is that, out there, planets fit to live on are scarce—and alien races willing to fight us for them are common. So: we fight. Far from Earth, the war has been going on for decades: brutal, bloody, unyielding.\n\nResponsible for protecting humanity, the Colonial Defense Force doesn’t want young people; they want people who carry the knowledge and skills of decades of living. You’ll be taken off Earth, never to return. You’ll serve two years in combat. And if you survive, you’ll be given a homestead of your own on a hard-won planet light-years from home.\n\nJohn Perry is taking that deal. He thinks he knows what to expect. But the actual fight is far, far harder than he can imagine—and what he will become is far stranger.\n\n**“Gripping and surpassing the original. It’s *Starship Troopers* without the lectures. It’s *The Forever War* with better sex. It’s funny, it’s sad, and it’s new.” —Cory Doctorow**\n\n**“Smartly conceived and thoroughly entertaining, *Old Man’s War* is a splendid novel.” —*The Plain Dealer* (Cleveland)**",
+		length: 416,
+		length_unit: 'pages',
+		cover:
+			'https://books.google.com/books/content?id=iaM7DwAAQBAJ&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=iaM7DwAAQBAJ&printsec=frontcover&img=1&fife=w180',
 	},
 	{
 		id: 'book-google-books-cxNVDgAAQBAJ',
@@ -643,8 +694,10 @@ export const sampleSeed: Item[] = [
 			"With over 10 million copies sold, The Expanse has become one of the biggest science fiction phenomenons of the decade.\n\n The seventh book in the *New York Times* bestselling Expanse series, *Persepolis Rising* finds an old enemy returning home with more power and technology than anyone thought possible, and the crew of the aging gunship Rocinante tries to rally forces against the new invasion. Now a Prime Original series.  \n\n An old enemy returns.\n\n In the thousand-sun network of humanity's expansion, new colony worlds are struggling to find their way. Every new planet lives on a knife edge between collapse and wonder, and the crew of the aging gunship *Rocinante* have their hands more than full keeping the fragile peace.\n\n In the vast space between Earth and Jupiter, the inner planets and belt have formed a tentative and uncertain alliance still haunted by a history of wars and prejudices. On the lost colony world of Laconia, a hidden enemy has a new vision for all of humanity and the power to enforce it.\n\n New technologies clash with old as the history of human conflict returns to its ancient patterns of war and subjugation. But human nature is not the only enemy, and the forces being unleashed have their own price. A price that will change the shape of humanity -- and of the *Rocinante* -- unexpectedly and forever. . .\n\n\"Interplanetary adventure the way it ought to be written.\" —George R. R. Martin\n\n Hugo Award Winner for Best Series\n\n**The Expanse**\nLeviathan Wakes\n Caliban's War\n Abaddon's Gate\n Cibola Burn\n Nemesis Games\n Babylon's Ashes\n Persepolis Rising\n Tiamat's Wrath\n ​Leviathan Falls\n\n Memory's Legion\n\n**The Expanse Short Fiction**\nDrive\n The Butcher of Anderson Station\n*Gods of Risk*\n*The Churn*\n*The Vital Abyss*\n*Strange Dogs*\nAuberon\n The Sins of Our Fathers",
 		length: 560,
 		length_unit: 'pages',
-		cover: 'https://covers.openlibrary.org/b/isbn/9780316332828-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/isbn/9780316332828-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=cxNVDgAAQBAJ&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=cxNVDgAAQBAJ&printsec=frontcover&img=1&fife=w180',
 		my_rating: 10,
 	},
 	{
@@ -675,9 +728,9 @@ export const sampleSeed: Item[] = [
 		length: 468,
 		length_unit: 'pages',
 		cover:
-			'https://books.google.com/books/content?id=gRtGMQAACAAJ&printsec=frontcover&img=1&zoom=1&imgtk=AFLRE721ih5gxo1WVqfTBI9WY087RmuQaOCjn6pYifNBUIawpBpxTvpiozeWDgYS2ZYHGy6sKIkpOZauBauhygsjRH7Jll8Br0m_BUauRMQgJVerK0ghG1lRkSzwtjtgmo5M3fjnvlXf&source=gbs_api',
+			'https://books.google.com/books/content?id=gRtGMQAACAAJ&printsec=frontcover&img=1&fife=w640',
 		thumbnail:
-			'https://books.google.com/books/content?id=gRtGMQAACAAJ&printsec=frontcover&img=1&zoom=5&imgtk=AFLRE70Lk4bpkz2Dxd1kIkY0aug47LX1HRzacQebTqlm4Ye5Ws5vqJw5M6AfEeIhaQzFhktQOGrt95zZTy7PxvPKahEX-9u8EGjCrxS4mZ88nuUxhIpEapC_pnyShrIDDbQvthqIdWhT&source=gbs_api',
+			'https://books.google.com/books/content?id=gRtGMQAACAAJ&printsec=frontcover&img=1&fife=w180',
 	},
 	{
 		id: 'book-google-books--Ff2DwAAQBAJ',
@@ -707,8 +760,10 @@ export const sampleSeed: Item[] = [
 		length: 496,
 		length_unit: 'pages',
 		community_rating: 10,
-		cover: 'https://covers.openlibrary.org/b/isbn/9780593135211-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/isbn/9780593135211-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=-Ff2DwAAQBAJ&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=-Ff2DwAAQBAJ&printsec=frontcover&img=1&fife=w180',
 		my_rating: 10,
 	},
 	{
@@ -732,8 +787,10 @@ export const sampleSeed: Item[] = [
 		length: 440,
 		length_unit: 'pages',
 		community_rating: 8,
-		cover: 'https://covers.openlibrary.org/b/isbn/9780553088533-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/isbn/9780553088533-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=B0xbAAAAMAAJ&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=B0xbAAAAMAAJ&printsec=frontcover&img=1&fife=w180',
 		my_rating: 8,
 		notes: 'Stuck with me for weeks.',
 	},
@@ -766,8 +823,10 @@ export const sampleSeed: Item[] = [
 		length: 640,
 		length_unit: 'pages',
 		community_rating: 8,
-		cover: 'https://covers.openlibrary.org/b/id/6672209-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/id/6672209-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=eDt6lmVX_k0C&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=eDt6lmVX_k0C&printsec=frontcover&img=1&fife=w180',
 	},
 	{
 		id: 'book-google-books-xFr92V2k3PIC',
@@ -804,8 +863,10 @@ export const sampleSeed: Item[] = [
 		length: 448,
 		length_unit: 'pages',
 		community_rating: 9,
-		cover: 'https://covers.openlibrary.org/b/isbn/9780007322497-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/isbn/9780007322497-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=xFr92V2k3PIC&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=xFr92V2k3PIC&printsec=frontcover&img=1&fife=w180',
 		my_rating: 9,
 	},
 	{
@@ -837,8 +898,10 @@ export const sampleSeed: Item[] = [
 		length: 528,
 		length_unit: 'pages',
 		community_rating: 7,
-		cover: 'https://covers.openlibrary.org/b/isbn/9780316212380-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/isbn/9780316212380-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=L6rU97RZs5EC&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=L6rU97RZs5EC&printsec=frontcover&img=1&fife=w180',
 	},
 	{
 		id: 'book-google-books-GsCT8lPbYFMC',
@@ -869,8 +932,10 @@ export const sampleSeed: Item[] = [
 		length: 416,
 		length_unit: 'pages',
 		community_rating: 9,
-		cover: 'https://covers.openlibrary.org/b/isbn/9780316095860-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/isbn/9780316095860-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=GsCT8lPbYFMC&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=GsCT8lPbYFMC&printsec=frontcover&img=1&fife=w180',
 		my_rating: 9,
 	},
 	{
@@ -905,8 +970,10 @@ export const sampleSeed: Item[] = [
 		length: 432,
 		length_unit: 'pages',
 		community_rating: 10,
-		cover: 'https://covers.openlibrary.org/b/isbn/9780547952048-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/isbn/9780547952048-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=WZ0f_yUgc0UC&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=WZ0f_yUgc0UC&printsec=frontcover&img=1&fife=w180',
 		my_rating: 10,
 	},
 	{
@@ -939,8 +1006,10 @@ export const sampleSeed: Item[] = [
 		length: 399,
 		length_unit: 'pages',
 		community_rating: 10,
-		cover: 'https://covers.openlibrary.org/b/isbn/9780765377067-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/isbn/9780765377067-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=QxbFBAAAQBAJ&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=QxbFBAAAQBAJ&printsec=frontcover&img=1&fife=w180',
 		notes: 'Saving this for a long weekend.',
 	},
 	{
@@ -975,8 +1044,10 @@ export const sampleSeed: Item[] = [
 		length: 352,
 		length_unit: 'pages',
 		community_rating: 10,
-		cover: 'https://covers.openlibrary.org/b/id/14627564-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/id/14627564-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=12e8PJ2T7sQC&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=12e8PJ2T7sQC&printsec=frontcover&img=1&fife=w180',
 		my_rating: 10,
 	},
 	{
@@ -1000,8 +1071,10 @@ export const sampleSeed: Item[] = [
 		length: 1007,
 		length_unit: 'pages',
 		community_rating: 8,
-		cover: 'https://covers.openlibrary.org/b/isbn/9780765376671-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/isbn/9780765376671-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=QVn-CgAAQBAJ&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=QVn-CgAAQBAJ&printsec=frontcover&img=1&fife=w180',
 		recommended_by: 'Marcus',
 	},
 	{
@@ -1034,34 +1107,45 @@ export const sampleSeed: Item[] = [
 			"With over 10 million copies sold, The Expanse has become one of the biggest science fiction phenomenons of the decade.\n\n The eighth book in the *New York Times* bestselling Expanse series, *Tiamat's Wrath* finds the crew of the Rocinante fighting an underground war against a nearly invulnerable authoritarian empire, with James Holden a prisoner of the enemy. Now a Prime Original series. \n\n Thirteen hundred gates have opened to solar systems around the galaxy. But as humanity builds its interstellar empire in the alien ruins, the mysteries and threats grow deeper.\n\n In the dead systems where gates lead to stranger things than alien planets, Elvi Okoye begins a desperate search to discover the nature of a genocide that happened before the first human beings existed, and to find weapons to fight a war against forces at the edge of the imaginable. But the price of that knowledge may be higher than she can pay.\n\n At the heart of the empire, Teresa Duarte prepares to take on the burden of her father's godlike ambition. The sociopathic scientist Paolo Cordozar and the Mephistophelian prisoner James Holden are only two of the dangers in a palace thick with intrigue, but Teresa has a mind of her own and secrets even her father the emperor doesn't guess.\n\n And throughout the wide human empire, the scattered crew of the *Rocinante* fights a brave rear-guard action against Duarte's authoritarian regime. Memory of the old order falls away, and a future under Laconia's eternal rule -- and with it, a battle that humanity can only lose -- seems more and more certain. Because against the terrors that lie between worlds, courage and ambition will not be enough. . .\n\n\"Interplanetary adventure the way it ought to be written.\" —George R. R. Martin\n\n Hugo Award Winner for Best Series\n\n**The Expanse**\nLeviathan Wakes\n Caliban's War\n Abaddon's Gate\n Cibola Burn\n Nemesis Games\n Babylon's Ashes\n Persepolis Rising\n Tiamat's Wrath\n ​Leviathan Falls\n\n Memory's Legion\n\n**The Expanse Short Fiction**\nDrive\n The Butcher of Anderson Station\n*Gods of Risk*\n*The Churn*\n*The Vital Abyss*\n*Strange Dogs*\nAuberon\n The Sins of Our Fathers",
 		length: 544,
 		length_unit: 'pages',
-		cover: 'https://covers.openlibrary.org/b/id/8600919-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/id/8600919-M.jpg',
+		cover:
+			'https://books.google.com/books/content?id=JQdUDwAAQBAJ&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=JQdUDwAAQBAJ&printsec=frontcover&img=1&fife=w180',
 	},
 	{
-		id: 'book-google-books-CH4eQgAACAAJ',
+		id: 'book-google-books-IqCdnDe9ZOQC',
 		type: 'book',
 		title: 'Use of Weapons',
 		provider: 'google-books',
 		status: 'complete',
 		is_purchased: false,
 		is_prioritized: false,
-		completed_dates: ['2025-04-06'],
-		completed_years: [2025],
-		tags: [],
+		completed_dates: ['2024-08-25'],
+		completed_years: [2024],
+		tags: [
+			'fiction',
+			'science fiction',
+			'action & adventure',
+			'space opera',
+			'military',
+		],
 		metadata: {
-			isbn: '9780708883501',
+			isbn: '9780316068796',
 			series: 'Culture',
 			series_number: 3,
 		},
-		creator: 'Iain Banks',
-		release_date: '1991',
+		creator: 'Iain M. Banks',
+		release_date: '2008-12-22',
 		description:
-			'Zakalwe does the Culture\'s dirty work, changing the destiny of planets through intrigue or military action. Diziet Sma enrolled him into the Culture\'s service, but does not know about his past. Written by the author of "Consider Phlebas" and "The Player of Games."',
-		length: 374,
+			"**The third entry in the critically acclaimed Culture series, from British Science Fiction author, Iain M. Banks.**\n\n The man known as Cheradenine Zakalwe was one of Special Circumstances' foremost agents, changing the destiny of planets to suit the Culture through intrigue, dirty tricks and military action.The woman known as Diziet Sma had plucked him from obscurity and pushed him towards his present eminence, but despite all their dealings she did not know him as well as she thought.\n\n The drone known as Skaffen-Amtiskaw knew both of these people. It had once saved the woman's life by massacring her attackers in a particularly bloody manner. It believed the man to be a lost cause. But not even its machine could see the horrors in his past.\n\n Ferociously intelligent, both witty and horrific, *Use of Weapons* is a masterpiece of science fiction.\n\n**The Culture Series**\n*Consider Phlebas*\n*The Player of Games*\n*Use of Weapons*\n*The State of the Art*\n*ExcessionInversions*\n*Look to Windward Matter*\n*Surface Detail*\n*The Hydrogen Sonata*",
+		length: 512,
 		length_unit: 'pages',
-		cover: 'https://covers.openlibrary.org/b/isbn/9780708883501-L.jpg',
-		thumbnail: 'https://covers.openlibrary.org/b/isbn/9780708883501-M.jpg',
-		my_rating: 10,
+		community_rating: 9,
+		cover:
+			'https://books.google.com/books/content?id=IqCdnDe9ZOQC&printsec=frontcover&img=1&fife=w640',
+		thumbnail:
+			'https://books.google.com/books/content?id=IqCdnDe9ZOQC&printsec=frontcover&img=1&fife=w180',
+		my_rating: 9,
 	},
 	{
 		id: 'movie-tmdb-584',
