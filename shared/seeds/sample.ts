@@ -3320,7 +3320,9 @@ export const sampleSeed: Item[] = [
 			'https://images.igdb.com/igdb/image/upload/t_cover_big_2x/co670h.jpg',
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co670h.jpg',
-		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar3tfx.jpg',
+		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar666v.jpg',
+		length: 6141,
+		length_unit: 'hours',
 	},
 	{
 		id: 'game-igdb-20',
@@ -3354,6 +3356,8 @@ export const sampleSeed: Item[] = [
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co2mli.jpg',
 		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar4go.jpg',
+		length: 25,
+		length_unit: 'hours',
 		my_rating: 10,
 		notes: 'Would happily revisit this.',
 	},
@@ -3388,6 +3392,8 @@ export const sampleSeed: Item[] = [
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/coaih8.jpg',
 		backdrop:
 			'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ig0frvvkkz4jx7cyqt3f.jpg',
+		length: 129,
+		length_unit: 'hours',
 	},
 	{
 		id: 'game-igdb-7351',
@@ -3411,6 +3417,8 @@ export const sampleSeed: Item[] = [
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co1nc7.jpg',
 		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar3lzo.jpg',
+		length: 41,
+		length_unit: 'hours',
 		my_rating: 10,
 	},
 	{
@@ -3441,6 +3449,8 @@ export const sampleSeed: Item[] = [
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co4jni.jpg',
 		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar1481.jpg',
+		length: 174,
+		length_unit: 'hours',
 		recommended_by: 'Devin',
 	},
 	{
@@ -3465,6 +3475,8 @@ export const sampleSeed: Item[] = [
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/cobd9i.jpg',
 		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar2dl2.jpg',
+		length: 93,
+		length_unit: 'hours',
 		notes: 'Heard the payoff is worth it.',
 	},
 	{
@@ -3495,8 +3507,9 @@ export const sampleSeed: Item[] = [
 			'https://images.igdb.com/igdb/image/upload/t_cover_big_2x/cobkt6.jpg',
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/cobkt6.jpg',
-		backdrop:
-			'https://images.igdb.com/igdb/image/upload/t_1080p_2x/thhohfsqjs1x77gyjg7b.jpg',
+		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar666x.jpg',
+		length: 48,
+		length_unit: 'hours',
 		my_rating: 10,
 	},
 	{
@@ -3532,6 +3545,8 @@ export const sampleSeed: Item[] = [
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co2lb8.jpg',
 		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/arj2x.jpg',
+		length: 39,
+		length_unit: 'hours',
 		my_rating: 9,
 		notes: 'A bit overhyped, but I enjoyed it.',
 	},
@@ -3561,6 +3576,8 @@ export const sampleSeed: Item[] = [
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co2lbv.jpg',
 		backdrop:
 			'https://images.igdb.com/igdb/image/upload/t_1080p_2x/o6wownutsouj6qfz2hz2.jpg',
+		length: 50,
+		length_unit: 'hours',
 		my_rating: 8,
 	},
 	{
@@ -3595,8 +3612,9 @@ export const sampleSeed: Item[] = [
 			'https://images.igdb.com/igdb/image/upload/t_cover_big_2x/co2lbd.jpg',
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co2lbd.jpg',
-		backdrop:
-			'https://images.igdb.com/igdb/image/upload/t_1080p_2x/s7eojwfwa0viamaa68gs.jpg',
+		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar667x.jpg',
+		length: 533,
+		length_unit: 'hours',
 		my_rating: 9,
 	},
 	{
@@ -3659,6 +3677,8 @@ export const sampleSeed: Item[] = [
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co2lb9.jpg',
 		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/arqzf.jpg',
+		length: 31,
+		length_unit: 'hours',
 		my_rating: 10,
 	},
 	{
@@ -3695,6 +3715,8 @@ export const sampleSeed: Item[] = [
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co2lbb.jpg',
 		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/arrb4.jpg',
+		length: 212,
+		length_unit: 'hours',
 		my_rating: 10,
 	},
 	{
@@ -3718,7 +3740,9 @@ export const sampleSeed: Item[] = [
 			'https://images.igdb.com/igdb/image/upload/t_cover_big_2x/co1nmw.jpg',
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co1nmw.jpg',
-		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/arkbf.jpg',
+		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar667y.jpg',
+		length: 20,
+		length_unit: 'hours',
 		my_rating: 8,
 	},
 	{
@@ -3747,6 +3771,8 @@ export const sampleSeed: Item[] = [
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co1x77.jpg',
 		backdrop:
 			'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ppkhu9pegv8hoabn9y6j.jpg',
+		length: 18,
+		length_unit: 'hours',
 		my_rating: 9,
 	},
 	{
@@ -3830,6 +3856,8 @@ export const sampleSeed: Item[] = [
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co1xhg.jpg',
 		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar5ks.jpg',
+		length: 65,
+		length_unit: 'hours',
 		my_rating: 10,
 	},
 	{
@@ -3864,6 +3892,8 @@ export const sampleSeed: Item[] = [
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co2dto.jpg',
 		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar88u.jpg',
+		length: 24,
+		length_unit: 'hours',
 	},
 	{
 		id: 'game-igdb-740',
@@ -3884,12 +3914,14 @@ export const sampleSeed: Item[] = [
 		release_date: '2001-11-15',
 		description:
 			"Bent on Humankind's extermination, a powerful fellowship of alien races known as the Covenant is wiping out Earth's fledgling interstellar empire. Climb into the boots of Master Chief, a biologically altered super-soldier, as you and the other surviving defenders of a devastated colony-world make a desperate attempt to lure the alien fleet away from earth. Shot down and marooned on the ancient ring-world Halo, you begin a guerilla-war against the Covenant. Fight for humanity against an alien onslaught as you race to uncover the mysteries of Halo.",
-		community_rating: 8.34,
+		community_rating: 8.33,
 		cover:
 			'https://images.igdb.com/igdb/image/upload/t_cover_big_2x/co2r2r.jpg',
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co2r2r.jpg',
 		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar5jvc.jpg',
+		length: 13,
+		length_unit: 'hours',
 		my_rating: 8,
 		notes: 'Stuck with me for weeks.',
 	},
@@ -3918,6 +3950,8 @@ export const sampleSeed: Item[] = [
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co1xha.jpg',
 		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar852.jpg',
+		length: 25,
+		length_unit: 'hours',
 		my_rating: 8,
 	},
 	{
@@ -3948,6 +3982,8 @@ export const sampleSeed: Item[] = [
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co2gvu.jpg',
 		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar1cwx.jpg',
+		length: 81,
+		length_unit: 'hours',
 		recommended_by: 'Mara',
 	},
 	{
@@ -3981,6 +4017,8 @@ export const sampleSeed: Item[] = [
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co2una.jpg',
 		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar4rzl.jpg',
+		length: 84,
+		length_unit: 'hours',
 		my_rating: 10,
 	},
 	{
@@ -4013,6 +4051,8 @@ export const sampleSeed: Item[] = [
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/cobg1k.jpg',
 		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar2d8r.jpg',
+		length: 31,
+		length_unit: 'hours',
 	},
 	{
 		id: 'game-igdb-73',
@@ -4046,6 +4086,8 @@ export const sampleSeed: Item[] = [
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co1x7o.jpg',
 		backdrop:
 			'https://images.igdb.com/igdb/image/upload/t_1080p_2x/nh2tkxayf39zfaruit9e.jpg',
+		length: 49,
+		length_unit: 'hours',
 		my_rating: 9,
 	},
 	{
@@ -4078,8 +4120,9 @@ export const sampleSeed: Item[] = [
 			'https://images.igdb.com/igdb/image/upload/t_cover_big_2x/co20ac.jpg',
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co20ac.jpg',
-		backdrop:
-			'https://images.igdb.com/igdb/image/upload/t_1080p_2x/j6s9suyfbzlzkbruo5gp.jpg',
+		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar667w.jpg',
+		length: 62,
+		length_unit: 'hours',
 		my_rating: 8,
 	},
 	{
@@ -4115,6 +4158,8 @@ export const sampleSeed: Item[] = [
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co1x7q.jpg',
 		backdrop:
 			'https://images.igdb.com/igdb/image/upload/t_1080p_2x/wwrtbxlwhixvc5uw46qp.jpg',
+		length: 56,
+		length_unit: 'hours',
 		my_rating: 8,
 	},
 	{
@@ -4145,7 +4190,9 @@ export const sampleSeed: Item[] = [
 			'https://images.igdb.com/igdb/image/upload/t_cover_big_2x/co1rs4.jpg',
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co1rs4.jpg',
-		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/arsj0.jpg',
+		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar667o.jpg',
+		length: 28,
+		length_unit: 'hours',
 		my_rating: 10,
 	},
 	{
@@ -4176,8 +4223,9 @@ export const sampleSeed: Item[] = [
 			'https://images.igdb.com/igdb/image/upload/t_cover_big_2x/co1q1f.jpg',
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/co1q1f.jpg',
-		backdrop:
-			'https://images.igdb.com/igdb/image/upload/t_1080p_2x/nqtsfctiapng5xcmozyk.jpg',
+		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar667l.jpg',
+		length: 208,
+		length_unit: 'hours',
 		my_rating: 9,
 	},
 	{
@@ -4212,6 +4260,8 @@ export const sampleSeed: Item[] = [
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/coa93h.jpg',
 		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar4yuh.jpg',
+		length: 212,
+		length_unit: 'hours',
 	},
 	{
 		id: 'game-igdb-96437',
@@ -4276,6 +4326,8 @@ export const sampleSeed: Item[] = [
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/cobt0i.jpg',
 		backdrop:
 			'https://images.igdb.com/igdb/image/upload/t_1080p_2x/dootpbeulmf5yxwqulvx.jpg',
+		length: 201,
+		length_unit: 'hours',
 		my_rating: 8,
 		notes: 'Need to finish the previous one first.',
 	},
@@ -4306,6 +4358,8 @@ export const sampleSeed: Item[] = [
 			'https://images.igdb.com/igdb/image/upload/t_cover_big_2x/coaarl.jpg',
 		thumbnail:
 			'https://images.igdb.com/igdb/image/upload/t_cover_small_2x/coaarl.jpg',
-		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar3lzk.jpg',
+		backdrop: 'https://images.igdb.com/igdb/image/upload/t_1080p_2x/ar666p.jpg',
+		length: 162,
+		length_unit: 'hours',
 	},
 ];
