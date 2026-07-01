@@ -31,6 +31,7 @@
 		"deploy:indexes:prod": "firebase deploy --only firestore:indexes --project prod --config firebase.json"
 	},
 	"dependencies": {
+		"@vueuse/core": "^14.3.0",
 		"@vueuse/router": "14.3.0",
 		"firebase": "12.15.0",
 		"markdown-it": "14.2.0",
