@@ -3,7 +3,6 @@ import type { SearchResult } from '../types/search';
 import { htmlToMarkdown } from '../utils/htmlToMarkdown';
 import { makeBookId } from '../utils/itemId';
 import {
-	cleanCoverUrl,
 	draftDefaults,
 	normalizeTags,
 	round2,
@@ -25,6 +24,27 @@ interface GoogleBooksVolumeInfo {
 export interface GoogleBooksVolume {
 	id: string;
 	volumeInfo?: GoogleBooksVolumeInfo;
+}
+
+// Cover widths in px. Google Books' `imageLinks` only give a ~128px thumbnail,
+// but the same volume's content endpoint serves any width via `fife` — and always
+// for the exact edition search showed (unlike Open Library, which we used to reach
+// for and which routinely returned the wrong edition/language). Cover for the
+// detail view, thumbnail for lists (~matching the other media types).
+const COVER_WIDTH = 640;
+const THUMB_WIDTH = 180;
+
+/**
+ * A Google Books cover URL at the given width, or undefined when the volume has
+ * no cover. Gated on `imageLinks`, because the content endpoint otherwise returns
+ * a generic "image not available" placeholder for coverless volumes.
+ */
+function googleBooksCover(
+	volume: GoogleBooksVolume,
+	width: number,
+): string | undefined {
+	if (!volume.volumeInfo?.imageLinks?.thumbnail) return undefined;
+	return `https://books.google.com/books/content?id=${volume.id}&printsec=frontcover&img=1&fife=w${width}`;
 }
 
 /** Google Books categories are slash/comma-delimited strings → flat tag list. */
@@ -50,9 +70,7 @@ export function mapGoogleBooksSearch(
 			providerId: v.id,
 			title: info.title ?? '(untitled)',
 			year: yearOf(info.publishedDate),
-			thumbnail: cleanCoverUrl(
-				info.imageLinks?.smallThumbnail ?? info.imageLinks?.thumbnail,
-			),
+			thumbnail: googleBooksCover(v, THUMB_WIDTH),
 			subtitle: info.authors?.join(', '),
 		};
 	});
@@ -82,12 +100,8 @@ export function mapGoogleBooksDraft(volume: GoogleBooksVolume): Item {
 	if (info.averageRating && info.averageRating > 0) {
 		item.community_rating = round2(info.averageRating * 2);
 	}
-	const cover = cleanCoverUrl(
-		info.imageLinks?.thumbnail ?? info.imageLinks?.smallThumbnail,
-	);
-	const thumbnail = cleanCoverUrl(
-		info.imageLinks?.smallThumbnail ?? info.imageLinks?.thumbnail,
-	);
+	const cover = googleBooksCover(volume, COVER_WIDTH);
+	const thumbnail = googleBooksCover(volume, THUMB_WIDTH);
 	if (cover) item.cover = cover;
 	if (thumbnail) item.thumbnail = thumbnail;
 	return item;

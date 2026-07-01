@@ -36,7 +36,8 @@ describe('mapGoogleBooksSearch', () => {
 			providerId: 'zyTCAlFPjgYC',
 			title: 'Dune',
 			year: '1965',
-			thumbnail: 'https://books.google.com/books/content?id=z&img=1&zoom=5',
+			thumbnail:
+				'https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&fife=w180',
 			subtitle: 'Frank Herbert',
 		});
 	});
@@ -58,10 +59,23 @@ describe('mapGoogleBooksDraft', () => {
 			'space opera',
 		]);
 		expect(item.metadata).toStrictEqual({ isbn: '9780441172719' }); // prefers ISBN_13
-		// Cover-URL cleanup: https + &edge=curl stripped
+		// Hi-res Google Books cover for the exact edition, built from the volume id.
 		expect(item.cover).toBe(
-			'https://books.google.com/books/content?id=z&img=1&zoom=1',
+			'https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&fife=w640',
+		);
+		expect(item.thumbnail).toBe(
+			'https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&fife=w180',
 		);
 		expect(item.provider).toBe('google-books');
+	});
+
+	it('omits cover and thumbnail when the volume has no images', () => {
+		const noImages: GoogleBooksVolume = {
+			id: 'x',
+			volumeInfo: { title: 'Coverless' },
+		};
+		const item = mapGoogleBooksDraft(noImages);
+		expect(item.cover).toBeUndefined();
+		expect(item.thumbnail).toBeUndefined();
 	});
 });

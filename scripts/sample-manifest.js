@@ -158,7 +158,13 @@ export const manifest = [
 	{ type: 'book', query: 'Neuromancer William Gibson' },
 	{ type: 'book', query: 'Snow Crash Neal Stephenson' },
 	{ type: 'book', query: 'Project Hail Mary Andy Weir' },
-	{ type: 'book', query: "Old Man's War John Scalzi", state: 'backlog' },
+	// Pinned to book 1's volume — the bare query resolves to a boxed set.
+	{
+		type: 'book',
+		providerId: 'iaM7DwAAQBAJ',
+		query: "Old Man's War John Scalzi",
+		state: 'backlog',
+	},
 	{ type: 'book', query: 'The Three-Body Problem Liu Cixin', state: 'backlog' },
 	{ type: 'book', query: 'Blindsight Peter Watts', state: 'backlog' },
 	{
