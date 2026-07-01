@@ -1,7 +1,7 @@
 <template>
 	<section>
 		<p>
-			<NuxtLink to="/">← Backlog</NuxtLink> ·
+			<NuxtLink :to="backlogLink">← Backlog</NuxtLink> ·
 			<NuxtLink to="/history">History</NuxtLink>
 		</p>
 
@@ -138,6 +138,14 @@ const {
 		watch: [id],
 	},
 );
+
+// Return to the backlog filtered to this item's media type. Mirrors the backlog's
+// own query convention (`book` is the default, so it's omitted); falls back to a
+// bare link while the item is still loading.
+const backlogLink = computed(() => {
+	const type = item.value?.type;
+	return type && type !== 'book' ? { path: '/', query: { type } } : '/';
+});
 
 // Entries of the type-specific metadata map, for display.
 const metadataEntries = computed(() =>
