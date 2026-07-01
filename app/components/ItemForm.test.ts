@@ -262,6 +262,64 @@ describe('ItemForm', () => {
 		}); // user-maintained series preserved
 	});
 
+	it('preserves a hand-entered length when a refresh returns none', async () => {
+		const initial: Item = {
+			id: 'game-igdb-1020',
+			type: 'game',
+			title: 'Halo: Combat Evolved',
+			provider: 'igdb',
+			length: 10,
+			length_unit: 'hours',
+			status: 'backlog',
+			is_purchased: false,
+			is_prioritized: false,
+			completed_dates: [],
+			completed_years: [],
+			tags: [],
+			metadata: {},
+		};
+		const wrapper = mount(ItemForm, { props: { mode: 'edit', initial } });
+
+		// IGDB has no time-to-beat for this game, so the draft carries no length.
+		const fresh: Item = {
+			...initial,
+			length: undefined,
+			length_unit: undefined,
+		};
+		(wrapper.vm as InstanceType<typeof ItemForm>).applyProviderFields(fresh);
+		await wrapper.find('form').trigger('submit');
+
+		const item = wrapper.emitted('submit')![0]![0] as Item;
+		expect(item).toHaveLength(10); // hand-entered length preserved
+		expect(item.length_unit).toBe('hours');
+	});
+
+	it('overwrites length when a refresh returns a fresh value', async () => {
+		const initial: Item = {
+			id: 'game-igdb-1020',
+			type: 'game',
+			title: 'Halo: Combat Evolved',
+			provider: 'igdb',
+			length: 10,
+			length_unit: 'hours',
+			status: 'backlog',
+			is_purchased: false,
+			is_prioritized: false,
+			completed_dates: [],
+			completed_years: [],
+			tags: [],
+			metadata: {},
+		};
+		const wrapper = mount(ItemForm, { props: { mode: 'edit', initial } });
+
+		const fresh: Item = { ...initial, length: 12, length_unit: 'hours' };
+		(wrapper.vm as InstanceType<typeof ItemForm>).applyProviderFields(fresh);
+		await wrapper.find('form').trigger('submit');
+
+		const item = wrapper.emitted('submit')![0]![0] as Item;
+		expect(item).toHaveLength(12); // provider length applied
+	});
+
 	it('records a show season title in metadata', async () => {
 		const initial: Item = {
 			id: 'show-tmdb-246-1',

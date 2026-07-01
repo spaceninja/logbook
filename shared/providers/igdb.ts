@@ -101,7 +101,7 @@ export function mapIgdbSearch(games: IgdbGame[]): SearchResult[] {
 	}));
 }
 
-export function mapIgdbDraft(game: IgdbGame): Item {
+export function mapIgdbDraft(game: IgdbGame, timeToBeatSeconds?: number): Item {
 	const item: Item = {
 		id: makeGameId('igdb', game.id),
 		type: 'game',
@@ -132,5 +132,11 @@ export function mapIgdbDraft(game: IgdbGame): Item {
 	if (cover) item.cover = cover;
 	if (thumbnail) item.thumbnail = thumbnail;
 	if (backdrop) item.backdrop = backdrop;
+	// IGDB's time-to-beat estimate is in seconds; round to whole hours. Often
+	// absent (thin coverage) — leave length blank when so.
+	if (timeToBeatSeconds && timeToBeatSeconds > 0) {
+		item.length = Math.round(timeToBeatSeconds / 3600);
+		item.length_unit = 'hours';
+	}
 	return item;
 }

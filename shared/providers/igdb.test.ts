@@ -67,6 +67,23 @@ describe('mapIgdbDraft', () => {
 		const item = mapIgdbDraft({ ...game, artworks: [], screenshots: [] });
 		expect(item.backdrop).toBeUndefined();
 	});
+
+	it('maps a completion time (seconds) to length in whole hours', () => {
+		const item = mapIgdbDraft(game, 27000); // 7.5h → 8h
+		expect(item).toHaveLength(8);
+		expect(item.length_unit).toBe('hours');
+	});
+
+	it('leaves length unset when there is no completion time', () => {
+		const item = mapIgdbDraft(game);
+		expect(item.length).toBeUndefined();
+		expect(item.length_unit).toBeUndefined();
+	});
+
+	it('leaves length unset when the completion time is zero', () => {
+		const item = mapIgdbDraft(game, 0);
+		expect(item.length).toBeUndefined();
+	});
 });
 
 describe('rankIgdbGames', () => {

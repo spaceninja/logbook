@@ -349,8 +349,13 @@ function applyProviderFields(source: Item) {
 	form.backdrop = source.backdrop ?? '';
 	form.release_date = source.release_date ?? '';
 	form.description = source.description ?? '';
-	form.length = numStr(source.length);
-	form.length_unit = source.length_unit ?? defaultUnit(form.type);
+	// length is user-maintainable and the provider's coverage is thin (IGDB
+	// time-to-beat is often absent), so a refresh must not wipe a hand-entered
+	// value — only overwrite when the fresh draft carries a length.
+	if (source.length !== undefined) {
+		form.length = numStr(source.length);
+		form.length_unit = source.length_unit ?? defaultUnit(form.type);
+	}
 	form.community_rating = numStr(source.community_rating);
 	// series and series_number are user-maintained (no provider returns them yet),
 	// so a refresh must not wipe them — only overwrite when the fresh draft carries

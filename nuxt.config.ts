@@ -19,6 +19,10 @@ export default defineNuxtConfig({
 		googleBooksApiKey: '', // NUXT_GOOGLE_BOOKS_API_KEY
 		twitchClientId: '', // NUXT_TWITCH_CLIENT_ID
 		twitchClientSecret: '', // NUXT_TWITCH_CLIENT_SECRET
+		// Which IGDB time-to-beat stat pre-fills a game's length: hastily |
+		// normally | completely. Defaults to normally (main-story pace); forks can
+		// override via NUXT_IGDB_TIME_TO_BEAT_STAT. Unknown values fall back to normally.
+		igdbTimeToBeatStat: 'normally', // NUXT_IGDB_TIME_TO_BEAT_STAT
 		public: {
 			firebase: {
 				apiKey: '',
