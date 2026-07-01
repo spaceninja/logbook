@@ -21,7 +21,7 @@ defineProps<{
 <style scoped>
 ol {
 	display: grid;
-	gap: 1em;
+	gap: 10px;
 	grid-template-columns: repeat(auto-fill, minmax(var(--width-thumb), 1fr));
 	list-style: none;
 	padding: 0;

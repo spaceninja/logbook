@@ -5,7 +5,6 @@
 				v-if="item.thumbnail"
 				:src="item.thumbnail"
 				:alt="`${itemDisplayTitle(item)} cover`"
-				width="125"
 			/>
 		</NuxtLink>
 		<strong class="title">{{ itemDisplayTitle(item) }}</strong>
@@ -94,7 +93,9 @@ li {
 }
 
 img {
+	height: auto;
 	outline: 1px solid light-dark(hotpink, cyan);
+	width: 100%;
 }
 
 .title {

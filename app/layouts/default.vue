@@ -1,28 +1,47 @@
 <template>
-	<header class="site-header">
-		<div class="site-header__inner">
-			<div class="site-logo">
-				<span class="logo">🪵</span> <span class="logotype">Logbook</span>
-			</div>
-			<nav class="site-nav">
-				<NuxtLink to="/">Backlog</NuxtLink>
-				<NuxtLink to="/history">History</NuxtLink>
-				<NuxtLink v-if="showDev" to="/dev">Dev</NuxtLink>
-				<!-- Auth state is client-only; render it client-side to avoid a
+	<div class="page">
+		<header class="site-header">
+			<div class="site-header__inner">
+				<NuxtLink to="/" class="site-logo">
+					<span class="logo">🪵</span> <span class="logotype">Logbook</span>
+				</NuxtLink>
+				<nav class="site-nav">
+					<NuxtLink to="/">Backlog</NuxtLink>
+					<NuxtLink to="/history">History</NuxtLink>
+					<!-- Auth state is client-only; render it client-side to avoid a
 							 hydration mismatch against the logged-out SSR markup. -->
-				<ClientOnly>
-					<template v-if="user">
-						<NuxtLink v-if="isOwner" to="/add">Add</NuxtLink>
-						<UserMenu />
-					</template>
-					<button v-else type="button" @click="login">Log in</button>
-				</ClientOnly>
-			</nav>
-		</div>
-	</header>
-	<main>
-		<slot />
-	</main>
+					<ClientOnly>
+						<template v-if="user">
+							<NuxtLink v-if="isOwner" to="/add" class="add-button">
+								+ Add
+							</NuxtLink>
+							<UserMenu />
+						</template>
+						<button v-else type="button" @click="login">Log in</button>
+					</ClientOnly>
+				</nav>
+			</div>
+		</header>
+		<main class="site-main">
+			<div class="site-main__inner">
+				<slot />
+			</div>
+		</main>
+		<footer class="site-footer">
+			<div class="site-footer__inner">
+				<div class="site-legal">
+					Metadata provided by <a href="https://www.themoviedb.org">TMDB</a>,
+					<a href="https://www.igdb.com">IGDB</a>,
+					<a href="https://books.google.com">Google Books</a>,
+					<a href="https://www.goodreads.com">Goodreads</a>, and
+					<a href="https://www.justwatch.com">JustWatch</a>
+				</div>
+				<nav class="footer-nav">
+					<NuxtLink v-if="showDev" class="button" to="/dev">Dev</NuxtLink>
+				</nav>
+			</div>
+		</footer>
+	</div>
 </template>
 
 <script setup lang="ts">

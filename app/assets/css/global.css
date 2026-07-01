@@ -1,6 +1,11 @@
+/* stylelint-disable plugin/no-low-performance-animation-properties */
 :root {
-	--width-thumb: 125px;
-	--max-width-page: 960px;
+	--width-thumb: 100px;
+	--max-width-page: 1070px;
+
+	@media screen and (width >= 768px) {
+		--width-thumb: 125px;
+	}
 }
 
 /* Respect OS preference by default */
@@ -18,8 +23,32 @@ body {
 	/* Set a --bg custom property using light-dark() */
 	--bg: light-dark(lightblue, black);
 	background: var(--bg);
+	flex-direction: row;
 	font-family: system-ui, sans-serif;
 	margin: 0;
+}
+
+/* stylelint-disable-next-line selector-id-pattern, selector-max-id */
+#__nuxt,
+html,
+body {
+	height: 100%;
+}
+
+.page {
+	display: flex;
+	flex-direction: column;
+	min-height: 100%;
+}
+
+.site-main {
+	flex: 1;
+	padding: 1em;
+}
+
+.site-main__inner {
+	margin-inline: auto;
+	max-width: var(--max-width-page);
 }
 
 /* Force a section to dark regardless of OS preference */
@@ -53,19 +82,81 @@ body {
 	}
 }
 
-.site-header {
+.site-header,
+.site-footer {
+	--color-border: color-mix(in srgb, currentcolor 50%, transparent);
 	background: #333;
 	color: #eee;
+	flex: none;
 	padding: 1em;
+
+	a {
+		color: currentcolor;
+		text-decoration-color: var(--color-border);
+		text-underline-offset: 0.2em;
+		transition: 0.15s ease text-decoration-color;
+
+		&[aria-current='page'] {
+			font-weight: 700;
+		}
+
+		&:hover,
+		&:focus {
+			text-decoration-color: currentcolor;
+			text-decoration-thickness: 2px;
+		}
+	}
+
+	button,
+	.button {
+		appearance: none;
+		background-color: transparent;
+		border: 1.5px solid var(--color-border);
+		border-radius: 2em;
+		color: currentcolor;
+		cursor: pointer;
+		font-size: 0.8em;
+		font-stretch: 110%;
+		font-weight: 600;
+		letter-spacing: 0.1ch;
+		line-height: 1;
+		padding: 0.4em 0.66em 0.33em;
+		text-decoration: none;
+		text-transform: uppercase;
+		transition:
+			0.15s ease background-color,
+			0.15s ease border-color;
+
+		&:hover,
+		&:focus {
+			background-color: color-mix(in srgb, currentcolor 10%, transparent);
+			border-color: currentcolor;
+		}
+	}
 }
 
-.site-header__inner {
+.site-header__inner,
+.site-footer__inner {
+	align-items: center;
 	display: flex;
-	justify-content: space-between;
+	flex-direction: column;
+	gap: 0.33em;
+	margin-inline: auto;
+	max-width: var(--max-width-page);
+
+	@media screen and (width >= 42em) {
+		flex-direction: row;
+		justify-content: space-between;
+	}
+}
+
+.site-footer__inner {
+	gap: 1em;
 }
 
 .site-logo {
 	font-size: 1.5em;
+	text-decoration: none;
 
 	.logotype {
 		font-stretch: 150%;
@@ -85,25 +176,20 @@ body {
 	text-transform: uppercase;
 
 	a {
-		color: currentcolor;
-		text-decoration: none;
+		text-decoration-color: transparent;
 
-		&[aria-current='page'] {
-			font-weight: 700;
+		&:hover,
+		&:focus {
+			text-decoration-color: var(--color-border);
 		}
 	}
+}
 
-	button {
-		appearance: none;
-		background: none;
-		border: 1.5px solid color-mix(in srgb, currentcolor 50%, transparent);
-		border-radius: 2em;
-		color: currentcolor;
-		font-size: 0.8em;
-		font-stretch: 110%;
-		font-weight: 500;
-		letter-spacing: 0.1ch;
-		padding: 0.33em 0.66em;
-		text-transform: uppercase;
+.site-legal {
+	font-size: smaller;
+	text-align: center;
+
+	@media screen and (width >= 42em) {
+		text-align: left;
 	}
 }
