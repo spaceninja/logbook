@@ -1,7 +1,5 @@
 <template>
 	<section>
-		<h1>Backlog</h1>
-
 		<fieldset>
 			<legend>Type</legend>
 			<label v-for="t in MEDIA_TYPES" :key="t">

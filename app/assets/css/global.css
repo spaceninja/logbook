@@ -1,3 +1,8 @@
+:root {
+	--width-thumb: 125px;
+	--max-width-page: 960px;
+}
+
 /* Respect OS preference by default */
 html {
 	color-scheme: light dark;
@@ -13,6 +18,8 @@ body {
 	/* Set a --bg custom property using light-dark() */
 	--bg: light-dark(lightblue, black);
 	background: var(--bg);
+	font-family: system-ui, sans-serif;
+	margin: 0;
 }
 
 /* Force a section to dark regardless of OS preference */
@@ -43,5 +50,60 @@ body {
 	.card-label,
 	.card-body {
 		color: oklch(from var(--bg) 30% 0.1 h);
+	}
+}
+
+.site-header {
+	background: #333;
+	color: #eee;
+	padding: 1em;
+}
+
+.site-header__inner {
+	display: flex;
+	justify-content: space-between;
+}
+
+.site-logo {
+	font-size: 1.5em;
+
+	.logotype {
+		font-stretch: 150%;
+		font-weight: 500;
+		letter-spacing: 0.1ch;
+		text-transform: uppercase;
+	}
+}
+
+.site-nav {
+	align-items: center;
+	display: flex;
+	font-stretch: 110%;
+	font-weight: 500;
+	gap: 0.66em;
+	letter-spacing: 0.1ch;
+	text-transform: uppercase;
+
+	a {
+		color: currentcolor;
+		text-decoration: none;
+
+		&[aria-current='page'] {
+			font-weight: 700;
+		}
+	}
+
+	button {
+		appearance: none;
+		background: none;
+		border: 1.5px solid color-mix(in srgb, currentcolor 50%, transparent);
+		border-radius: 2em;
+		color: currentcolor;
+		font-size: 0.8em;
+		font-stretch: 110%;
+		font-weight: 500;
+		letter-spacing: 0.1ch;
+		padding: 0.33em 0.66em;
+		text-transform: uppercase;
 	}
 }

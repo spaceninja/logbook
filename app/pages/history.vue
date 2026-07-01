@@ -1,6 +1,5 @@
 <template>
 	<section>
-		<h1>History</h1>
 		<label>
 			Year:
 			<select v-model.number="year">

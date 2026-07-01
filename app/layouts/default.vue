@@ -1,26 +1,26 @@
 <template>
-	<div>
-		<header>
-			<nav>
+	<header class="site-header">
+		<div class="site-header__inner">
+			<div class="site-logo">
+				<span class="logo">🪵</span> <span class="logotype">Logbook</span>
+			</div>
+			<nav class="site-nav">
 				<NuxtLink to="/">Backlog</NuxtLink>
 				<NuxtLink to="/history">History</NuxtLink>
 				<NuxtLink v-if="showDev" to="/dev">Dev</NuxtLink>
-
 				<!-- Auth state is client-only; render it client-side to avoid a
-             hydration mismatch against the logged-out SSR markup. -->
+							 hydration mismatch against the logged-out SSR markup. -->
 				<ClientOnly>
 					<NuxtLink v-if="isOwner" to="/add">Add</NuxtLink>
 					<button v-if="isOwner" type="button" @click="logout">Log out</button>
-					<button v-else type="button" @click="login">
-						Log in with GitHub
-					</button>
+					<button v-else type="button" @click="login">Log in</button>
 				</ClientOnly>
 			</nav>
-		</header>
-		<main>
-			<slot />
-		</main>
-	</div>
+		</div>
+	</header>
+	<main>
+		<slot />
+	</main>
 </template>
 
 <script setup lang="ts">
@@ -29,13 +29,3 @@ const showDev = import.meta.dev;
 
 const { isOwner, login, logout } = useAuth();
 </script>
-
-<style>
-:root {
-	--width-thumb: 125px;
-}
-
-body {
-	font-family: system-ui, sans-serif;
-}
-</style>
