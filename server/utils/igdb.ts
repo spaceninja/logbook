@@ -3,13 +3,17 @@ import { $fetch } from 'ofetch';
 import {
 	mapIgdbDraft,
 	mapIgdbSearch,
+	pickTimeToBeat,
 	rankIgdbGames,
+	TIME_TO_BEAT_STATS,
 	type IgdbGame,
+	type IgdbTimeToBeat,
+	type TimeToBeatStat,
 } from '../../shared/providers/igdb';
 import { getIgdbToken } from './igdbToken';
 
 const FIELDS =
-	'name,first_release_date,summary,rating,total_rating_count,cover.image_id,artworks.image_id,screenshots.image_id,genres.name,themes.name,involved_companies.developer,involved_companies.company.name';
+	'name,first_release_date,summary,rating,total_rating_count,cover.image_id,artworks.image_id,artworks.artwork_type,artworks.width,artworks.height,screenshots.image_id,genres.name,themes.name,involved_companies.developer,involved_companies.company.name';
 
 async function igdbQuery<T>(endpoint: string, body: string): Promise<T[]> {
 	const { twitchClientId } = useRuntimeConfig();
@@ -25,11 +29,6 @@ async function igdbQuery<T>(endpoint: string, body: string): Promise<T[]> {
 	});
 }
 
-// IGDB's three time-to-beat stats, all in seconds. Which one pre-fills length is
-// configurable (see nuxt.config.ts); default and fallback is `normally`.
-const TIME_TO_BEAT_STATS = ['hastily', 'normally', 'completely'] as const;
-type TimeToBeatStat = (typeof TIME_TO_BEAT_STATS)[number];
-
 function timeToBeatStat(): TimeToBeatStat {
 	const configured = useRuntimeConfig().igdbTimeToBeatStat;
 	return (TIME_TO_BEAT_STATS as readonly string[]).includes(configured)
@@ -40,16 +39,19 @@ function timeToBeatStat(): TimeToBeatStat {
 /**
  * A game's estimated completion time in seconds from IGDB's `game_time_to_beats`
  * endpoint (its HowLongToBeat-style estimate), for the configured stat — or
- * undefined when IGDB has no submissions for it. Keyed by `game_id`, which
- * matches our draft's IGDB id exactly — no fuzzy title match needed.
+ * undefined when IGDB has no submissions for it, or when `completely` is an
+ * out-of-scale outlier (see pickTimeToBeat). Keyed by `game_id`, which matches
+ * our draft's IGDB id exactly — no fuzzy title match needed.
  */
 async function igdbTimeToBeat(id: string): Promise<number | undefined> {
 	const stat = timeToBeatStat();
-	const [record] = await igdbQuery<Partial<Record<TimeToBeatStat, number>>>(
+	// `completely` also needs `normally` to sanity-check it against.
+	const fields = stat === 'completely' ? 'normally,completely' : stat;
+	const [record] = await igdbQuery<IgdbTimeToBeat>(
 		'game_time_to_beats',
-		`fields ${stat}; where game_id = ${Number(id)};`,
+		`fields ${fields}; where game_id = ${Number(id)};`,
 	);
-	return record?.[stat];
+	return pickTimeToBeat(record, stat);
 }
 
 export async function igdbSearch(q: string) {
