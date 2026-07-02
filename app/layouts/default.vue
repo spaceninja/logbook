@@ -13,11 +13,23 @@
 					<ClientOnly>
 						<template v-if="user">
 							<NuxtLink v-if="isOwner" to="/add" class="add-button">
-								+ Add
+								<svg width="12" height="12" viewBox="0 0 32 32">
+									<path
+										d="M28 12h-8V4a4 4 0 1 0-8 0v8H4a4 4 0 1 0 0 8h8v8a4 4 0 1 0 8 0v-8h8a4 4 0 1 0 0-8"
+									/>
+								</svg>
+								<span>Add</span>
 							</NuxtLink>
 							<UserMenu />
 						</template>
-						<button v-else type="button" @click="login">Log in</button>
+						<button
+							v-else
+							type="button"
+							class="button button--reset"
+							@click="login"
+						>
+							Log in
+						</button>
 					</ClientOnly>
 				</nav>
 			</div>

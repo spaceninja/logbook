@@ -3,6 +3,13 @@
 	--width-thumb: 100px;
 	--max-width-page: 1070px;
 
+	/* colors */
+	--color-currentcolor-10: color-mix(in srgb, currentcolor, transparent 90%);
+	--color-currentcolor-20: color-mix(in srgb, currentcolor, transparent 80%);
+	--color-currentcolor-50: color-mix(in srgb, currentcolor, transparent 50%);
+	--color-currentcolor-80: color-mix(in srgb, currentcolor, transparent 20%);
+	--color-border: var(--color-currentcolor-50);
+
 	@media screen and (width >= 768px) {
 		--width-thumb: 125px;
 	}
@@ -11,6 +18,64 @@
 /* Respect OS preference by default */
 html {
 	color-scheme: light dark;
+	-webkit-font-smoothing: antialiased;
+	hanging-punctuation: first allow-end last;
+	overflow-wrap: break-word;
+	/* stylelint-disable-next-line property-no-vendor-prefix */
+	-webkit-text-size-adjust: none;
+	text-size-adjust: none;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+img {
+	display: block;
+	height: auto;
+	width: 100%;
+}
+
+a {
+	text-decoration-color: var(--color-border);
+	text-underline-offset: 2px;
+
+	&:hover,
+	&:focus {
+		text-decoration-color: currentcolor;
+	}
+}
+
+[hidden] {
+	display: none !important;
+}
+
+.visually-hidden:not(:focus, :active) {
+	clip-path: inset(50%);
+	height: 1px;
+	overflow: hidden;
+	position: absolute;
+	white-space: nowrap;
+	width: 1px;
+}
+
+:focus-visible {
+	outline-offset: 2px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	text-wrap: balance;
+}
+
+p {
+	text-wrap: pretty;
 }
 
 @property --contrast-color {
@@ -82,9 +147,21 @@ body {
 	}
 }
 
+button {
+	cursor: pointer;
+}
+
+.button--reset {
+	appearance: none;
+	background-color: transparent;
+	border: none;
+	color: currentcolor;
+	font: inherit;
+	padding: 0;
+}
+
 .site-header,
 .site-footer {
-	--color-border: color-mix(in srgb, currentcolor 50%, transparent);
 	background: #333;
 	color: #eee;
 	flex: none;
@@ -107,20 +184,14 @@ body {
 		}
 	}
 
-	button,
 	.button {
-		appearance: none;
-		background-color: transparent;
 		border: 1.5px solid var(--color-border);
 		border-radius: 2em;
-		color: currentcolor;
-		cursor: pointer;
 		font-size: 0.8em;
 		font-stretch: 110%;
 		font-weight: 600;
 		letter-spacing: 0.1ch;
-		line-height: 1;
-		padding: 0.4em 0.66em 0.33em;
+		padding: 0.33em 0.66em;
 		text-decoration: none;
 		text-transform: uppercase;
 		transition:
@@ -129,7 +200,7 @@ body {
 
 		&:hover,
 		&:focus {
-			background-color: color-mix(in srgb, currentcolor 10%, transparent);
+			background-color: var(--color-currentcolor-10);
 			border-color: currentcolor;
 		}
 	}
@@ -181,6 +252,28 @@ body {
 		&:hover,
 		&:focus {
 			text-decoration-color: var(--color-border);
+		}
+	}
+
+	.add-button {
+		align-items: center;
+		background: #00ac1c;
+		border-radius: 2em;
+		color: white;
+		display: flex;
+		font-size: 0.9em;
+		font-weight: 700;
+		gap: 0.5em;
+		padding: 0.4em 1em;
+		text-decoration: none;
+
+		&:hover,
+		&:focus {
+			background: #009d1a;
+		}
+
+		svg {
+			fill: currentcolor;
 		}
 	}
 }
