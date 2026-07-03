@@ -9,7 +9,7 @@ describe('app', () => {
 		// which the app shell needs — NuxtLayout/NuxtPage read the current route.
 		await renderSuspended(app);
 		// Scope to the layout's <nav> so we don't collide with in-page links.
-		const nav = within(screen.getByRole('navigation'));
+		const nav = within(screen.getByRole('navigation', { name: 'primary' }));
 		expect(nav.getByRole('link', { name: 'Backlog' })).toBeInTheDocument();
 		expect(nav.getByRole('link', { name: 'History' })).toBeInTheDocument();
 	});

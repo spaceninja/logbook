@@ -5,7 +5,7 @@
 				<NuxtLink to="/" class="site-logo">
 					<span class="logo">🪵</span> <span class="logotype">Logbook</span>
 				</NuxtLink>
-				<nav class="site-nav">
+				<nav aria-label="primary" class="site-nav">
 					<NuxtLink to="/">Backlog</NuxtLink>
 					<NuxtLink to="/history">History</NuxtLink>
 					<!-- Auth state is client-only; render it client-side to avoid a
