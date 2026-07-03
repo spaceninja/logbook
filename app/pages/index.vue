@@ -1,33 +1,19 @@
 <template>
-	<section>
-		<fieldset>
-			<legend>Type</legend>
-			<label v-for="t in MEDIA_TYPES" :key="t">
-				<input v-model="type" type="radio" :value="t" />
-				{{ t }}
-			</label>
-		</fieldset>
-
-		<!-- Data comes from the client-only Firestore SDK, so render it client-side
-         to avoid hydrating against the empty SSR default. -->
-		<ClientOnly>
-			<template #fallback>
-				<p>Loading…</p>
-			</template>
-			<ItemControls
-				v-model:sort-key="sortKey"
-				v-model:reversed="reversed"
-				:sort-keys="sortKeys"
-				:filter-keys="FILTER_KEYS"
-				:filters="filters"
-				@update:filter="setFilter"
-			/>
-			<p v-if="pending">Loading…</p>
-			<p v-else-if="error">Failed to load backlog: {{ error.message }}</p>
-			<p v-else-if="displayed.length === 0">Nothing in the backlog.</p>
-			<ItemCardList v-else :items="displayed" view="backlog" />
-		</ClientOnly>
-	</section>
+	<ItemBrowser
+		v-model:type="type"
+		v-model:sort-key="sortKey"
+		v-model:reversed="reversed"
+		:sort-keys="sortKeys"
+		:filter-keys="FILTER_KEYS"
+		:filters="filters"
+		:pending="pending"
+		:error="error"
+		:displayed="displayed"
+		view="backlog"
+		empty-message="Nothing in the backlog."
+		error-message="Failed to load backlog"
+		@update:filter="setFilter"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -88,13 +74,7 @@ const {
 	data: items,
 	pending,
 	error,
-} = useAsyncData(backlogKey, () => getBacklog(type.value), {
-	server: false,
-	lazy: true,
-	default: () => [],
-	watch: [type],
-	...readCacheOptions(),
-});
+} = useItemQuery(backlogKey, () => getBacklog(type.value), [type]);
 
 const { displayed } = useItemList(items, {
 	sortKey,
