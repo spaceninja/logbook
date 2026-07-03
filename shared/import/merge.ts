@@ -49,14 +49,45 @@ export function toContribution(record: ImportRecord): ImportContribution {
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
+/** Normalize an ISO date/datetime to a `YYYY-MM-DD` day, or undefined if invalid. */
+function toDay(value: string): string | undefined {
+	const day = value.slice(0, 10);
+	return DAY.test(day) ? day : undefined;
+}
+
 /** Union of ISO dates, normalized to `YYYY-MM-DD`, deduped, sorted ascending. */
 function unionDates(existing: string[], incoming: string[]): string[] {
 	const days = new Set<string>();
 	for (const value of [...existing, ...incoming]) {
-		const day = value.slice(0, 10);
-		if (DAY.test(day)) days.add(day);
+		const day = toDay(value);
+		if (day) days.add(day);
 	}
 	return [...days].sort();
+}
+
+/**
+ * The merged completion dates. Existing dates that match an import-generated
+ * fallback (`replaceableDays`) are dropped first, so switching the date fallback
+ * replaces the old placeholder rather than stacking. Real dates are then unioned
+ * in; if nothing remains, the chosen `fallbackDate` backfills a single date.
+ */
+function mergeDates(current: Item, contribution: ImportContribution): string[] {
+	const replaceable = new Set(
+		(contribution.replaceableDays ?? [])
+			.map(toDay)
+			.filter((day): day is string => day !== undefined),
+	);
+	const kept = current.completed_dates.filter((date) => {
+		const day = toDay(date);
+		return day === undefined || !replaceable.has(day);
+	});
+
+	const dates = unionDates(kept, contribution.completedDates);
+	if (dates.length === 0 && contribution.fallbackDate) {
+		const day = toDay(contribution.fallbackDate);
+		if (day) return [day];
+	}
+	return dates;
 }
 
 function mergeRating(
@@ -75,8 +106,11 @@ function mergeStatus(
 	contribution: ImportContribution,
 	mergedDates: string[],
 ): ItemStatus {
-	// A completion is authoritative — a history record's status always wins.
-	if (contribution.completedDates.length > 0) return contribution.status;
+	// A completion is authoritative — a history record's status always wins
+	// (keyed on the status itself, since a fallback record carries no real dates).
+	if (contribution.status === 'complete' || contribution.status === 'dnf') {
+		return contribution.status;
+	}
 	// A backlog record must not demote an item that already has completions.
 	if (mergedDates.length > 0) return current.status;
 	return contribution.status;
@@ -91,10 +125,7 @@ export function applyContribution(
 	current: Item,
 	contribution: ImportContribution,
 ): Item {
-	const completed_dates = unionDates(
-		current.completed_dates,
-		contribution.completedDates,
-	);
+	const completed_dates = mergeDates(current, contribution);
 	const my_rating = mergeRating(current, contribution);
 
 	const merged: Item = {

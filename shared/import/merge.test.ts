@@ -202,6 +202,74 @@ describe('applyContribution — is_purchased & protected fields', () => {
 	});
 });
 
+describe('applyContribution — fallback dates', () => {
+	it('backfills the fallback date when the item has no completion', () => {
+		const merged = applyContribution(
+			makeItem(),
+			makeContribution({
+				status: 'complete',
+				completedDates: [],
+				fallbackDate: '2025-01-03',
+				replaceableDays: ['2024-06-15', '2025-01-03', '2010-05-27'],
+			}),
+		);
+		expect(merged.completed_dates).toStrictEqual(['2025-01-03']);
+		expect(merged.status).toBe('complete');
+	});
+
+	it('replaces a prior fallback date instead of stacking a second one', () => {
+		// The item already holds a last-updated fallback; re-importing with the
+		// release-date choice should swap it, not add a second completion.
+		const merged = applyContribution(
+			makeItem({
+				status: 'complete',
+				completed_dates: ['2025-01-03'],
+				completed_years: [2025],
+			}),
+			makeContribution({
+				status: 'complete',
+				completedDates: [],
+				fallbackDate: '2010-05-27',
+				replaceableDays: ['2024-06-15', '2025-01-03', '2010-05-27'],
+			}),
+		);
+		expect(merged.completed_dates).toStrictEqual(['2010-05-27']);
+	});
+
+	it('keeps a real completion date and drops the stale fallback', () => {
+		const merged = applyContribution(
+			makeItem({
+				status: 'complete',
+				completed_dates: ['2025-01-03'],
+				completed_years: [2025],
+			}),
+			makeContribution({
+				status: 'complete',
+				completedDates: ['2022-07-30'],
+				replaceableDays: ['2024-06-15', '2025-01-03', '2010-05-27'],
+			}),
+		);
+		expect(merged.completed_dates).toStrictEqual(['2022-07-30']);
+	});
+
+	it('does not backfill when a real date already survives the strip', () => {
+		const merged = applyContribution(
+			makeItem({
+				status: 'complete',
+				completed_dates: ['2021-05-05'],
+				completed_years: [2021],
+			}),
+			makeContribution({
+				status: 'complete',
+				completedDates: [],
+				fallbackDate: '2010-05-27',
+				replaceableDays: ['2024-06-15', '2025-01-03', '2010-05-27'],
+			}),
+		);
+		expect(merged.completed_dates).toStrictEqual(['2021-05-05']);
+	});
+});
+
 describe('applyContribution — idempotency', () => {
 	it('is stable when the same contribution is applied twice', () => {
 		const contribution = makeContribution({

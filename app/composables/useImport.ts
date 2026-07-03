@@ -64,20 +64,32 @@ function effectiveContribution(
 	dateFallback: DateFallback,
 ): ImportContribution {
 	const contribution = toContribution(record);
-	if (record.section !== 'history' || contribution.completedDates.length > 0) {
-		return contribution;
-	}
+	if (record.section !== 'history') return contribution; // backlog: no dates
+
+	// This item's import-generated fallback candidates — an existing completion
+	// date matching one is a stale placeholder the merge may replace.
 	const added = record.addedDate;
 	const updated = record.updatedDate;
 	const release = base.release_date;
+	const replaceableDays = [added, updated, release].filter(
+		(day): day is string => Boolean(day),
+	);
+
+	// A real completion date from the export: union it (stripping stale fallbacks).
+	if (contribution.completedDates.length > 0) {
+		return { ...contribution, replaceableDays };
+	}
+
+	// Undated completion: backfill the chosen fallback, preferring the user's pick
+	// but taking whichever date is available.
 	const order =
 		dateFallback === 'release'
 			? [release, added, updated]
 			: dateFallback === 'updated'
 				? [updated, added, release]
 				: [added, updated, release];
-	const chosen = order.find(Boolean);
-	return chosen ? { ...contribution, completedDates: [chosen] } : contribution;
+	const fallbackDate = order.find(Boolean);
+	return { ...contribution, replaceableDays, fallbackDate };
 }
 
 /** A diagnostic reason for a failed enrichment: the error message and any status code. */

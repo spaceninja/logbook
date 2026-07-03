@@ -85,7 +85,21 @@ export interface ImportRecord {
  */
 export interface ImportContribution {
 	status: ItemStatus;
+	/** Real completion dates from the export; unioned into the item. */
 	completedDates: string[];
+	/**
+	 * A date to backfill an undated completion, applied only if the item has no
+	 * completion date left after merging. The chosen date fallback for a history
+	 * record the export left undated.
+	 */
+	fallbackDate?: string;
+	/**
+	 * Days that were (or would be) import-generated fallbacks for this item — its
+	 * date-added / last-updated / release day. Any existing completion date
+	 * matching one is stripped before merging, so changing the date-fallback
+	 * choice replaces the old placeholder instead of stacking a second date (#20).
+	 */
+	replaceableDays?: string[];
 	myRating?: number;
 	isPurchased?: boolean;
 	ratingAuthority: RatingAuthority;
