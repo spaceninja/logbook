@@ -81,11 +81,19 @@
 			<h2>Import complete</h2>
 			<p>
 				{{ summary.created }} created, {{ summary.updated }} updated<span
-					v-if="summary.skipped"
+					v-if="summary.skipped.length"
 				>
-					, {{ summary.skipped }} skipped</span
+					, {{ summary.skipped.length }} skipped</span
 				>.
 			</p>
+			<details v-if="summary.skipped.length">
+				<summary>{{ summary.skipped.length }} skipped</summary>
+				<ul>
+					<li v-for="(item, i) in summary.skipped" :key="i">
+						{{ item.title }} — {{ item.reason }}
+					</li>
+				</ul>
+			</details>
 			<p>
 				<button type="button" @click="reset">Import more</button>
 				<NuxtLink to="/">Done</NuxtLink>

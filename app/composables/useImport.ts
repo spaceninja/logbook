@@ -18,8 +18,15 @@ export interface ImportProgress {
 export interface ImportSummary {
 	created: number;
 	updated: number;
-	/** Records we couldn't resolve/enrich (search-only hints, or a failed lookup). */
-	skipped: number;
+	/** Items we couldn't resolve/enrich (search-only hints, or a failed lookup). */
+	skipped: { title: string; reason: string }[];
+}
+
+/** A short reason string for a failed enrichment, including the status code. */
+function describeError(error: unknown): string {
+	const status = error as { statusCode?: number; status?: number };
+	const code = status?.statusCode ?? status?.status;
+	return code ? `Lookup failed (${code})` : 'Lookup failed';
 }
 
 /** How many item ids to enrich in parallel. Keeps provider APIs from being hammered. */
@@ -95,12 +102,12 @@ export function useImport() {
 		// Group the enabled records by their target item id; bucket records that
 		// need a search (no direct id) as skipped for now.
 		const groups = new Map<string, ImportRecord[]>();
-		let skipped = 0;
+		const skipped: ImportSummary['skipped'] = [];
 		for (const record of records) {
 			if (!sections.includes(record.section)) continue;
 			const id = resolveDirectId(record.resolve);
 			if (!id) {
-				skipped++;
+				skipped.push({ title: record.title, reason: 'Needs manual matching' });
 				continue;
 			}
 			const existing = groups.get(id);
@@ -130,11 +137,17 @@ export function useImport() {
 						if (built.isNew) created++;
 						else updated++;
 					} else {
-						skipped += group.length;
+						skipped.push({
+							title: group[0]!.title,
+							reason: 'No by-id lookup for this source',
+						});
 					}
-				} catch {
+				} catch (error) {
 					// A single failed lookup shouldn't abort the whole import.
-					skipped += group.length;
+					skipped.push({
+						title: group[0]!.title,
+						reason: describeError(error),
+					});
 				}
 				processed++;
 				report();
