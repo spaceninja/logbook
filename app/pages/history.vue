@@ -13,12 +13,12 @@
 		error-message="Failed to load history"
 	>
 		<template #controls>
-			<label>
-				Year:
-				<select v-model.number="year">
+			<div class="filter year-switcher">
+				<label for="year-switcher">Year</label>
+				<select id="year-switcher" v-model.number="year">
 					<option v-for="y in years" :key="y" :value="y">{{ y }}</option>
 				</select>
-			</label>
+			</div>
 		</template>
 	</ItemBrowser>
 </template>

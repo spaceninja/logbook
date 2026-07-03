@@ -1,27 +1,30 @@
 <template>
-	<div class="item-controls">
-		<label>
-			Sort
-			<select v-model="sortKey">
-				<option v-for="k in sortKeys" :key="k" :value="k">
-					{{ SORT_LABELS[k] }}
-				</option>
-			</select>
-		</label>
-
+	<div class="filter sort-by">
+		<label for="sort-by">Sort</label>
+		<select id="sort-by" v-model="sortKey">
+			<option v-for="k in sortKeys" :key="k" :value="k">
+				{{ SORT_LABELS[k] }}
+			</option>
+		</select>
 		<label>
 			<input v-model="reversed" type="checkbox" />
 			Reverse
 		</label>
+	</div>
 
-		<label v-for="k in filterKeys" :key="k">
+	<div v-for="k in filterKeys" :key="k" :class="`filter filter-${k}`">
+		<label :for="k">
 			{{ FILTER_LABELS[k] }}
-			<select :value="filters[k] ?? 'all'" @change="onFilterChange(k, $event)">
-				<option v-for="s in FILTER_STATES" :key="s.value" :value="s.value">
-					{{ s.label }}
-				</option>
-			</select>
 		</label>
+		<select
+			:id="k"
+			:value="filters[k] ?? 'all'"
+			@change="onFilterChange(k, $event)"
+		>
+			<option v-for="s in FILTER_STATES" :key="s.value" :value="s.value">
+				{{ s.label }}
+			</option>
+		</select>
 	</div>
 </template>
 

@@ -1,31 +1,34 @@
+<!--
+	Data comes from the client-only Firestore SDK, so we render some
+	parts client-side to avoid hydrating against the empty SSR default.
+-->
 <template>
 	<section>
-		<!-- View-specific controls (e.g. the History year switcher) render above the
-		     type selector; the Backlog leaves this empty. -->
-		<slot name="controls" />
-
-		<fieldset>
-			<legend>Type</legend>
-			<label v-for="t in MEDIA_TYPES" :key="t">
-				<input v-model="type" type="radio" :value="t" />
-				{{ t }}
-			</label>
-		</fieldset>
-
-		<!-- Data comes from the client-only Firestore SDK, so render it client-side
-		     to avoid hydrating against the empty SSR default. -->
+		<header class="controls">
+			<!-- Media type switcher -->
+			<fieldset class="type-switcher">
+				<legend>Type</legend>
+				<label v-for="t in mediaTypes" :key="t">
+					<input v-model="type" type="radio" :value="t" />
+					{{ t }}
+				</label>
+			</fieldset>
+			<!-- View-specific controls (e.g. the History year switcher) -->
+			<slot name="controls" />
+			<!-- Sort and filter controls -->
+			<ClientOnly>
+				<ItemControls
+					v-model:sort-key="sortKey"
+					v-model:reversed="reversed"
+					:sort-keys="sortKeys"
+					:filter-keys="filterKeys"
+					:filters="filters"
+					@update:filter="(k, s) => emit('update:filter', k, s)"
+				/>
+			</ClientOnly>
+		</header>
 		<ClientOnly>
-			<template #fallback>
-				<p>Loading…</p>
-			</template>
-			<ItemControls
-				v-model:sort-key="sortKey"
-				v-model:reversed="reversed"
-				:sort-keys="sortKeys"
-				:filter-keys="filterKeys"
-				:filters="filters"
-				@update:filter="(k, s) => emit('update:filter', k, s)"
-			/>
+			<template #fallback><p>Loading…</p></template>
 			<p v-if="pending">Loading…</p>
 			<p v-else-if="error">{{ errorMessage }}: {{ error.message }}</p>
 			<p v-else-if="displayed.length === 0">{{ emptyMessage }}</p>
@@ -43,35 +46,24 @@ import type {
 } from '~~/shared/utils/itemFilter';
 import type { SortKey } from '~~/shared/utils/itemSort';
 
-const MEDIA_TYPES: MediaType[] = ['book', 'movie', 'show', 'game'];
+const mediaTypes: MediaType[] = ['book', 'movie', 'show', 'game'];
 
-withDefaults(
-	defineProps<{
-		/** Sort keys offered for the current view/type. */
-		sortKeys: SortKey[];
-		/** Filter keys to expose; empty means no filters (History today). */
-		filterKeys?: FilterKey[];
-		/** Active filter states, passed through to ItemControls. */
-		filters?: ItemFilters;
-		/** Async-read flags from useItemQuery. */
-		pending: boolean;
-		error?: { message: string } | null;
-		/** The refined list to render (sorted + filtered by the page). */
-		displayed: Item[];
-		view: 'history' | 'backlog';
-		/** Scopes ItemCard rendering to the selected History year. */
-		year?: number;
-		/** Shown when the read succeeds but nothing matches. */
-		emptyMessage: string;
-		/** Prefixes the read error message. */
-		errorMessage: string;
-	}>(),
-	{
-		filterKeys: () => [],
-		filters: () => ({}),
-		year: undefined,
-	},
-);
+const {
+	filterKeys = [],
+	filters = {},
+	year = undefined,
+} = defineProps<{
+	sortKeys: SortKey[];
+	filterKeys?: FilterKey[];
+	filters?: ItemFilters;
+	pending: boolean;
+	error?: { message: string } | null;
+	displayed: Item[];
+	view: 'history' | 'backlog';
+	year?: number;
+	emptyMessage: string;
+	errorMessage: string;
+}>();
 
 const emit = defineEmits<{
 	'update:filter': [key: FilterKey, state: FilterState];
@@ -81,3 +73,15 @@ const type = defineModel<MediaType>('type', { required: true });
 const sortKey = defineModel<SortKey>('sortKey', { required: true });
 const reversed = defineModel<boolean>('reversed', { required: true });
 </script>
+
+<style scoped>
+.controls {
+	align-items: center;
+	display: flex;
+	gap: 1em;
+}
+
+.type-switcher {
+	margin-right: auto;
+}
+</style>
