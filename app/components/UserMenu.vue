@@ -22,11 +22,6 @@
 			</span>
 		</button>
 		<ul class="user-menu__list" :hidden="!isOpen">
-			<li v-if="isOwner" class="user-menu__item">
-				<NuxtLink to="/import" class="user-menu__link" @click="close">
-					Import
-				</NuxtLink>
-			</li>
 			<li class="user-menu__item">
 				<button
 					type="button"
@@ -43,7 +38,7 @@
 <script setup lang="ts">
 import { onClickOutside, onKeyStroke } from '@vueuse/core';
 
-const { user, isOwner, logout } = useAuth();
+const { user, logout } = useAuth();
 
 const isOpen = ref(false);
 const navEl = ref<HTMLElement | null>(null);

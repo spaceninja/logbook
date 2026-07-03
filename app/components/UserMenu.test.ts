@@ -45,14 +45,6 @@ describe('UserMenu', () => {
 		expect(button).toHaveAttribute('aria-expanded', 'false');
 	});
 
-	it('offers the owner an Import link', async () => {
-		await renderSuspended(UserMenu);
-
-		await fireEvent.click(screen.getByRole('button', { name: 'Account menu' }));
-		const link = screen.getByRole('link', { name: 'Import' });
-		expect(link).toHaveAttribute('href', '/import');
-	});
-
 	it('calls logout when the Log out item is chosen', async () => {
 		await renderSuspended(UserMenu);
 
