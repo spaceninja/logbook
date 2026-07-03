@@ -3,6 +3,7 @@ import {
 	collection,
 	deleteDoc,
 	doc,
+	documentId,
 	getDoc,
 	getDocs,
 	query,
@@ -109,6 +110,37 @@ export function useItems() {
 	}
 
 	/**
+	 * Fetch many items by id in one batched pass, for the importer's existence
+	 * check. Firestore caps a `documentId() in [...]` query at 30 values, so ids
+	 * are chunked; missing ids simply don't appear in the result. This replaces
+	 * hundreds of individual `getDoc`s — far fewer reads, and far less exposure to
+	 * the long-poll stalls that a per-item read hits under bulk load (#20). Each
+	 * chunk is retried a few times so a transient stall doesn't fail the import.
+	 */
+	async function getItemsByIds(ids: string[]): Promise<Map<string, Item>> {
+		const found = new Map<string, Item>();
+		for (let start = 0; start < ids.length; start += 30) {
+			const chunk = ids.slice(start, start + 30);
+			for (let attempt = 1; ; attempt++) {
+				try {
+					const snapshot = await withTimeout(
+						getDocs(query(items(), where(documentId(), 'in', chunk))),
+						'Loading existing items',
+					);
+					for (const found_doc of snapshot.docs) {
+						found.set(found_doc.id, found_doc.data() as Item);
+					}
+					break;
+				} catch (error) {
+					if (attempt >= 3) throw error;
+					await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+				}
+			}
+		}
+		return found;
+	}
+
+	/**
 	 * Create or replace an item (used by both add and edit). `completed_years` is
 	 * recomputed from `completed_dates` so the stored value can't drift. Owner-only
 	 * by Firestore rules; callers gate the UI on `isOwner`.
@@ -196,6 +228,7 @@ export function useItems() {
 		getHistory,
 		getCompletionYears,
 		getItem,
+		getItemsByIds,
 		saveItem,
 		saveItems,
 		deleteItem,

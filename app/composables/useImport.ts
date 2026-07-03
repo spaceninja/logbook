@@ -77,14 +77,18 @@ function draftRequest(
  * updates in place without duplicating.
  */
 export function useImport() {
-	const { getItem, saveItems } = useItems();
+	const { getItemsByIds, saveItems } = useItems();
 
-	/** Resolve, enrich, and merge one id's records into a single item to write. */
+	/**
+	 * Merge one id's records onto its base item. `existing` is the current
+	 * Firestore doc (from the batched prefetch) or undefined for a brand-new id,
+	 * which is enriched via `/api/draft`. Returns null when a new id can't be
+	 * enriched by id alone (Goodreads/search — added in later rounds).
+	 */
 	async function buildItem(
-		id: string,
+		existing: Item | undefined,
 		group: ImportRecord[],
 	): Promise<{ item: Item; isNew: boolean } | null> {
-		const existing = await getItem(id);
 		let base: Item;
 		let isNew: boolean;
 
@@ -108,19 +112,19 @@ export function useImport() {
 	}
 
 	/**
-	 * `buildItem` with a few retries and backoff. The Firestore read (long-polling
-	 * in this app) and the provider lookup can both blip transiently under the
-	 * load of a bulk import; retrying recovers nearly all of those. A `null`
-	 * return (no by-id lookup for this source) is deterministic, not an error, so
-	 * it is passed through without retrying.
+	 * `buildItem` with a few retries and backoff. Enrichment (`/api/draft`) can
+	 * blip transiently under bulk load; retrying recovers nearly all of those. A
+	 * `null` return (no by-id lookup for this source) is deterministic, not an
+	 * error, so it is passed through without retrying. Existing items no longer
+	 * touch the network here — they were prefetched in one batch.
 	 */
 	async function buildItemResilient(
-		id: string,
+		existing: Item | undefined,
 		group: ImportRecord[],
 	): Promise<{ item: Item; isNew: boolean } | null> {
 		for (let attempt = 1; ; attempt++) {
 			try {
-				return await buildItem(id, group);
+				return await buildItem(existing, group);
 			} catch (error) {
 				if (attempt >= ITEM_ATTEMPTS) throw error;
 				await sleep(400 * attempt);
@@ -160,12 +164,17 @@ export function useImport() {
 			onProgress({ total: ids.length, processed, created, updated });
 		report();
 
+		// Prefetch every existing item in one batched pass so the worker loop does
+		// no per-item Firestore reads (those stall under long-poll load). On a
+		// re-import almost everything is already here, so no enrichment runs at all.
+		const existingItems = await getItemsByIds(ids);
+
 		async function worker(): Promise<void> {
 			while (cursor < ids.length) {
 				const id = ids[cursor++]!;
 				const group = groups.get(id)!;
 				try {
-					const built = await buildItemResilient(id, group);
+					const built = await buildItemResilient(existingItems.get(id), group);
 					if (built) {
 						toWrite.push(built.item);
 						if (built.isNew) created++;
