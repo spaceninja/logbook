@@ -34,6 +34,7 @@
 		"@vueuse/core": "^14.3.0",
 		"@vueuse/router": "14.3.0",
 		"firebase": "12.15.0",
+		"jszip": "^3.10.1",
 		"markdown-it": "14.2.0",
 		"nuxt": "4.4.8",
 		"vue": "3.5.39",

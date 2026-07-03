@@ -76,3 +76,24 @@ export interface ImportContribution {
 	isPurchased?: boolean;
 	ratingAuthority: RatingAuthority;
 }
+
+/**
+ * An export's files as `basename → text`. Loose uploads and unzipped archive
+ * entries both land here, so a parser finds the files it needs by name pattern
+ * regardless of how the user supplied them.
+ */
+export type ImportFileMap = Map<string, string>;
+
+/** What a service parser returns from a set of export files. */
+export interface ParseResult {
+	records: ImportRecord[];
+	/** Rows we could not import, surfaced in the preview (e.g. missing provider id). */
+	skipped: { title: string; reason: string }[];
+}
+
+/** A service's parser: pure `files → records`, unit-tested against fixtures. */
+export interface ServiceParser {
+	source: ImportSource;
+	label: string;
+	parse: (files: ImportFileMap) => ParseResult;
+}

@@ -8,6 +8,7 @@ import {
 	query,
 	setDoc,
 	where,
+	writeBatch,
 	type Firestore,
 } from 'firebase/firestore';
 import type { Item, MediaType } from '~~/shared/types/item';
@@ -138,6 +139,52 @@ export function useItems() {
 		clearReadCache();
 	}
 
+	/**
+	 * Bulk create/replace items for the importer. Writes in chunked `writeBatch`es
+	 * (Firestore caps a batch at 500 ops) and mirrors `saveItem`'s per-doc
+	 * normalization (`completed_years`, `creator_sort`). The `completionYears`
+	 * aggregate is folded once per media type and the read cache cleared once —
+	 * not per item — so a large import stays cheap. Owner-only by Firestore rules.
+	 */
+	async function saveItems(itemsToSave: Item[]): Promise<void> {
+		if (itemsToSave.length === 0) return;
+		const database = db();
+
+		for (let start = 0; start < itemsToSave.length; start += 500) {
+			const batch = writeBatch(database);
+			for (const item of itemsToSave.slice(start, start + 500)) {
+				const creatorSort =
+					item.creator_sort ?? deriveCreatorSort(item.creator, item.type);
+				const record: Item = {
+					...item,
+					completed_years: deriveCompletedYears(item.completed_dates),
+					...(creatorSort ? { creator_sort: creatorSort } : {}),
+				};
+				batch.set(doc(items(), item.id), record);
+			}
+			await batch.commit();
+		}
+
+		// Fold every completion year into its type's bucket, one merge per type.
+		const yearsByType = new Map<MediaType, Set<number>>();
+		for (const item of itemsToSave) {
+			const years = deriveCompletedYears(item.completed_dates);
+			if (years.length === 0) continue;
+			const bucket = yearsByType.get(item.type) ?? new Set<number>();
+			for (const year of years) bucket.add(year);
+			yearsByType.set(item.type, bucket);
+		}
+		for (const [type, years] of yearsByType) {
+			await setDoc(
+				completionYearsDoc(),
+				{ [type]: arrayUnion(...years) },
+				{ merge: true },
+			);
+		}
+
+		clearReadCache();
+	}
+
 	/** Delete an item by id. Owner-only by Firestore rules. */
 	async function deleteItem(id: string): Promise<void> {
 		await deleteDoc(doc(items(), id));
@@ -150,6 +197,7 @@ export function useItems() {
 		getCompletionYears,
 		getItem,
 		saveItem,
+		saveItems,
 		deleteItem,
 	};
 }
