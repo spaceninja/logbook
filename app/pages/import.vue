@@ -68,22 +68,34 @@
 
 		<!-- Running. -->
 		<template v-else-if="step === 'running'">
-			<h2>Importing…</h2>
-			<progress :value="progress.processed" :max="progress.total || 1" />
-			<p>
-				{{ progress.processed }} / {{ progress.total }} —
-				{{ progress.created }} new, {{ progress.updated }} updated
-			</p>
+			<template v-if="progress.phase === 'reading'">
+				<h2>Checking your library…</h2>
+				<progress />
+				<p>Looking up {{ progress.total }} existing items.</p>
+			</template>
+			<template v-else-if="progress.phase === 'saving'">
+				<h2>Saving…</h2>
+				<progress />
+				<p>Writing {{ progress.created + progress.updated }} changes.</p>
+			</template>
+			<template v-else>
+				<h2>Importing…</h2>
+				<progress :value="progress.processed" :max="progress.total || 1" />
+				<p>
+					{{ progress.processed }} / {{ progress.total }} —
+					{{ progress.created }} new, {{ progress.updated }} updated,
+					{{ progress.unchanged }} unchanged
+				</p>
+			</template>
 		</template>
 
 		<!-- Done. -->
 		<template v-else-if="step === 'done' && summary">
 			<h2>Import complete</h2>
 			<p>
-				{{ summary.created }} created, {{ summary.updated }} updated<span
-					v-if="summary.skipped.length"
-				>
-					, {{ summary.skipped.length }} skipped</span
+				{{ summary.created }} created, {{ summary.updated }} updated,
+				{{ summary.unchanged }} unchanged<span v-if="summary.skipped.length"
+					>, {{ summary.skipped.length }} skipped</span
 				>.
 			</p>
 			<details v-if="summary.skipped.length">
@@ -125,10 +137,12 @@ const skipped = ref<{ title: string; reason: string }[]>([]);
 const importHistory = ref(true);
 const importBacklog = ref(true);
 const progress = ref<ImportProgress>({
+	phase: 'reading',
 	total: 0,
 	processed: 0,
 	created: 0,
 	updated: 0,
+	unchanged: 0,
 });
 const summary = ref<ImportSummary | null>(null);
 

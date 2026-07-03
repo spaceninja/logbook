@@ -7,19 +7,47 @@ import type {
 } from '~~/shared/import/types';
 import type { Item, MediaType } from '~~/shared/types/item';
 
+/**
+ * Which stage the import is in, so the UI can show something during the phases
+ * with no per-item progress: `reading` (batched existence prefetch) and `saving`
+ * (the bulk write) bracket the per-item `importing` loop.
+ */
+export type ImportPhase = 'reading' | 'importing' | 'saving';
+
 /** Live progress for the importer's progress bar. `total` counts unique items. */
 export interface ImportProgress {
+	phase: ImportPhase;
 	total: number;
 	processed: number;
 	created: number;
 	updated: number;
+	unchanged: number;
 }
 
 export interface ImportSummary {
 	created: number;
 	updated: number;
+	/** Existing items whose merged result was identical — not re-written. */
+	unchanged: number;
 	/** Items we couldn't resolve/enrich (search-only hints, or a failed lookup). */
 	skipped: { title: string; reason: string }[];
+}
+
+/** Whether the merge changed any import-owned field vs the existing doc. */
+function importChanged(existing: Item, merged: Item): boolean {
+	return (
+		existing.status !== merged.status ||
+		existing.my_rating !== merged.my_rating ||
+		existing.is_purchased !== merged.is_purchased ||
+		!sameDates(existing.completed_dates, merged.completed_dates)
+	);
+}
+
+/** Compare completion dates as sets — order is not significant. */
+function sameDates(a: string[], b: string[]): boolean {
+	if (a.length !== b.length) return false;
+	const set = new Set(a);
+	return b.every((date) => set.has(date));
 }
 
 /** A diagnostic reason for a failed enrichment: the error message and any status code. */
@@ -155,13 +183,22 @@ export function useImport() {
 
 		const ids = [...groups.keys()];
 		const toWrite: Item[] = [];
+		let phase: ImportPhase = 'reading';
 		let processed = 0;
 		let created = 0;
 		let updated = 0;
+		let unchanged = 0;
 		let cursor = 0;
 
 		const report = () =>
-			onProgress({ total: ids.length, processed, created, updated });
+			onProgress({
+				phase,
+				total: ids.length,
+				processed,
+				created,
+				updated,
+				unchanged,
+			});
 		report();
 
 		// Prefetch every existing item in one batched pass so the worker loop does
@@ -169,21 +206,30 @@ export function useImport() {
 		// re-import almost everything is already here, so no enrichment runs at all.
 		const existingItems = await getItemsByIds(ids);
 
+		phase = 'importing';
+		report();
+
 		async function worker(): Promise<void> {
 			while (cursor < ids.length) {
 				const id = ids[cursor++]!;
 				const group = groups.get(id)!;
+				const existing = existingItems.get(id);
 				try {
-					const built = await buildItemResilient(existingItems.get(id), group);
-					if (built) {
-						toWrite.push(built.item);
-						if (built.isNew) created++;
-						else updated++;
-					} else {
+					const built = await buildItemResilient(existing, group);
+					if (!built) {
 						skipped.push({
 							title: group[0]!.title,
 							reason: 'No by-id lookup for this source',
 						});
+					} else if (built.isNew) {
+						toWrite.push(built.item);
+						created++;
+					} else if (existing && importChanged(existing, built.item)) {
+						// Only re-write existing docs whose merged result actually differs.
+						toWrite.push(built.item);
+						updated++;
+					} else {
+						unchanged++;
 					}
 				} catch (error) {
 					// A single failed lookup shouldn't abort the whole import.
@@ -201,8 +247,10 @@ export function useImport() {
 			Array.from({ length: Math.min(CONCURRENCY, ids.length) }, worker),
 		);
 
+		phase = 'saving';
+		report();
 		await saveItems(toWrite);
-		return { created, updated, skipped };
+		return { created, updated, unchanged, skipped };
 	}
 
 	return { runImport };
