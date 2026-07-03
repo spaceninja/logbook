@@ -22,15 +22,28 @@ export interface ImportSummary {
 	skipped: { title: string; reason: string }[];
 }
 
-/** A short reason string for a failed enrichment, including the status code. */
+/** A diagnostic reason for a failed enrichment: the error message and any status code. */
 function describeError(error: unknown): string {
-	const status = error as { statusCode?: number; status?: number };
-	const code = status?.statusCode ?? status?.status;
-	return code ? `Lookup failed (${code})` : 'Lookup failed';
+	const e = error as {
+		statusCode?: number;
+		status?: number;
+		statusMessage?: string;
+		message?: string;
+	};
+	const code = e?.statusCode ?? e?.status;
+	const message = e?.statusMessage || e?.message || 'Lookup failed';
+	return code ? `${message} (${code})` : message;
 }
 
 /** How many item ids to enrich in parallel. Keeps provider APIs from being hammered. */
 const CONCURRENCY = 4;
+
+/** Attempts per item before giving up — absorbs transient read/lookup blips. */
+const ITEM_ATTEMPTS = 3;
+
+function sleep(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 /**
  * Turn a resolve hint into an `/api/draft` request (by-id enrichment). Returns
@@ -94,6 +107,27 @@ export function useImport() {
 		return { item, isNew };
 	}
 
+	/**
+	 * `buildItem` with a few retries and backoff. The Firestore read (long-polling
+	 * in this app) and the provider lookup can both blip transiently under the
+	 * load of a bulk import; retrying recovers nearly all of those. A `null`
+	 * return (no by-id lookup for this source) is deterministic, not an error, so
+	 * it is passed through without retrying.
+	 */
+	async function buildItemResilient(
+		id: string,
+		group: ImportRecord[],
+	): Promise<{ item: Item; isNew: boolean } | null> {
+		for (let attempt = 1; ; attempt++) {
+			try {
+				return await buildItem(id, group);
+			} catch (error) {
+				if (attempt >= ITEM_ATTEMPTS) throw error;
+				await sleep(400 * attempt);
+			}
+		}
+	}
+
 	async function runImport(
 		records: ImportRecord[],
 		sections: ImportSection[],
@@ -131,7 +165,7 @@ export function useImport() {
 				const id = ids[cursor++]!;
 				const group = groups.get(id)!;
 				try {
-					const built = await buildItem(id, group);
+					const built = await buildItemResilient(id, group);
 					if (built) {
 						toWrite.push(built.item);
 						if (built.isNew) created++;
