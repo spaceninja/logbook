@@ -54,6 +54,7 @@ export default defineNuxtConfig({
 	vite: {
 		optimizeDeps: {
 			include: [
+				'@vueuse/core',
 				'@vueuse/router',
 				'firebase/app',
 				'firebase/firestore',
