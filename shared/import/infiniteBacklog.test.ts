@@ -36,15 +36,24 @@ describe('parseInfiniteBacklog — collection history', () => {
 		});
 	});
 
-	it('falls back to Last updated when there is no completion date', () => {
-		const { records } = parseInfiniteBacklog(
-			collection(
-				'2539,Alpha Protocol,2010-05-27,Played,Completed,Owned,,,2025-01-03T23:29:43.000Z,',
-			),
-		);
+	it('leaves an undated completion empty but carries the fallback dates', () => {
+		// Columns: IGDB ID,Game name,release,Status,Completion,Ownership,Playtime,
+		//          Completion date,Last updated,Rating — plus Date added appended.
+		const files = new Map([
+			[
+				'InfiniteBacklog_GameCollection_2026-07-02.csv',
+				[
+					COLLECTION_HEADER + ',Date added',
+					'2539,Alpha Protocol,2010-05-27,Played,Completed,Owned,,,2025-01-03T23:29:43.000Z,,2024-06-15T00:00:00.000Z',
+				].join('\n'),
+			],
+		]);
+		const { records } = parseInfiniteBacklog(files);
 		expect(records[0]).toMatchObject({
 			status: 'complete',
-			completedDates: ['2025-01-03'],
+			completedDates: [],
+			addedDate: '2024-06-15',
+			updatedDate: '2025-01-03',
 		});
 		expect(records[0]?.myRating).toBeUndefined();
 	});

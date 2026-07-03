@@ -31,6 +31,13 @@ export type ImportSection = 'history' | 'backlog';
 export type RatingAuthority = 'overwrite' | 'fill';
 
 /**
+ * How to date a completed item the export left undated, chosen by the user on
+ * the import screen (issue #20). `added`/`updated` use the export's date-added /
+ * last-updated; `release` uses the item's (enriched) release date.
+ */
+export type DateFallback = 'added' | 'updated' | 'release';
+
+/**
  * How to resolve a record's target item id and fetch its metadata. Every
  * variant but `tmdb-movie-search` yields a deterministic id with no network
  * call (see `resolveDirectId`); the search variant needs a TMDB title+year
@@ -56,6 +63,13 @@ export interface ImportRecord {
 	status: ItemStatus;
 	/** ISO dates/datetimes; normalized to day and unioned at merge time. */
 	completedDates: string[];
+	/**
+	 * The export's date-added / last-updated for this row, used to date an undated
+	 * completion per the user's chosen fallback. An empty completion on a history
+	 * record marks a completed-but-undated item for the pipeline to fill.
+	 */
+	addedDate?: string;
+	updatedDate?: string;
 	/** Owner rating already normalized to the 0–10 scale, if the export had one. */
 	myRating?: number;
 	/** True when the export signals ownership (IB `Owned`, Goodreads `Owned Copies > 0`). */

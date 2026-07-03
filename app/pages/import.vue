@@ -51,6 +51,24 @@
 					</label>
 				</li>
 			</ul>
+			<fieldset v-if="importHistory && undatedHistoryCount">
+				<legend>
+					Date for {{ undatedHistoryCount }} completed items with no completion
+					date
+				</legend>
+				<label>
+					<input v-model="dateFallback" type="radio" value="added" />
+					Date added
+				</label>
+				<label>
+					<input v-model="dateFallback" type="radio" value="updated" />
+					Last updated
+				</label>
+				<label>
+					<input v-model="dateFallback" type="radio" value="release" />
+					Release date
+				</label>
+			</fieldset>
 			<p v-if="skipped.length">
 				{{ skipped.length }} rows skipped (no provider id).
 			</p>
@@ -116,7 +134,11 @@
 
 <script setup lang="ts">
 import { resolveDirectId } from '~~/shared/import/resolve';
-import type { ImportRecord, ImportSection } from '~~/shared/import/types';
+import type {
+	DateFallback,
+	ImportRecord,
+	ImportSection,
+} from '~~/shared/import/types';
 import { collectFiles, IMPORT_SERVICES } from '~~/app/utils/import';
 import type {
 	ImportProgress,
@@ -136,6 +158,7 @@ const records = ref<ImportRecord[]>([]);
 const skipped = ref<{ title: string; reason: string }[]>([]);
 const importHistory = ref(true);
 const importBacklog = ref(true);
+const dateFallback = ref<DateFallback>('updated');
 const progress = ref<ImportProgress>({
 	phase: 'reading',
 	total: 0,
@@ -160,6 +183,12 @@ const backlogCount = computed(
 );
 const unresolvedCount = computed(
 	() => records.value.filter((r) => resolveDirectId(r.resolve) === null).length,
+);
+const undatedHistoryCount = computed(
+	() =>
+		records.value.filter(
+			(r) => r.section === 'history' && r.completedDates.length === 0,
+		).length,
 );
 const selectedCount = computed(
 	() =>
@@ -203,9 +232,14 @@ async function run() {
 	if (importHistory.value) sections.push('history');
 	if (importBacklog.value) sections.push('backlog');
 	try {
-		summary.value = await runImport(records.value, sections, (p) => {
-			progress.value = p;
-		});
+		summary.value = await runImport(
+			records.value,
+			sections,
+			dateFallback.value,
+			(p) => {
+				progress.value = p;
+			},
+		);
 		step.value = 'done';
 	} catch (e) {
 		error.value = (e as Error).message;

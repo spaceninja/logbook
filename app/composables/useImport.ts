@@ -1,6 +1,8 @@
 import { applyContribution, toContribution } from '~~/shared/import/merge';
 import { resolveDirectId } from '~~/shared/import/resolve';
 import type {
+	DateFallback,
+	ImportContribution,
 	ImportRecord,
 	ImportSection,
 	ResolveHint,
@@ -48,6 +50,34 @@ function sameDates(a: string[], b: string[]): boolean {
 	if (a.length !== b.length) return false;
 	const set = new Set(a);
 	return b.every((date) => set.has(date));
+}
+
+/**
+ * The contribution for a record, dating an undated completion with the user's
+ * chosen fallback — the export's date-added / last-updated, or the item's
+ * (enriched) release date — preferring the chosen source but taking whichever is
+ * available. The merge engine day-normalizes the result.
+ */
+function effectiveContribution(
+	record: ImportRecord,
+	base: Item,
+	dateFallback: DateFallback,
+): ImportContribution {
+	const contribution = toContribution(record);
+	if (record.section !== 'history' || contribution.completedDates.length > 0) {
+		return contribution;
+	}
+	const added = record.addedDate;
+	const updated = record.updatedDate;
+	const release = base.release_date;
+	const order =
+		dateFallback === 'release'
+			? [release, added, updated]
+			: dateFallback === 'updated'
+				? [updated, added, release]
+				: [added, updated, release];
+	const chosen = order.find(Boolean);
+	return chosen ? { ...contribution, completedDates: [chosen] } : contribution;
 }
 
 /** A diagnostic reason for a failed enrichment: the error message and any status code. */
@@ -116,6 +146,7 @@ export function useImport() {
 	async function buildItem(
 		existing: Item | undefined,
 		group: ImportRecord[],
+		dateFallback: DateFallback,
 	): Promise<{ item: Item; isNew: boolean } | null> {
 		let base: Item;
 		let isNew: boolean;
@@ -134,7 +165,10 @@ export function useImport() {
 
 		let item = base;
 		for (const record of group) {
-			item = applyContribution(item, toContribution(record));
+			item = applyContribution(
+				item,
+				effectiveContribution(record, base, dateFallback),
+			);
 		}
 		return { item, isNew };
 	}
@@ -149,10 +183,11 @@ export function useImport() {
 	async function buildItemResilient(
 		existing: Item | undefined,
 		group: ImportRecord[],
+		dateFallback: DateFallback,
 	): Promise<{ item: Item; isNew: boolean } | null> {
 		for (let attempt = 1; ; attempt++) {
 			try {
-				return await buildItem(existing, group);
+				return await buildItem(existing, group, dateFallback);
 			} catch (error) {
 				if (attempt >= ITEM_ATTEMPTS) throw error;
 				await sleep(400 * attempt);
@@ -163,6 +198,7 @@ export function useImport() {
 	async function runImport(
 		records: ImportRecord[],
 		sections: ImportSection[],
+		dateFallback: DateFallback,
 		onProgress: (progress: ImportProgress) => void,
 	): Promise<ImportSummary> {
 		// Group the enabled records by their target item id; bucket records that
@@ -215,7 +251,7 @@ export function useImport() {
 				const group = groups.get(id)!;
 				const existing = existingItems.get(id);
 				try {
-					const built = await buildItemResilient(existing, group);
+					const built = await buildItemResilient(existing, group, dateFallback);
 					if (!built) {
 						skipped.push({
 							title: group[0]!.title,

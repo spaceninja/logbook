@@ -66,11 +66,15 @@ function collectionRecord(
 		year: yearOf(row['Game release date']),
 		isPurchased: (row['Ownership'] ?? '').trim() === 'Owned',
 		myRating: parseRating(row['Rating (Score)']),
+		// Carried for the user's date fallbacks on undated completions.
+		addedDate: isoDay(row['Date added']),
+		updatedDate: isoDay(row['Last updated']),
 	};
 
 	if (finished) {
-		// Most finished games lack a completion date; fall back to Last updated.
-		const day = isoDay(row['Completion date']) ?? isoDay(row['Last updated']);
+		// Most finished games lack a completion date; leave undated ones empty for
+		// the pipeline to fill per the user's chosen date fallback.
+		const day = isoDay(row['Completion date']);
 		return {
 			...shared,
 			section: 'history',
