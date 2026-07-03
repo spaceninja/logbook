@@ -15,7 +15,35 @@ import { getIgdbToken } from './igdbToken';
 const FIELDS =
 	'name,first_release_date,summary,rating,total_rating_count,cover.image_id,artworks.image_id,artworks.artwork_type,artworks.width,artworks.height,screenshots.image_id,genres.name,themes.name,involved_companies.developer,involved_companies.company.name';
 
-async function igdbQuery<T>(endpoint: string, body: string): Promise<T[]> {
+// IGDB caps clients at ~4 requests/second. A bulk import (each game draft makes
+// two IGDB calls) blows past that under any concurrency, so serialize every call
+// through a single per-instance chain spaced by a min interval, and retry the
+// occasional 429 with backoff. ~280ms keeps us comfortably under the ceiling.
+const IGDB_MIN_INTERVAL_MS = 280;
+const IGDB_MAX_RETRIES = 4;
+
+let igdbChain: Promise<unknown> = Promise.resolve();
+
+function sleep(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRateLimited(error: unknown): boolean {
+	const status = error as { status?: number; response?: { status?: number } };
+	return status?.status === 429 || status?.response?.status === 429;
+}
+
+/** Queue a call onto the IGDB chain so calls never overlap or exceed the rate. */
+function scheduleIgdb<T>(task: () => Promise<T>): Promise<T> {
+	const result = igdbChain.then(task, task);
+	// Advance the chain after this call settles + the spacing interval, so the
+	// next queued call starts no sooner than the interval regardless of outcome.
+	const settle = () => sleep(IGDB_MIN_INTERVAL_MS);
+	igdbChain = result.then(settle, settle);
+	return result;
+}
+
+async function igdbRequest<T>(endpoint: string, body: string): Promise<T[]> {
 	const { twitchClientId } = useRuntimeConfig();
 	const token = await getIgdbToken();
 	return $fetch<T[]>(`https://api.igdb.com/v4/${endpoint}`, {
@@ -26,6 +54,22 @@ async function igdbQuery<T>(endpoint: string, body: string): Promise<T[]> {
 			Accept: 'application/json',
 		},
 		body,
+	});
+}
+
+async function igdbQuery<T>(endpoint: string, body: string): Promise<T[]> {
+	return scheduleIgdb(async () => {
+		for (let attempt = 0; ; attempt++) {
+			try {
+				return await igdbRequest<T>(endpoint, body);
+			} catch (error) {
+				if (attempt < IGDB_MAX_RETRIES && isRateLimited(error)) {
+					await sleep(IGDB_MIN_INTERVAL_MS * 2 ** attempt);
+					continue;
+				}
+				throw error;
+			}
+		}
 	});
 }
 
@@ -47,11 +91,17 @@ async function igdbTimeToBeat(id: string): Promise<number | undefined> {
 	const stat = timeToBeatStat();
 	// `completely` also needs `normally` to sanity-check it against.
 	const fields = stat === 'completely' ? 'normally,completely' : stat;
-	const [record] = await igdbQuery<IgdbTimeToBeat>(
-		'game_time_to_beats',
-		`fields ${fields}; where game_id = ${Number(id)};`,
-	);
-	return pickTimeToBeat(record, stat);
+	try {
+		const [record] = await igdbQuery<IgdbTimeToBeat>(
+			'game_time_to_beats',
+			`fields ${fields}; where game_id = ${Number(id)};`,
+		);
+		return pickTimeToBeat(record, stat);
+	} catch {
+		// Length is optional metadata — never let it fail a draft (e.g. a stray
+		// 429 during a bulk import). Fall back to no length.
+		return undefined;
+	}
 }
 
 export async function igdbSearch(q: string) {
