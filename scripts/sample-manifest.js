@@ -96,6 +96,7 @@ export const manifest = [
 	},
 	{
 		type: 'book',
+		providerId: 'OtPhEAAAQBAJ',
 		query: 'Look to Windward Iain Banks',
 		series: 'Culture',
 		series_number: 5,
@@ -117,18 +118,21 @@ export const manifest = [
 	// The Lord of the Rings — Tolkien
 	{
 		type: 'book',
+		providerId: 'xFr92V2k3PIC',
 		query: 'The Fellowship of the Ring Tolkien',
 		series: 'The Lord of the Rings',
 		series_number: 1,
 	},
 	{
 		type: 'book',
+		providerId: '12e8PJ2T7sQC',
 		query: 'The Two Towers Tolkien',
 		series: 'The Lord of the Rings',
 		series_number: 2,
 	},
 	{
 		type: 'book',
+		providerId: 'WZ0f_yUgc0UC',
 		query: 'The Return of the King Tolkien',
 		series: 'The Lord of the Rings',
 		series_number: 3,
@@ -155,10 +159,19 @@ export const manifest = [
 		series_number: 3,
 	},
 	// Singletons / other sci-fi
-	{ type: 'book', query: 'Foundation Isaac Asimov', year: 1951 },
+	{
+		type: 'book',
+		providerId: 'IgGOEAAAQBAJ',
+		query: 'Foundation Isaac Asimov',
+		year: 1951,
+	},
 	{ type: 'book', query: 'Hyperion Dan Simmons' },
 	{ type: 'book', query: 'Neuromancer William Gibson' },
-	{ type: 'book', query: 'Snow Crash Neal Stephenson' },
+	{
+		type: 'book',
+		providerId: 'RMd3GpIFxcUC',
+		query: 'Snow Crash Neal Stephenson',
+	},
 	{ type: 'book', query: 'Project Hail Mary Andy Weir' },
 	// Pinned to book 1's volume — the bare query resolves to a boxed set.
 	{
@@ -185,7 +198,12 @@ export const manifest = [
 		query: 'The Way of Kings Brandon Sanderson',
 		state: 'in_progress',
 	},
-	{ type: 'book', query: 'Pride and Prejudice Jane Austen', state: 'dnf' },
+	{
+		type: 'book',
+		providerId: 'ertAPgAACAAJ',
+		query: 'Pride and Prejudice Jane Austen',
+		state: 'dnf',
+	},
 
 	// ============================ MOVIES ====================================
 	// The Lord of the Rings
