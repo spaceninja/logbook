@@ -93,12 +93,10 @@
 			/>
 		</label>
 
-		<label>
-			Provider
-			<select v-model="form.provider">
-				<option v-for="p in PROVIDERS" :key="p" :value="p">{{ p }}</option>
-			</select>
-		</label>
+		<!-- Data source is provenance, not an editable field: it's the id namespace
+		     (e.g. a book's id is book-goodreads-…) and the refresh key, so changing
+		     it only desyncs those. Shown read-only; it round-trips on submit. -->
+		<p>Data source: {{ form.provider }}</p>
 
 		<label>
 			Recommended by
@@ -235,14 +233,6 @@ const emit = defineEmits<{ submit: [item: Item] }>();
 const MEDIA_TYPES: MediaType[] = ['book', 'movie', 'show', 'game'];
 const STATUSES: ItemStatus[] = ['backlog', 'in_progress', 'complete', 'dnf'];
 const LENGTH_UNITS: LengthUnit[] = ['pages', 'min', 'episodes', 'hours'];
-const PROVIDERS: Provider[] = [
-	'manual',
-	'tmdb',
-	'igdb',
-	'goodreads',
-	'google-books',
-	'open-library',
-];
 
 // Form state mirrors the schema but holds inputs as strings (numbers parsed on
 // submit), so empty inputs are easy to detect and omit.
@@ -272,6 +262,8 @@ interface FormState {
 	series: string;
 	series_number: string;
 	isbn: string;
+	/** Google Books volume id — carried (not user-editable) so a save keeps the book's refresh handle. */
+	google_books_id: string;
 	show_tmdb_id: string;
 	season_number: string;
 	season_title: string;
@@ -321,6 +313,7 @@ function initialForm(): FormState {
 		series: str(m.series),
 		series_number: numStr(m.series_number),
 		isbn: str(m.isbn),
+		google_books_id: str(m.google_books_id),
 		show_tmdb_id: numStr(m.show_tmdb_id),
 		season_number: numStr(m.season_number),
 		season_title: str(m.season_title),
@@ -364,6 +357,7 @@ function applyProviderFields(source: Item) {
 	if (m.series_number !== undefined)
 		form.series_number = numStr(m.series_number);
 	form.isbn = str(m.isbn);
+	form.google_books_id = str(m.google_books_id);
 	form.show_tmdb_id = numStr(m.show_tmdb_id);
 	form.season_number = numStr(m.season_number);
 	form.season_title = str(m.season_title);
@@ -426,6 +420,8 @@ function assembleMetadata(): ItemMetadata {
 		case 'book': {
 			const meta: Record<string, string | number> = { ...seriesMeta() };
 			if (form.isbn.trim()) meta.isbn = form.isbn.trim();
+			if (form.google_books_id.trim())
+				meta.google_books_id = form.google_books_id.trim();
 			return meta;
 		}
 		case 'movie':

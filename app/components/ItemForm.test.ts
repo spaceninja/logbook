@@ -202,6 +202,75 @@ describe('ItemForm', () => {
 		);
 	});
 
+	it('keeps a book’s google_books_id and provider across an edit', async () => {
+		const initial: Item = {
+			id: 'book-goodreads-75319056',
+			type: 'book',
+			title: 'System Collapse',
+			provider: 'goodreads',
+			status: 'complete',
+			is_purchased: false,
+			is_prioritized: false,
+			completed_dates: [],
+			completed_years: [],
+			tags: [],
+			metadata: { isbn: '9781250826985', google_books_id: 'abc123' },
+		};
+		const { emitted } = render(ItemForm, { props: { mode: 'edit', initial } });
+
+		// The data source is shown read-only, not as an editable control.
+		expect(screen.queryByLabelText('Provider')).toBeNull();
+
+		await fireEvent.update(screen.getByLabelText('Title'), 'System Collapse!');
+		await submitForm();
+
+		const item = (emitted().submit as [Item][])[0]![0];
+		expect(item.provider).toBe('goodreads'); // provenance round-trips
+		// The Google Books refresh handle survives a metadata rebuild on save.
+		expect(item.metadata).toStrictEqual({
+			isbn: '9781250826985',
+			google_books_id: 'abc123',
+		});
+	});
+
+	it('adopts a new google_books_id when a fresh volume is applied', async () => {
+		const initial: Item = {
+			id: 'book-goodreads-1',
+			type: 'book',
+			title: 'Old Edition',
+			provider: 'goodreads',
+			status: 'backlog',
+			is_purchased: false,
+			is_prioritized: false,
+			completed_dates: [],
+			completed_years: [],
+			tags: [],
+			metadata: { google_books_id: 'old' },
+		};
+		const wrapper = mount(ItemForm, { props: { mode: 'edit', initial } });
+
+		// A draft for the chosen edition carries the new volume id in metadata.
+		const fresh: Item = {
+			...initial,
+			id: 'book-google-books-new',
+			provider: 'google-books',
+			title: 'New Edition',
+			cover: 'https://example.com/new.jpg',
+			metadata: { google_books_id: 'new', isbn: '9780000000002' },
+		};
+		(wrapper.vm as InstanceType<typeof ItemForm>).applyProviderFields(fresh);
+		await wrapper.find('form').trigger('submit');
+
+		const item = wrapper.emitted('submit')![0]![0] as Item;
+		expect(item.id).toBe('book-goodreads-1'); // id unchanged
+		expect(item.provider).toBe('goodreads'); // provider unchanged
+		expect(item.cover).toBe('https://example.com/new.jpg'); // metadata repointed
+		expect(item.metadata).toStrictEqual({
+			google_books_id: 'new',
+			isbn: '9780000000002',
+		});
+	});
+
 	it('stores movie series metadata', async () => {
 		const { emitted } = render(ItemForm, {
 			props: { mode: 'create', initialType: 'movie' },

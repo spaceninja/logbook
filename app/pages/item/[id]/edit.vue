@@ -7,12 +7,30 @@
 			<p v-else-if="error">Failed to load item: {{ error.message }}</p>
 			<p v-else-if="!item">Item not found.</p>
 			<template v-else>
-				<p v-if="canRefresh">
-					<button type="button" :disabled="refreshing" @click="onRefresh">
+				<p>
+					<button
+						v-if="canRefresh"
+						type="button"
+						:disabled="refreshing"
+						@click="onRefresh"
+					>
 						{{ refreshing ? 'Refreshing…' : 'Refresh metadata' }}
+					</button>
+					<button
+						v-if="item.type === 'book'"
+						type="button"
+						@click="choosingEdition = !choosingEdition"
+					>
+						Choose edition
 					</button>
 					<span v-if="refreshError" role="alert"> {{ refreshError }}</span>
 				</p>
+				<BookEditionPicker
+					v-if="choosingEdition && item.type === 'book'"
+					:initial-query="editionQuery"
+					@select="onChooseEdition"
+					@cancel="choosingEdition = false"
+				/>
 				<p v-if="saveError" role="alert">Failed to save: {{ saveError }}</p>
 				<ItemForm
 					ref="formRef"
@@ -26,7 +44,8 @@
 </template>
 
 <script setup lang="ts">
-import type { Item, ShowMetadata } from '~~/shared/types/item';
+import type { BookMetadata, Item, ShowMetadata } from '~~/shared/types/item';
+import type { SearchResult } from '~~/shared/types/search';
 
 definePageMeta({ middleware: 'owner' });
 
@@ -55,10 +74,21 @@ const formRef = useTemplateRef('formRef');
 const saveError = ref('');
 const refreshing = ref(false);
 const refreshError = ref('');
+const choosingEdition = ref(false);
 
+// Refresh is available whenever we can build a provider lookup for the item —
+// which for books means a stored Google Books volume id (see draftParams).
 const canRefresh = computed(
-	() => !!item.value?.provider && item.value.provider !== 'manual',
+	() => !!item.value && draftParams(item.value) !== null,
 );
+
+/** A title+author query to seed the edition picker. */
+const editionQuery = computed(() => {
+	const it = item.value;
+	if (!it) return '';
+	const author = Array.isArray(it.creator) ? it.creator[0] : it.creator;
+	return [it.title, author].filter(Boolean).join(' ');
+});
 
 /** Build /api/draft params for an item, or null if it isn't provider-sourced. */
 function draftParams(it: Item): Record<string, string | number> | null {
@@ -66,6 +96,14 @@ function draftParams(it: Item): Record<string, string | number> | null {
 	if (it.type === 'show') {
 		const meta = it.metadata as ShowMetadata;
 		return { type: 'show', id: meta.show_tmdb_id, season: meta.season_number };
+	}
+	// Books enrich from Google Books, whose volume id can't be recovered from the
+	// (Goodreads-namespaced) item id, so it's stored in metadata instead.
+	if (it.type === 'book') {
+		const meta = it.metadata as BookMetadata;
+		return meta.google_books_id
+			? { type: 'book', id: meta.google_books_id }
+			: null;
 	}
 	// Native provider id is the id with the `<type>-<provider>-` prefix removed.
 	const prefix = `${it.type}-${it.provider}-`;
@@ -86,6 +124,25 @@ async function onRefresh() {
 		refreshError.value = 'Could not refresh metadata from the provider.';
 	} finally {
 		refreshing.value = false;
+	}
+}
+
+/**
+ * Repoint a book at a different Google Books volume: pull that volume's draft and
+ * overwrite only the provider-sourced fields (cover, description, google_books_id,
+ * …), leaving the item's id/provider and the user's own fields untouched. The
+ * change is staged in the form and persisted on save like any edit.
+ */
+async function onChooseEdition(result: SearchResult) {
+	refreshError.value = '';
+	try {
+		const draft = await $fetch<Item>('/api/draft', {
+			params: { type: 'book', id: result.providerId },
+		});
+		formRef.value?.applyProviderFields(draft);
+		choosingEdition.value = false;
+	} catch {
+		refreshError.value = 'Could not load that edition.';
 	}
 }
 
