@@ -27,6 +27,14 @@ export interface BookMetadata {
 	series?: string;
 	series_number?: number;
 	isbn?: string;
+	/**
+	 * Google Books volume id — the handle for refreshing a book's metadata or
+	 * switching which edition it's sourced from. Books identify by a different
+	 * provider than they enrich from (id is the Goodreads Book Id; metadata comes
+	 * from Google Books), so unlike other media the refresh key can't be recovered
+	 * from the item id and is stored here instead (like a show's `show_tmdb_id`).
+	 */
+	google_books_id?: string;
 }
 
 // Movies carry only optional series/franchise info; `creator` holds the director.

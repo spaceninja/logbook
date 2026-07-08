@@ -92,15 +92,16 @@ function effectiveContribution(
 	return { ...contribution, replaceableDays, fallbackDate };
 }
 
+/** The HTTP status of a failed `$fetch`, if it carried one. */
+function statusOf(error: unknown): number | undefined {
+	const e = error as { statusCode?: number; status?: number };
+	return e?.statusCode ?? e?.status;
+}
+
 /** A diagnostic reason for a failed enrichment: the error message and any status code. */
 function describeError(error: unknown): string {
-	const e = error as {
-		statusCode?: number;
-		status?: number;
-		statusMessage?: string;
-		message?: string;
-	};
-	const code = e?.statusCode ?? e?.status;
+	const e = error as { statusMessage?: string; message?: string };
+	const code = statusOf(error);
 	const message = e?.statusMessage || e?.message || 'Lookup failed';
 	return code ? `${message} (${code})` : message;
 }
@@ -117,8 +118,8 @@ function sleep(ms: number): Promise<void> {
 
 /**
  * Turn a resolve hint into an `/api/draft` request (by-id enrichment). Returns
- * null when the id can't be enriched by id alone — Goodreads (ISBN lookup, round
- * 3) and Letterboxd search (round 4) are added later.
+ * null for hints that don't enrich by id alone — Goodreads books go through
+ * `enrichBook` (ISBN/title lookup) and Letterboxd search (round 4) is added later.
  */
 function draftRequest(
 	resolve: ResolveHint,
@@ -139,6 +140,11 @@ function draftRequest(
 	}
 }
 
+/** First author from a `creator`, for a Google Books title+author search. */
+function firstAuthor(creator: Item['creator']): string | undefined {
+	return Array.isArray(creator) ? creator[0] : creator;
+}
+
 /**
  * The client-orchestrated import pipeline (issue #20). Groups records by their
  * resolved item id, enriches only brand-new ids (existing docs are read and
@@ -150,10 +156,45 @@ export function useImport() {
 	const { getItemsByIds, saveItems } = useItems();
 
 	/**
+	 * A Google Books draft for a book by ISBN then title/author, or the export's
+	 * own `fallbackDraft` when neither matches — stamped with the deterministic
+	 * Goodreads id/provider so a re-import matches without re-doing the lookup. A
+	 * 404 (no match) falls through; a transient failure rethrows so the caller
+	 * retries it.
+	 */
+	async function enrichBook(record: ImportRecord): Promise<Item | null> {
+		const { resolve, fallbackDraft } = record;
+		if (resolve.kind !== 'goodreads-book') return null;
+
+		const isbn = resolve.isbn13 ?? resolve.isbn;
+		const draft =
+			(isbn ? await tryBook({ isbn }) : null) ??
+			(await tryBook({
+				title: record.title,
+				author: firstAuthor(fallbackDraft?.creator) ?? '',
+			})) ??
+			fallbackDraft ??
+			null;
+		if (!draft) return null;
+
+		return { ...draft, id: resolveDirectId(resolve)!, provider: 'goodreads' };
+	}
+
+	/** `/api/book` lookup: the draft, null on a 404 (no match), rethrow otherwise. */
+	async function tryBook(params: Record<string, string>): Promise<Item | null> {
+		try {
+			return await $fetch<Item>('/api/book', { params });
+		} catch (error) {
+			if (statusOf(error) === 404) return null;
+			throw error;
+		}
+	}
+
+	/**
 	 * Merge one id's records onto its base item. `existing` is the current
 	 * Firestore doc (from the batched prefetch) or undefined for a brand-new id,
-	 * which is enriched via `/api/draft`. Returns null when a new id can't be
-	 * enriched by id alone (Goodreads/search — added in later rounds).
+	 * which is enriched via `/api/draft` (books via `enrichBook`). Returns null
+	 * when a new id can't be enriched (Letterboxd search — added in a later round).
 	 */
 	async function buildItem(
 		existing: Item | undefined,
@@ -166,6 +207,11 @@ export function useImport() {
 		if (existing) {
 			base = existing;
 			isNew = false;
+		} else if (group[0]!.resolve.kind === 'goodreads-book') {
+			const enriched = await enrichBook(group[0]!);
+			if (!enriched) return null;
+			base = enriched;
+			isNew = true;
 		} else {
 			const request = draftRequest(group[0]!.resolve);
 			if (!request) return null; // not yet enrichable by id

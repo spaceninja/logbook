@@ -86,7 +86,7 @@ export function mapGoogleBooksDraft(volume: GoogleBooksVolume): Item {
 		provider: 'google-books',
 		...draftDefaults(),
 		tags: categoriesToTags(info.categories),
-		metadata: isbn ? { isbn } : {},
+		metadata: { google_books_id: volume.id, ...(isbn ? { isbn } : {}) },
 	};
 	const creator = toCreator(info.authors ?? []);
 	if (creator !== undefined) item.creator = creator;

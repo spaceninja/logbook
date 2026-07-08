@@ -1,4 +1,4 @@
-import type { ItemStatus, MediaType } from '../types/item';
+import type { Item, ItemStatus, MediaType } from '../types/item';
 
 /**
  * Types for the bulk-import pipeline (issue #20). A service parser turns an
@@ -77,6 +77,13 @@ export interface ImportRecord {
 	ratingAuthority: RatingAuthority;
 	title: string;
 	year?: string;
+	/**
+	 * A base item built from the export's own fields, used as the enrichment base
+	 * when a provider lookup can't supply one — Goodreads books that carry no ISBN
+	 * (about a third of them) or whose ISBN has no Google Books match. Already
+	 * carries the deterministic id/provider, so the merge treats it like any base.
+	 */
+	fallbackDraft?: Item;
 }
 
 /**

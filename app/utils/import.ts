@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { parseGoodreads } from '~~/shared/import/goodreads';
 import { parseInfiniteBacklog } from '~~/shared/import/infiniteBacklog';
 import type { ImportFileMap, ServiceParser } from '~~/shared/import/types';
 
@@ -7,6 +8,11 @@ import type { ImportFileMap, ServiceParser } from '~~/shared/import/types';
  * just dropping its parser here (issue #20).
  */
 export const IMPORT_SERVICES: ServiceParser[] = [
+	{
+		source: 'goodreads',
+		label: 'Goodreads',
+		parse: parseGoodreads,
+	},
 	{
 		source: 'infinite-backlog',
 		label: 'Infinite Backlog',

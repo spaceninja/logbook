@@ -58,7 +58,11 @@ describe('mapGoogleBooksDraft', () => {
 			'science fiction',
 			'space opera',
 		]);
-		expect(item.metadata).toStrictEqual({ isbn: '9780441172719' }); // prefers ISBN_13
+		// Volume id is stored for later refresh/edition-switching; prefers ISBN_13.
+		expect(item.metadata).toStrictEqual({
+			google_books_id: 'zyTCAlFPjgYC',
+			isbn: '9780441172719',
+		});
 		// Hi-res Google Books cover for the exact edition, built from the volume id.
 		expect(item.cover).toBe(
 			'https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&fife=w640',
