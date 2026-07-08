@@ -5,6 +5,7 @@ import {
 	mapGoogleBooksSearch,
 	type GoogleBooksVolume,
 } from '../../shared/providers/googleBooks';
+import type { Item } from '../../shared/types/item';
 
 const BASE = 'https://www.googleapis.com/books/v1';
 
@@ -60,6 +61,41 @@ function googleBooksGet<T>(
 	});
 }
 
+// Even when a volume advertises `imageLinks`, the content host may serve a fixed
+// "no cover" placeholder rather than a real scan — a gray PNG for unknown volumes
+// and the "image not available" JPEG card. These are static assets, so at our
+// cover width (fife=w640) each has an exact content-type + byte length. Matching
+// them exactly (never by a loose heuristic) lets us treat such books as coverless
+// — honestly blank and fixable via "Choose edition" — without ever dropping a real
+// cover. Sizes are for w640 (COVER_WIDTH); unknown responses keep their cover. (#20)
+const PLACEHOLDER_COVERS = [
+	{ type: 'image/png', bytes: 9103 }, // unknown/invalid-volume gray card
+	{ type: 'image/jpeg', bytes: 38878 }, // "image not available" card (no scan)
+];
+
+/** Whether a cover URL resolves to a Google Books "no cover" placeholder (HEAD only). */
+async function coverIsPlaceholder(url: string): Promise<boolean> {
+	try {
+		const res = await fetch(url, { method: 'HEAD' });
+		const type = (res.headers.get('content-type') ?? '').split(';')[0]!.trim();
+		const bytes = Number(res.headers.get('content-length'));
+		return PLACEHOLDER_COVERS.some((p) => p.type === type && p.bytes === bytes);
+	} catch {
+		return false; // a HEAD hiccup shouldn't wrongly strip a cover
+	}
+}
+
+/** A draft with its cover/thumbnail removed when the cover is a placeholder. */
+async function withoutPlaceholderCover(item: Item): Promise<Item> {
+	if (item.cover && (await coverIsPlaceholder(item.cover))) {
+		const stripped = { ...item };
+		delete stripped.cover;
+		delete stripped.thumbnail;
+		return stripped;
+	}
+	return item;
+}
+
 export async function googleBooksSearch(q: string) {
 	const res = await googleBooksGet<{ items?: GoogleBooksVolume[] }>(
 		'/volumes',
@@ -73,7 +109,7 @@ export async function googleBooksSearch(q: string) {
 
 export async function googleBooksDraft(id: string) {
 	const volume = await googleBooksGet<GoogleBooksVolume>(`/volumes/${id}`, {});
-	return mapGoogleBooksDraft(volume);
+	return withoutPlaceholderCover(mapGoogleBooksDraft(volume));
 }
 
 /** First volume matching a query, mapped to a draft — or null if none match. */
@@ -91,7 +127,7 @@ async function firstDraft(q: string, preferCover: boolean) {
 	const chosen =
 		(preferCover && volumes.find((v) => v.volumeInfo?.imageLinks?.thumbnail)) ||
 		volumes[0];
-	return chosen ? mapGoogleBooksDraft(chosen) : null;
+	return chosen ? withoutPlaceholderCover(mapGoogleBooksDraft(chosen)) : null;
 }
 
 /** Draft for a book looked up by ISBN — the exact edition, when Goodreads has one. */
