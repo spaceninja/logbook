@@ -33,8 +33,9 @@ describe('flagParam', () => {
 describe('yearParam', () => {
 	const codec = yearParam();
 
-	it('parses positive integers and rejects junk', () => {
+	it('parses non-negative integers and rejects junk', () => {
 		expect(codec.parse('2025')).toBe(2025);
+		expect(codec.parse('0')).toBe(0); // the "Undated" bucket
 		expect(codec.parse('abc')).toBeUndefined();
 		expect(codec.parse('20.5')).toBeUndefined();
 		expect(codec.parse('-3')).toBeUndefined();

@@ -376,6 +376,29 @@ watch(
 	},
 );
 
+/** Today as a local `YYYY-MM-DD` (not UTC, which can be a day off near midnight). */
+function todayIso(): string {
+	const now = new Date();
+	const pad = (n: number) => String(n).padStart(2, '0');
+	return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+// Completing an item auto-adds today's date if none is set — a timesaver, and it
+// keeps a completed item from being saved undated by accident (which would hide it
+// from both History and Backlog). Not required: the user can remove it to file the
+// item under History's "Undated" bucket intentionally.
+watch(
+	() => form.status,
+	(status) => {
+		if (
+			(status === 'complete' || status === 'dnf') &&
+			form.completed_dates.length === 0
+		) {
+			form.completed_dates.push(todayIso());
+		}
+	},
+);
+
 function addDate() {
 	form.completed_dates.push('');
 }

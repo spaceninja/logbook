@@ -9,7 +9,7 @@
 		:displayed="displayed"
 		view="history"
 		:year="year"
-		:empty-message="`Nothing completed in ${year}.`"
+		:empty-message="emptyMessage"
 		error-message="Failed to load history"
 	>
 		<template #controls>
@@ -17,6 +17,8 @@
 				<label for="year-switcher">Year</label>
 				<select id="year-switcher" v-model.number="year">
 					<option v-for="y in years" :key="y" :value="y">{{ y }}</option>
+					<!-- Completed items with no date, otherwise unreachable (#20). -->
+					<option :value="UNDATED">Undated</option>
 				</select>
 			</div>
 		</template>
@@ -30,6 +32,8 @@ import type { SortKey } from '~~/shared/utils/itemSort';
 import { enumParam, flagParam, yearParam } from '~~/shared/utils/viewQuery';
 
 const MEDIA_TYPES: MediaType[] = ['book', 'movie', 'show', 'game'];
+/** The year-switcher sentinel for the "Undated" bucket (completions with no date). */
+const UNDATED = 0;
 const SORT_KEYS: SortKey[] = [
 	'completion_date',
 	'rating',
@@ -40,7 +44,7 @@ const SORT_KEYS: SortKey[] = [
 	'release_date',
 ];
 
-const { getHistory, getCompletionYears } = useItems();
+const { getHistory, getUndated, getCompletionYears } = useItems();
 const route = useRoute();
 const router = useRouter();
 
@@ -92,7 +96,11 @@ watch(
 	() => {
 		if (!import.meta.client || yearsStatus.value !== 'success') return;
 		const available = completionYears.value[type.value] ?? [];
-		if (urlYear.value != null && !available.includes(urlYear.value)) {
+		if (
+			urlYear.value != null &&
+			urlYear.value !== UNDATED &&
+			!available.includes(urlYear.value)
+		) {
 			const query = { ...route.query };
 			delete query.year;
 			router.replace({ query });
@@ -114,10 +122,20 @@ const {
 	data: items,
 	pending,
 	error,
-} = useItemQuery(historyKey, () => getHistory(year.value, type.value), [
-	year,
-	type,
-]);
+} = useItemQuery(
+	historyKey,
+	() =>
+		year.value === UNDATED
+			? getUndated(type.value)
+			: getHistory(year.value, type.value),
+	[year, type],
+);
+
+const emptyMessage = computed(() =>
+	year.value === UNDATED
+		? `No undated ${type.value} completions.`
+		: `Nothing completed in ${year.value}.`,
+);
 
 const { displayed } = useItemList(items, {
 	sortKey,

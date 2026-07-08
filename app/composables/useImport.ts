@@ -1,3 +1,4 @@
+import { chooseFallbackDate, coerceIsoDay } from '~~/shared/import/dates';
 import { applyContribution, toContribution } from '~~/shared/import/merge';
 import { resolveDirectId } from '~~/shared/import/resolve';
 import type {
@@ -67,28 +68,29 @@ function effectiveContribution(
 	if (record.section !== 'history') return contribution; // backlog: no dates
 
 	// This item's import-generated fallback candidates — an existing completion
-	// date matching one is a stale placeholder the merge may replace.
-	const added = record.addedDate;
-	const updated = record.updatedDate;
-	const release = base.release_date;
-	const replaceableDays = [added, updated, release].filter(
-		(day): day is string => Boolean(day),
-	);
+	// date matching one is a stale placeholder the merge may replace. Coerced to
+	// whole days so a prior year-only release fallback is recognized and replaced.
+	const candidates = {
+		added: record.addedDate,
+		updated: record.updatedDate,
+		release: base.release_date,
+	};
+	const replaceableDays = [
+		candidates.added,
+		candidates.updated,
+		candidates.release,
+	]
+		.map(coerceIsoDay)
+		.filter((day): day is string => day !== undefined);
 
 	// A real completion date from the export: union it (stripping stale fallbacks).
 	if (contribution.completedDates.length > 0) {
 		return { ...contribution, replaceableDays };
 	}
 
-	// Undated completion: backfill the chosen fallback, preferring the user's pick
-	// but taking whichever date is available.
-	const order =
-		dateFallback === 'release'
-			? [release, added, updated]
-			: dateFallback === 'updated'
-				? [updated, added, release]
-				: [added, updated, release];
-	const fallbackDate = order.find(Boolean);
+	// Undated completion: backfill the first usable date in the chosen preference
+	// order, so a completion is essentially never left undated by an import.
+	const fallbackDate = chooseFallbackDate(candidates, dateFallback);
 	return { ...contribution, replaceableDays, fallbackDate };
 }
 

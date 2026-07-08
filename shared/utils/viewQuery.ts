@@ -38,14 +38,15 @@ export function flagParam(def = false): ParamCodec<boolean> {
 /**
  * A calendar year, or `null` when absent. Unlike the others its "default" is not
  * a concrete year — absence means "use the newest available" (resolved by the
- * page), so the default is `null` and any positive integer is valid.
+ * page), so the default is `null`. Any non-negative integer is valid; `0` is the
+ * History view's "Undated" bucket (completions with no date).
  */
 export function yearParam(): ParamCodec<number | null> {
 	return {
 		default: null,
 		parse: (raw) => {
 			const n = Number(raw);
-			return Number.isInteger(n) && n > 0 ? n : undefined;
+			return Number.isInteger(n) && n >= 0 ? n : undefined;
 		},
 		serialize: (value) => (value == null ? null : String(value)),
 	};

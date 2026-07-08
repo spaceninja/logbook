@@ -56,17 +56,9 @@
 					Date for {{ undatedHistoryCount }} completed items with no completion
 					date
 				</legend>
-				<label>
-					<input v-model="dateFallback" type="radio" value="added" />
-					Date added
-				</label>
-				<label>
-					<input v-model="dateFallback" type="radio" value="updated" />
-					Last updated
-				</label>
-				<label>
-					<input v-model="dateFallback" type="radio" value="release" />
-					Release date
+				<label v-for="option in dateFallbackOptions" :key="option.value">
+					<input v-model="dateFallback" type="radio" :value="option.value" />
+					{{ option.label }}
 				</label>
 			</fieldset>
 			<p v-if="skipped.length">
@@ -158,7 +150,7 @@ const records = ref<ImportRecord[]>([]);
 const skipped = ref<{ title: string; reason: string }[]>([]);
 const importHistory = ref(true);
 const importBacklog = ref(true);
-const dateFallback = ref<DateFallback>('updated');
+const dateFallback = ref<DateFallback>('added');
 const progress = ref<ImportProgress>({
 	phase: 'reading',
 	total: 0,
@@ -184,12 +176,34 @@ const backlogCount = computed(
 const unresolvedCount = computed(
 	() => records.value.filter((r) => resolveDirectId(r.resolve) === null).length,
 );
-const undatedHistoryCount = computed(
-	() =>
-		records.value.filter(
-			(r) => r.section === 'history' && r.completedDates.length === 0,
-		).length,
+const undatedHistoryRecords = computed(() =>
+	records.value.filter(
+		(r) => r.section === 'history' && r.completedDates.length === 0,
+	),
 );
+const undatedHistoryCount = computed(() => undatedHistoryRecords.value.length);
+
+// Only offer a date fallback the export can actually satisfy — Goodreads has no
+// "last updated", so that option is hidden for it. Release date always shows: it
+// comes from enrichment (unknown until the run) and covers the no-date-at-all case.
+const dateFallbackOptions = computed(() => {
+	const options: { value: DateFallback; label: string }[] = [];
+	if (undatedHistoryRecords.value.some((r) => r.addedDate))
+		options.push({ value: 'added', label: 'Date added' });
+	if (undatedHistoryRecords.value.some((r) => r.updatedDate))
+		options.push({ value: 'updated', label: 'Last updated' });
+	options.push({ value: 'release', label: 'Release date' });
+	return options;
+});
+
+// If a parsed export can't satisfy the selected fallback (e.g. Goodreads and the
+// default were "last updated"), drop to the first offered option. Not immediate:
+// at mount there are no records yet, and firing then would discard the default.
+watch(dateFallbackOptions, (options) => {
+	if (!options.some((o) => o.value === dateFallback.value)) {
+		dateFallback.value = options[0]!.value;
+	}
+});
 const selectedCount = computed(
 	() =>
 		(importHistory.value ? historyCount.value : 0) +

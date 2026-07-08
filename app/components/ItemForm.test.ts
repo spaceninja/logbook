@@ -12,6 +12,13 @@ function submitForm() {
 	return fireEvent.submit(screen.getByRole('form'));
 }
 
+/** Today as a local YYYY-MM-DD, matching the form's auto-date. */
+function todayLocalIso() {
+	const now = new Date();
+	const pad = (n: number) => String(n).padStart(2, '0');
+	return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
 describe('ItemForm', () => {
 	it('emits a manual-id item assembled from the inputs (create)', async () => {
 		const { emitted } = render(ItemForm, { props: { mode: 'create' } });
@@ -269,6 +276,26 @@ describe('ItemForm', () => {
 			google_books_id: 'new',
 			isbn: '9780000000002',
 		});
+	});
+
+	it('auto-adds today when switching to complete, but allows removing it', async () => {
+		const { emitted } = render(ItemForm, {
+			props: { mode: 'create', initialType: 'book' },
+		});
+		await fireEvent.update(screen.getByLabelText('Title'), 'Dated');
+
+		// Switching to complete fills in today's date so it isn't saved undated.
+		await fireEvent.update(screen.getByLabelText('Status'), 'complete');
+		const dateInput = screen.getByDisplayValue(todayLocalIso());
+		expect(dateInput).toBeInTheDocument();
+
+		// …but the date isn't required: removing it still submits (→ Undated bucket).
+		await fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+		await submitForm();
+
+		const item = (emitted().submit as [Item][])[0]![0];
+		expect(item.status).toBe('complete');
+		expect(item.completed_dates).toStrictEqual([]);
 	});
 
 	it('stores movie series metadata', async () => {

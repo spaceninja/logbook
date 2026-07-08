@@ -86,6 +86,30 @@ export function useItems() {
 	}
 
 	/**
+	 * Completed items of one type that have no completion date — the History
+	 * "Undated" bucket. Without this they'd be invisible: History is date-driven
+	 * (so they match no year) and Backlog is `backlog`/`in_progress` only, so a
+	 * completed-but-undated item would fall through both and be unreachable (#20).
+	 * Reuses the same `(type, status)` index as the backlog query; the rare
+	 * dateless subset is filtered client-side.
+	 */
+	async function getUndated(type: MediaType): Promise<Item[]> {
+		const snapshot = await withTimeout(
+			getDocs(
+				query(
+					items(),
+					where('type', '==', type),
+					where('status', 'in', ['complete', 'dnf']),
+				),
+			),
+			'Loading undated completions',
+		);
+		return snapshot.docs
+			.map((d) => d.data() as Item)
+			.filter((item) => item.completed_dates.length === 0);
+	}
+
+	/**
 	 * Years that have at least one completion, grouped by media type, for the
 	 * History year switcher. Read from the maintained `meta/completionYears`
 	 * aggregate (a collection-wide DISTINCT is impossible in Firestore). Empty
@@ -226,6 +250,7 @@ export function useItems() {
 	return {
 		getBacklog,
 		getHistory,
+		getUndated,
 		getCompletionYears,
 		getItem,
 		getItemsByIds,
