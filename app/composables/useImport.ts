@@ -8,7 +8,7 @@ import type {
 	ImportSection,
 	ResolveHint,
 } from '~~/shared/import/types';
-import type { Item, MediaType } from '~~/shared/types/item';
+import type { BookMetadata, Item, MediaType } from '~~/shared/types/item';
 
 /**
  * Which stage the import is in, so the UI can show something during the phases
@@ -34,6 +34,11 @@ export interface ImportSummary {
 	unchanged: number;
 	/** Items we couldn't resolve/enrich (search-only hints, or a failed lookup). */
 	skipped: { title: string; reason: string }[];
+	/**
+	 * Books Google Books had no match for, imported from the export's own fields —
+	 * so they carry no cover or description and are worth re-sourcing by hand.
+	 */
+	unmatched: { title: string }[];
 }
 
 /** Whether the merge changed any import-owned field vs the existing doc. */
@@ -165,24 +170,43 @@ export function useImport() {
 	 * own `fallbackDraft` when neither matches — stamped with the deterministic
 	 * Goodreads id/provider so a re-import matches without re-doing the lookup. A
 	 * 404 (no match) falls through; a transient failure rethrows so the caller
-	 * retries it.
+	 * retries it. `matched` is false when we fell back, so the caller can report
+	 * the book as imported without a cover or description.
 	 */
-	async function enrichBook(record: ImportRecord): Promise<Item | null> {
+	async function enrichBook(
+		record: ImportRecord,
+	): Promise<{ item: Item; matched: boolean } | null> {
 		const { resolve, fallbackDraft } = record;
 		if (resolve.kind !== 'goodreads-book') return null;
 
 		const isbn = resolve.isbn13 ?? resolve.isbn;
-		const draft =
+		const found =
 			(isbn ? await tryBook({ isbn }) : null) ??
 			(await tryBook({
 				title: record.title,
 				author: firstAuthor(fallbackDraft?.creator) ?? '',
-			})) ??
-			fallbackDraft ??
-			null;
+			}));
+		const draft = found ?? fallbackDraft ?? null;
 		if (!draft) return null;
 
-		return { ...draft, id: resolveDirectId(resolve)!, provider: 'goodreads' };
+		// Google Books has no series data, so the series parsed from the Goodreads
+		// title (carried on the fallback draft) is the only source — merge it onto
+		// an enriched draft, whose metadata holds only the volume id and ISBN.
+		const { series, series_number } = (fallbackDraft?.metadata ??
+			{}) as BookMetadata;
+		return {
+			item: {
+				...draft,
+				id: resolveDirectId(resolve)!,
+				provider: 'goodreads',
+				metadata: {
+					...draft.metadata,
+					...(series ? { series } : {}),
+					...(series_number !== undefined ? { series_number } : {}),
+				},
+			},
+			matched: found !== null,
+		};
 	}
 
 	/** `/api/book` lookup: the draft, null on a 404 (no match), rethrow otherwise. */
@@ -205,9 +229,10 @@ export function useImport() {
 		existing: Item | undefined,
 		group: ImportRecord[],
 		dateFallback: DateFallback,
-	): Promise<{ item: Item; isNew: boolean } | null> {
+	): Promise<{ item: Item; isNew: boolean; unmatched: boolean } | null> {
 		let base: Item;
 		let isNew: boolean;
+		let unmatched = false;
 
 		if (existing) {
 			base = existing;
@@ -215,7 +240,8 @@ export function useImport() {
 		} else if (group[0]!.resolve.kind === 'goodreads-book') {
 			const enriched = await enrichBook(group[0]!);
 			if (!enriched) return null;
-			base = enriched;
+			base = enriched.item;
+			unmatched = !enriched.matched;
 			isNew = true;
 		} else {
 			const request = draftRequest(group[0]!.resolve);
@@ -233,7 +259,7 @@ export function useImport() {
 				effectiveContribution(record, base, dateFallback),
 			);
 		}
-		return { item, isNew };
+		return { item, isNew, unmatched };
 	}
 
 	/**
@@ -247,7 +273,7 @@ export function useImport() {
 		existing: Item | undefined,
 		group: ImportRecord[],
 		dateFallback: DateFallback,
-	): Promise<{ item: Item; isNew: boolean } | null> {
+	): Promise<{ item: Item; isNew: boolean; unmatched: boolean } | null> {
 		for (let attempt = 1; ; attempt++) {
 			try {
 				return await buildItem(existing, group, dateFallback);
@@ -274,6 +300,7 @@ export function useImport() {
 		// need a search (no direct id) as skipped for now.
 		const groups = new Map<string, ImportRecord[]>();
 		const skipped: ImportSummary['skipped'] = [];
+		const unmatched: ImportSummary['unmatched'] = [];
 		for (const record of records) {
 			if (!sections.includes(record.section)) continue;
 			const id = resolveDirectId(record.resolve);
@@ -339,6 +366,7 @@ export function useImport() {
 					} else if (built.isNew) {
 						toWrite.push(built.item);
 						created++;
+						if (built.unmatched) unmatched.push({ title: built.item.title });
 					} else if (existing && importChanged(existing, built.item)) {
 						// Only re-write existing docs whose merged result actually differs.
 						toWrite.push(built.item);
@@ -365,7 +393,7 @@ export function useImport() {
 		phase = 'saving';
 		report();
 		await saveItems(toWrite);
-		return { created, updated, unchanged, skipped };
+		return { created, updated, unchanged, skipped, unmatched };
 	}
 
 	return { runImport };

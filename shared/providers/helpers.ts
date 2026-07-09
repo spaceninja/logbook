@@ -49,6 +49,43 @@ export function yearOf(date: string | undefined): string | undefined {
 }
 
 /**
+ * How closely a title matches the query (lower = closer): exact, prefix,
+ * substring, then everything else. Keeps literal matches ahead of incidental
+ * ones so specific searches (e.g. "Hades II") aren't displaced by a more popular
+ * sibling.
+ */
+export function titleTier(title: string, query: string): number {
+	const n = title.toLowerCase();
+	const q = query.trim().toLowerCase();
+	if (n === q) return 0;
+	if (n.startsWith(q)) return 1;
+	if (n.includes(q)) return 2;
+	return 3;
+}
+
+/** Casefold, strip diacritics and punctuation, collapse whitespace. */
+function normalizeTitle(title: string): string {
+	return title
+		.toLowerCase()
+		.normalize('NFKD')
+		.replace(/[̀-ͯ]/g, '') // combining marks, so "novéna" → "novena"
+		.replace(/[^a-z0-9]+/g, ' ')
+		.trim();
+}
+
+/**
+ * Whether a candidate title plausibly names the same book as `wanted`. Prefix
+ * matching either way tolerates a subtitle on one side ("Dune (Movie Tie-In)" vs
+ * "Dune") while rejecting a different book by the same author ("De leugens van
+ * Locke Lamora" vs "Locke Lamora and the Bottled Serpent").
+ */
+export function titlesMatch(candidate: string, wanted: string): boolean {
+	const a = normalizeTitle(candidate);
+	const b = normalizeTitle(wanted);
+	return a === b || a.startsWith(b) || b.startsWith(a);
+}
+
+/**
  * The user-owned and structural fields every provider draft starts with. Provider
  * mappers spread provider-sourced fields on top of these. Keeping these concrete
  * (not undefined) matches the milestone-1 convention.

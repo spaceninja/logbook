@@ -6,6 +6,7 @@ import {
 	draftDefaults,
 	normalizeTags,
 	round2,
+	titleTier,
 	toCreator,
 	unixSecondsToIsoDate,
 } from './helpers';
@@ -90,21 +91,6 @@ function developers(game: IgdbGame): string[] {
 }
 
 /**
- * How closely a game's name matches the query (lower = closer): exact, prefix,
- * substring, then everything else. Keeps literal matches ahead of incidental
- * ones so specific searches (e.g. "Hades II") aren't displaced by a more popular
- * sibling.
- */
-function nameTier(name: string, query: string): number {
-	const n = name.toLowerCase();
-	const q = query.trim().toLowerCase();
-	if (n === q) return 0;
-	if (n.startsWith(q)) return 1;
-	if (n.includes(q)) return 2;
-	return 3;
-}
-
-/**
  * Re-rank IGDB search hits. IGDB's `search` orders purely by text match and
  * ignores popularity, and APICalypse forbids combining `search` with `sort`, so
  * we re-rank in code (core design §15): by name-match tier first, then by
@@ -116,7 +102,8 @@ export function rankIgdbGames(games: IgdbGame[], query: string): IgdbGame[] {
 	return games
 		.map((game, index) => ({ game, index }))
 		.sort((a, b) => {
-			const tier = nameTier(a.game.name, query) - nameTier(b.game.name, query);
+			const tier =
+				titleTier(a.game.name, query) - titleTier(b.game.name, query);
 			if (tier !== 0) return tier;
 			const pop =
 				(b.game.total_rating_count ?? 0) - (a.game.total_rating_count ?? 0);

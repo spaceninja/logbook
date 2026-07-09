@@ -66,16 +66,23 @@ describe('parseGoodreads — read shelf → history', () => {
 			id: 'book-goodreads-75319056',
 			type: 'book',
 			provider: 'goodreads',
-			title: 'System Collapse (The Murderbot Diaries, #7)',
+			// Goodreads' "(Series, #N)" suffix is parsed off into series metadata.
+			title: 'System Collapse',
 			creator: 'Martha Wells',
 			length: 248,
 			length_unit: 'pages',
 			release_date: '2023',
-			metadata: { isbn: '9781250826985' },
+			metadata: {
+				isbn: '9781250826985',
+				series: 'The Murderbot Diaries',
+				series_number: 7,
+			},
 			status: 'backlog',
 			is_purchased: false,
 			completed_dates: [],
 		});
+		// The lookup title drops the suffix so Google Books can match it.
+		expect(records[0]?.title).toBe('System Collapse');
 	});
 
 	it('keeps a read Kindle book with no ISBN, undated and ISBN-free', () => {
@@ -110,7 +117,11 @@ describe('parseGoodreads — read shelf → history', () => {
 		// No usable ISBN on either column.
 		expect(records[0]?.resolve).not.toHaveProperty('isbn13');
 		expect(records[0]?.resolve).not.toHaveProperty('isbn');
-		expect(records[0]?.fallbackDraft?.metadata).toStrictEqual({});
+		// No ISBN, but the title still yields series metadata.
+		expect(records[0]?.fallbackDraft?.metadata).toStrictEqual({
+			series: 'The Murderbot Diaries',
+			series_number: 5,
+		});
 	});
 
 	it('leaves an unrated book without a rating', () => {

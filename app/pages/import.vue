@@ -122,6 +122,16 @@
 					</li>
 				</ul>
 			</details>
+			<details v-if="summary.unmatched.length">
+				<summary>
+					{{ summary.unmatched.length }} imported without cover or description
+				</summary>
+				<ul>
+					<li v-for="(item, i) in summary.unmatched" :key="i">
+						{{ item.title }}
+					</li>
+				</ul>
+			</details>
 			<p>
 				<button type="button" @click="reset">Import more</button>
 				<NuxtLink to="/">Done</NuxtLink>

@@ -3,6 +3,7 @@ import type { Item } from '../types/item';
 import { makeBookId } from '../utils/itemId';
 import { parseCsvRecords } from './csv';
 import { ratingAuthorityFor } from './merge';
+import { parseSeriesSuffix } from './series';
 import type { ImportFileMap, ImportRecord, ParseResult } from './types';
 
 /**
@@ -78,13 +79,18 @@ function positiveInt(value: string | undefined): number | undefined {
  */
 function fallbackDraft(row: Record<string, string>, isbn?: string): Item {
 	const bookId = (row['Book Id'] ?? '').trim();
+	const { title, series, seriesNumber } = parseSeriesSuffix(row['Title'] ?? '');
 	const item: Item = {
 		id: makeBookId('goodreads', bookId),
 		type: 'book',
-		title: row['Title'] ?? '(untitled)',
+		title: title || '(untitled)',
 		provider: 'goodreads',
 		...draftDefaults(),
-		metadata: isbn ? { isbn } : {},
+		metadata: {
+			...(isbn ? { isbn } : {}),
+			...(series ? { series } : {}),
+			...(seriesNumber !== undefined ? { series_number: seriesNumber } : {}),
+		},
 	};
 	const creator = toCreator([
 		row['Author'],
@@ -131,7 +137,8 @@ function bookRecord(
 				? [isoDay(row['Date Read'])].filter((day): day is string => !!day)
 				: [],
 		ratingAuthority: ratingAuthorityFor('goodreads', 'book'),
-		title: row['Title'] ?? '',
+		// Without the series suffix, so the Google Books lookup gets a real title.
+		title: parseSeriesSuffix(row['Title'] ?? '').title,
 		year:
 			yearOf(row['Original Publication Year']) ?? yearOf(row['Year Published']),
 		myRating: ratingOf(row['My Rating']),

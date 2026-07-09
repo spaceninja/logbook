@@ -3,9 +3,10 @@ import { $fetch } from 'ofetch';
 import {
 	mapGoogleBooksDraft,
 	mapGoogleBooksSearch,
+	rankGoogleBooksVolumes,
 	type GoogleBooksVolume,
 } from '../../shared/providers/googleBooks';
-import type { Item } from '../../shared/types/item';
+import { titlesMatch } from '../../shared/providers/helpers';
 
 const BASE = 'https://www.googleapis.com/books/v1';
 
@@ -61,83 +62,65 @@ function googleBooksGet<T>(
 	});
 }
 
-// Even when a volume advertises `imageLinks`, the content host may serve a fixed
-// "no cover" placeholder rather than a real scan — a gray PNG for unknown volumes
-// and the "image not available" JPEG card. These are static assets, so at our
-// cover width (fife=w640) each has an exact content-type + byte length. Matching
-// them exactly (never by a loose heuristic) lets us treat such books as coverless
-// — honestly blank and fixable via "Choose edition" — without ever dropping a real
-// cover. Sizes are for w640 (COVER_WIDTH); unknown responses keep their cover. (#20)
-const PLACEHOLDER_COVERS = [
-	{ type: 'image/png', bytes: 9103 }, // unknown/invalid-volume gray card
-	{ type: 'image/jpeg', bytes: 38878 }, // "image not available" card (no scan)
-];
-
-/** Whether a cover URL resolves to a Google Books "no cover" placeholder (HEAD only). */
-async function coverIsPlaceholder(url: string): Promise<boolean> {
-	try {
-		const res = await fetch(url, { method: 'HEAD' });
-		const type = (res.headers.get('content-type') ?? '').split(';')[0]!.trim();
-		const bytes = Number(res.headers.get('content-length'));
-		return PLACEHOLDER_COVERS.some((p) => p.type === type && p.bytes === bytes);
-	} catch {
-		return false; // a HEAD hiccup shouldn't wrongly strip a cover
-	}
-}
-
-/** A draft with its cover/thumbnail removed when the cover is a placeholder. */
-async function withoutPlaceholderCover(item: Item): Promise<Item> {
-	if (item.cover && (await coverIsPlaceholder(item.cover))) {
-		const stripped = { ...item };
-		delete stripped.cover;
-		delete stripped.thumbnail;
-		return stripped;
-	}
-	return item;
-}
-
-export async function googleBooksSearch(q: string) {
+/** Volumes matching a query, in Google's own order; empty when nothing matches. */
+async function searchVolumes(
+	q: string,
+	maxResults = 10,
+): Promise<GoogleBooksVolume[]> {
 	const res = await googleBooksGet<{ items?: GoogleBooksVolume[] }>(
 		'/volumes',
 		{
 			q,
-			maxResults: 10,
+			maxResults,
 		},
 	);
-	return mapGoogleBooksSearch(res.items ?? []);
+	return res.items ?? [];
+}
+
+export async function googleBooksSearch(q: string) {
+	// 20 is Google's real ceiling — it silently clamps anything higher — and its
+	// `totalItems` is a fabricated round number, so there's nothing to paginate on.
+	const volumes = await searchVolumes(q, 20);
+	return mapGoogleBooksSearch(rankGoogleBooksVolumes(volumes, q));
 }
 
 export async function googleBooksDraft(id: string) {
 	const volume = await googleBooksGet<GoogleBooksVolume>(`/volumes/${id}`, {});
-	return withoutPlaceholderCover(mapGoogleBooksDraft(volume));
-}
-
-/** First volume matching a query, mapped to a draft — or null if none match. */
-async function firstDraft(q: string, preferCover: boolean) {
-	const res = await googleBooksGet<{ items?: GoogleBooksVolume[] }>(
-		'/volumes',
-		{
-			q,
-			maxResults: 10,
-		},
-	);
-	const volumes = res.items ?? [];
-	// Prefer a result that actually has cover art (Google Books' first hit for a
-	// title often doesn't), falling back to the top result otherwise.
-	const chosen =
-		(preferCover && volumes.find((v) => v.volumeInfo?.imageLinks?.thumbnail)) ||
-		volumes[0];
-	return chosen ? withoutPlaceholderCover(mapGoogleBooksDraft(chosen)) : null;
+	return mapGoogleBooksDraft(volume);
 }
 
 /** Draft for a book looked up by ISBN — the exact edition, when Goodreads has one. */
-export function googleBooksByIsbn(isbn: string) {
-	// The exact-edition match wins outright; no cover-preference reordering.
-	return firstDraft(`isbn:${isbn}`, false);
+export async function googleBooksByIsbn(isbn: string) {
+	// The exact-edition match wins outright; no reordering, no title guard.
+	const [volume] = await searchVolumes(`isbn:${isbn}`);
+	return volume ? mapGoogleBooksDraft(volume) : null;
 }
 
-/** Draft for a book looked up by title (and author) — the no-ISBN fallback. */
-export function googleBooksByTitle(title: string, author?: string) {
-	const q = author ? `intitle:${title} inauthor:${author}` : `intitle:${title}`;
-	return firstDraft(q, true);
+/**
+ * Draft for a book looked up by title (and author) — the no-ISBN fallback.
+ * `intitle:` matches tokens rather than phrases, so an unquoted lookup for
+ * "Locke Lamora and the Bottled Serpent" returns the Dutch translation of "The
+ * Lies of Locke Lamora". Quote the phrase first, retry unquoted only if that
+ * finds nothing, and accept a candidate only when its title actually matches —
+ * a wrong book is worse than no book, because the importer can fall back to the
+ * export's own fields.
+ */
+export async function googleBooksByTitle(title: string, author?: string) {
+	const bare = (s: string) => s.replace(/"/g, '');
+	const wanted = bare(title);
+	const byAuthor = author ? ` inauthor:"${bare(author)}"` : '';
+	const loose = author ? ` inauthor:${bare(author)}` : '';
+
+	let volumes = await searchVolumes(`intitle:"${wanted}"${byAuthor}`);
+	if (volumes.length === 0) {
+		volumes = await searchVolumes(`intitle:${wanted}${loose}`);
+	}
+
+	const ranked = rankGoogleBooksVolumes(volumes, wanted).filter((v) =>
+		titlesMatch(v.volumeInfo?.title ?? '', wanted),
+	);
+	// Google's first hit for a title often has no cover art; prefer one that does.
+	const chosen =
+		ranked.find((v) => v.volumeInfo?.imageLinks?.thumbnail) ?? ranked[0];
+	return chosen ? mapGoogleBooksDraft(chosen) : null;
 }

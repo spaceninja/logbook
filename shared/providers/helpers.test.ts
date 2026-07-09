@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
 	cleanCoverUrl,
 	normalizeTags,
+	titlesMatch,
+	titleTier,
 	toCreator,
 	unixSecondsToIsoDate,
 	yearOf,
@@ -64,5 +66,52 @@ describe('yearOf', () => {
 	it('returns undefined for partial/invalid input', () => {
 		expect(yearOf(undefined)).toBeUndefined();
 		expect(yearOf('n/a')).toBeUndefined();
+	});
+});
+
+describe('titleTier', () => {
+	it('ranks exact, prefix, substring, then everything else', () => {
+		expect(titleTier('Hades', 'Hades')).toBe(0);
+		expect(titleTier('Hades II', 'Hades')).toBe(1);
+		expect(titleTier('Return to Hades', 'Hades')).toBe(2);
+		expect(titleTier('Bastion', 'Hades')).toBe(3);
+	});
+
+	it('ignores case and surrounding whitespace in the query', () => {
+		expect(titleTier('Hades', '  hades ')).toBe(0);
+	});
+});
+
+describe('titlesMatch', () => {
+	it('accepts a candidate carrying an extra subtitle', () => {
+		expect(titlesMatch('Dune (Movie Tie-In)', 'Dune')).toBe(true);
+	});
+
+	it('accepts a wanted title carrying the extra subtitle', () => {
+		expect(titlesMatch('Gideon the Ninth', 'Gideon the Ninth: A Novel')).toBe(
+			true,
+		);
+	});
+
+	it('ignores punctuation, case and diacritics', () => {
+		expect(titlesMatch("The Spirits' Book", 'the spirits book')).toBe(true);
+		expect(titlesMatch('Gideon la novéna', 'Gideon la novena')).toBe(true);
+	});
+
+	it('rejects a different book by the same author', () => {
+		// The bug this guards: an unquoted intitle: lookup returns the Dutch
+		// translation of "The Lies of Locke Lamora" for a different short story.
+		expect(
+			titlesMatch(
+				'De leugens van Locke Lamora / druk 1',
+				'Locke Lamora and the Bottled Serpent',
+			),
+		).toBe(false);
+	});
+
+	it('rejects a translation whose title is prefixed by another language', () => {
+		expect(
+			titlesMatch('Gideon la novena / Gideon the Ninth', 'Gideon the Ninth'),
+		).toBe(false);
 	});
 });
