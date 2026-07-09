@@ -9,10 +9,7 @@ import type { Item, ItemStatus, MediaType } from '../types/item';
 
 /** The four services we can import from. */
 export type ImportSource =
-	| 'goodreads'
-	| 'letterboxd'
-	| 'trakt'
-	| 'infinite-backlog';
+	'goodreads' | 'letterboxd' | 'trakt' | 'infinite-backlog';
 
 /**
  * Which half of an export a record came from. The importer ingests a whole

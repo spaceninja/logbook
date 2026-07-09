@@ -16,12 +16,7 @@ export type ItemStatus = 'backlog' | 'in_progress' | 'complete' | 'dnf';
 export type LengthUnit = 'pages' | 'min' | 'episodes' | 'hours';
 
 export type Provider =
-	| 'tmdb'
-	| 'igdb'
-	| 'goodreads'
-	| 'google-books'
-	| 'open-library'
-	| 'manual';
+	'tmdb' | 'igdb' | 'goodreads' | 'google-books' | 'open-library' | 'manual';
 
 export interface BookMetadata {
 	series?: string;
@@ -64,10 +59,7 @@ export interface GameMetadata {
 }
 
 export type ItemMetadata =
-	| BookMetadata
-	| MovieMetadata
-	| ShowMetadata
-	| GameMetadata;
+	BookMetadata | MovieMetadata | ShowMetadata | GameMetadata;
 
 export interface Item {
 	/** Unique id; also the Firestore document id. */
