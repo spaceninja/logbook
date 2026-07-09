@@ -61,6 +61,12 @@
 					{{ option.label }}
 				</label>
 			</fieldset>
+			<p v-if="isDev">
+				<label>
+					<input v-model="fastImport" type="checkbox" />
+					Fast import ({{ FAST_IMPORT_LIMIT }} items only)
+				</label>
+			</p>
 			<p v-if="skipped.length">
 				{{ skipped.length }} rows skipped (no provider id).
 			</p>
@@ -71,7 +77,7 @@
 			<p>
 				<button type="button" @click="reset">Cancel</button>
 				<button type="button" :disabled="selectedCount === 0" @click="run">
-					Import {{ selectedCount }} items
+					Import {{ importCount }} items
 				</button>
 			</p>
 		</template>
@@ -132,6 +138,7 @@ import type {
 	ImportSection,
 } from '~~/shared/import/types';
 import { collectFiles, IMPORT_SERVICES } from '~~/app/utils/import';
+import { FAST_IMPORT_LIMIT } from '~~/app/composables/useImport';
 import type {
 	ImportProgress,
 	ImportSummary,
@@ -143,6 +150,8 @@ type Step = 'select' | 'preview' | 'running' | 'done';
 
 const { runImport } = useImport();
 
+const isDev = import.meta.dev;
+
 const step = ref<Step>('select');
 const error = ref('');
 const serviceSource = ref(IMPORT_SERVICES[0]!.source);
@@ -150,6 +159,7 @@ const records = ref<ImportRecord[]>([]);
 const skipped = ref<{ title: string; reason: string }[]>([]);
 const importHistory = ref(true);
 const importBacklog = ref(true);
+const fastImport = ref(false);
 const dateFallback = ref<DateFallback>('added');
 const progress = ref<ImportProgress>({
 	phase: 'reading',
@@ -210,6 +220,12 @@ const selectedCount = computed(
 		(importBacklog.value ? backlogCount.value : 0),
 );
 
+// A fast run's true count isn't known until the existence prefetch tells us how
+// many of these have already been imported, so the button promises an upper bound.
+const importCount = computed(() =>
+	fastImport.value ? `up to ${FAST_IMPORT_LIMIT}` : selectedCount.value,
+);
+
 function reset() {
 	step.value = 'select';
 	error.value = '';
@@ -253,6 +269,7 @@ async function run() {
 			(p) => {
 				progress.value = p;
 			},
+			isDev && fastImport.value ? FAST_IMPORT_LIMIT : undefined,
 		);
 		step.value = 'done';
 	} catch (e) {

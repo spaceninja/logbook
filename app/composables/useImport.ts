@@ -111,6 +111,9 @@ function describeError(error: unknown): string {
 /** How many item ids to enrich in parallel. Keeps provider APIs from being hammered. */
 const CONCURRENCY = 4;
 
+/** How many not-yet-imported items a dev-only "fast import" run processes. */
+export const FAST_IMPORT_LIMIT = 100;
+
 /** Attempts per item before giving up — absorbs transient read/lookup blips. */
 const ITEM_ATTEMPTS = 3;
 
@@ -255,11 +258,17 @@ export function useImport() {
 		}
 	}
 
+	/**
+	 * `limit` caps the run at that many ids that don't exist in Firestore yet, so
+	 * re-running picks up where the last one stopped. Existing items are then left
+	 * untouched — a limited run can't update them the way a full run would.
+	 */
 	async function runImport(
 		records: ImportRecord[],
 		sections: ImportSection[],
 		dateFallback: DateFallback,
 		onProgress: (progress: ImportProgress) => void,
+		limit?: number,
 	): Promise<ImportSummary> {
 		// Group the enabled records by their target item id; bucket records that
 		// need a search (no direct id) as skipped for now.
@@ -277,7 +286,9 @@ export function useImport() {
 			else groups.set(id, [record]);
 		}
 
-		const ids = [...groups.keys()];
+		// Narrowed to the limited slice after the prefetch below; until then this is
+		// every id, which is what the `reading` phase reports on.
+		let ids = [...groups.keys()];
 		const toWrite: Item[] = [];
 		let phase: ImportPhase = 'reading';
 		let processed = 0;
@@ -301,6 +312,14 @@ export function useImport() {
 		// no per-item Firestore reads (those stall under long-poll load). On a
 		// re-import almost everything is already here, so no enrichment runs at all.
 		const existingItems = await getItemsByIds(ids);
+
+		// The prefetch is what makes a limited run resumable: ids already in
+		// Firestore were imported by an earlier run, so dropping them and taking the
+		// next `limit` advances through the export. Group order follows the export's
+		// row order, so the slice is stable across runs.
+		if (limit !== undefined) {
+			ids = ids.filter((id) => !existingItems.has(id)).slice(0, limit);
+		}
 
 		phase = 'importing';
 		report();
