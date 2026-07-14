@@ -75,10 +75,18 @@ export interface ImportRecord {
 	title: string;
 	year?: string;
 	/**
+	 * The owner's own writing about this item in the export (a Letterboxd review).
+	 * `notes` is a user-owned field the merge engine never touches, so this is
+	 * applied only when the import *creates* the item — a re-import will not
+	 * clobber notes written since (issue #20).
+	 */
+	notes?: string;
+	/**
 	 * A base item built from the export's own fields, used as the enrichment base
 	 * when a provider lookup can't supply one — Goodreads books that carry no ISBN
-	 * (about a third of them) or whose ISBN has no Google Books match. Already
-	 * carries the deterministic id/provider, so the merge treats it like any base.
+	 * (about a third of them) or whose ISBN has no Google Books match, and
+	 * Letterboxd films TMDB's movie index doesn't hold (about 3%). Already carries
+	 * the deterministic id/provider, so the merge treats it like any base.
 	 */
 	fallbackDraft?: Item;
 }
@@ -128,4 +136,12 @@ export interface ServiceParser {
 	source: ImportSource;
 	label: string;
 	parse: (files: ImportFileMap) => ParseResult;
+	/**
+	 * Which date to offer first for completions the export left undated. Defaults
+	 * to the export's date-added, which suits a service whose dates track when
+	 * things were actually finished — but not Letterboxd, where an account
+	 * typically opens with one big backfill that would pile thousands of films
+	 * onto a single day, so it prefers each film's release date.
+	 */
+	defaultDateFallback?: DateFallback;
 }

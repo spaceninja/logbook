@@ -64,7 +64,7 @@ export function titleTier(title: string, query: string): number {
 }
 
 /** Casefold, strip diacritics and punctuation, collapse whitespace. */
-function normalizeTitle(title: string): string {
+export function normalizeTitle(title: string): string {
 	return title
 		.toLowerCase()
 		.normalize('NFKD')

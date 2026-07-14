@@ -15,8 +15,20 @@ export type ItemStatus = 'backlog' | 'in_progress' | 'complete' | 'dnf';
 
 export type LengthUnit = 'pages' | 'min' | 'episodes' | 'hours';
 
+/**
+ * Where an item's id (and usually its metadata) comes from. `letterboxd` is an
+ * id-only provider: the bulk importer matches Letterboxd films to TMDB, but the
+ * handful TMDB doesn't carry (miniseries Letterboxd files as films) are kept
+ * under a Letterboxd id so they still import and still de-duplicate on re-import.
+ */
 export type Provider =
-	'tmdb' | 'igdb' | 'goodreads' | 'google-books' | 'open-library' | 'manual';
+	| 'tmdb'
+	| 'igdb'
+	| 'goodreads'
+	| 'google-books'
+	| 'open-library'
+	| 'letterboxd'
+	| 'manual';
 
 export interface BookMetadata {
 	series?: string;

@@ -71,8 +71,8 @@
 				{{ skipped.length }} rows skipped (no provider id).
 			</p>
 			<p v-if="unresolvedCount">
-				{{ unresolvedCount }} items need matching — not supported yet for this
-				service.
+				{{ unresolvedCount }} items carry no provider id, and will be matched to
+				TMDB by title and year.
 			</p>
 			<p>
 				<button type="button" @click="reset">Cancel</button>
@@ -84,7 +84,15 @@
 
 		<!-- Running. -->
 		<template v-else-if="step === 'running'">
-			<template v-if="progress.phase === 'reading'">
+			<template v-if="progress.phase === 'matching'">
+				<h2>Matching to TMDB…</h2>
+				<progress :value="progress.processed" :max="progress.total || 1" />
+				<p>
+					{{ progress.processed }} / {{ progress.total }} films matched by title
+					and year.
+				</p>
+			</template>
+			<template v-else-if="progress.phase === 'reading'">
 				<h2>Checking your library…</h2>
 				<progress />
 				<p>Looking up {{ progress.total }} existing items.</p>
@@ -257,6 +265,10 @@ async function onFiles(event: Event) {
 		}
 		records.value = result.records;
 		skipped.value = result.skipped;
+		// Which undated-completion date suits this export (Letterboxd prefers the
+		// film's release date); the watcher below still vets it against what the
+		// parsed rows can actually offer.
+		dateFallback.value = activeService.value.defaultDateFallback ?? 'added';
 		step.value = 'preview';
 	} catch {
 		error.value = 'Could not read those files.';

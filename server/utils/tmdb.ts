@@ -33,9 +33,17 @@ type MovieSearchResults = {
 };
 type ShowSearchResults = { results?: Parameters<typeof mapTmdbShowSearch>[0] };
 
-export async function tmdbSearchMovies(q: string) {
+/**
+ * `year` scopes the search to that release year. TMDB ranks by popularity and
+ * returns one page, so a common title can bury the film actually wanted — the
+ * 2020 filmed "Hamilton" doesn't make the first page of an unscoped search. The
+ * bulk importer passes the year from the export for exactly that reason; the
+ * interactive search box doesn't, and behaves as before.
+ */
+export async function tmdbSearchMovies(q: string, year?: string) {
 	const res = await tmdbFetch<MovieSearchResults>('/search/movie', {
 		query: q,
+		...(year ? { primary_release_year: year } : {}),
 	});
 	return mapTmdbMovieSearch(res.results ?? []);
 }
