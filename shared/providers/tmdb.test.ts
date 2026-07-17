@@ -111,7 +111,11 @@ describe('show seasons', () => {
 		const season: TmdbSeasonDetails = {
 			air_date: '2022-02-18',
 			poster_path: '/s1.jpg',
-			episodes: [{ runtime: 50 }, { runtime: 60 }, { runtime: null }],
+			episodes: [
+				{ runtime: 50, air_date: '2022-02-18' },
+				{ runtime: 60, air_date: '2022-04-08' },
+				{ runtime: null, air_date: null }, // announced but unaired
+			],
 		};
 		const item = mapTmdbSeasonDraft(show, season, 1);
 		expect(item.id).toBe('show-tmdb-95396-s1');
@@ -128,6 +132,7 @@ describe('show seasons', () => {
 			season_number: 1,
 			episode_count: 9,
 			episode_runtime: 55, // mean of 50 & 60
+			end_date: '2022-04-08', // last *dated* episode: the finale so far
 		});
 	});
 });

@@ -1,8 +1,34 @@
+import { registerEndpoint } from '@nuxt/test-utils/runtime';
 import { mount } from '@vue/test-utils';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { describe, expect, it } from 'vitest';
-import type { Item } from '~~/shared/types/item';
+import type { Item, ShowMetadata } from '~~/shared/types/item';
 import ItemForm from './ItemForm.vue';
+
+// A fresh season draft for the "completed on release date" finale lookup —
+// what /api/draft returns for a show whose stored metadata predates `end_date`.
+registerEndpoint('/api/draft', (): Item => {
+	return {
+		id: 'show-tmdb-95396-s1',
+		type: 'show',
+		title: 'Severance',
+		provider: 'tmdb',
+		status: 'backlog',
+		is_purchased: false,
+		is_prioritized: false,
+		completed_dates: [],
+		completed_years: [],
+		tags: [],
+		release_date: '2022-02-18',
+		metadata: {
+			show_tmdb_id: 95396,
+			season_number: 1,
+			episode_count: 9,
+			episode_runtime: 55,
+			end_date: '2022-04-08',
+		},
+	};
+});
 
 // Submit by dispatching the form's submit event directly. Unlike clicking the
 // submit button, this bypasses native constraint validation — which keeps the
@@ -460,5 +486,164 @@ describe('ItemForm', () => {
 		const item = (emitted().submit as [Item][])[0]![0];
 		expect(item.type).toBe('game');
 		expect(item.id).toMatch(/^game-manual-/);
+	});
+});
+
+describe('ItemForm — quick completion', () => {
+	/** A minimal in-progress item to point the buttons at. */
+	function inProgress(overrides: Partial<Item>): Item {
+		return {
+			id: 'movie-tmdb-1',
+			type: 'movie',
+			title: 'Something',
+			provider: 'tmdb',
+			status: 'in_progress',
+			is_purchased: false,
+			is_prioritized: false,
+			completed_dates: [],
+			completed_years: [],
+			tags: [],
+			metadata: {},
+			...overrides,
+		};
+	}
+
+	it('"Completed today" sets the status and today\'s date in one click', async () => {
+		const { emitted } = render(ItemForm, {
+			props: { mode: 'edit', initial: inProgress({}) },
+		});
+
+		await fireEvent.click(
+			screen.getByRole('button', { name: 'Completed today' }),
+		);
+		await submitForm();
+
+		const item = (emitted().submit as [Item][])[0]![0];
+		expect(item.status).toBe('complete');
+		expect(item.completed_dates).toStrictEqual([todayLocalIso()]);
+	});
+
+	it('"Completed on release date" uses a movie\'s release date, without duplicating', async () => {
+		const { emitted } = render(ItemForm, {
+			props: {
+				mode: 'edit',
+				initial: inProgress({ release_date: '2010-07-16' }),
+			},
+		});
+
+		const button = screen.getByRole('button', {
+			name: 'Completed on release date',
+		});
+		await fireEvent.click(button);
+		// Two inputs now show the date: the release-date field and the new
+		// completion entry.
+		expect(await screen.findAllByDisplayValue('2010-07-16')).toHaveLength(2);
+		await fireEvent.click(button); // second click must not stack a second date
+		await submitForm();
+
+		const item = (emitted().submit as [Item][])[0]![0];
+		expect(item.status).toBe('complete');
+		expect(item.completed_dates).toStrictEqual(['2010-07-16']);
+	});
+
+	it('coerces a year-only release date to a whole day', async () => {
+		const { emitted } = render(ItemForm, {
+			props: {
+				mode: 'edit',
+				initial: inProgress({
+					id: 'book-goodreads-1',
+					type: 'book',
+					release_date: '2023',
+				}),
+			},
+		});
+
+		await fireEvent.click(
+			screen.getByRole('button', { name: 'Completed on release date' }),
+		);
+		await submitForm();
+
+		const item = (emitted().submit as [Item][])[0]![0];
+		expect(item.completed_dates).toStrictEqual(['2023-01-01']);
+	});
+
+	it('errors instead when no release date is on record', async () => {
+		const { emitted } = render(ItemForm, {
+			props: { mode: 'edit', initial: inProgress({}) },
+		});
+
+		await fireEvent.click(
+			screen.getByRole('button', { name: 'Completed on release date' }),
+		);
+
+		expect(await screen.findByRole('alert')).toHaveTextContent(
+			'No release date on record for this item.',
+		);
+		await submitForm();
+		const item = (emitted().submit as [Item][])[0]![0];
+		expect(item.status).toBe('in_progress'); // unchanged
+	});
+
+	it('completes a season on its stored finale air date', async () => {
+		const { emitted } = render(ItemForm, {
+			props: {
+				mode: 'edit',
+				initial: inProgress({
+					id: 'show-tmdb-95396-s2',
+					type: 'show',
+					release_date: '2025-01-17', // premiere — must NOT be used
+					metadata: {
+						show_tmdb_id: 95396,
+						season_number: 2,
+						episode_count: 10,
+						episode_runtime: 45,
+						end_date: '2025-03-21',
+					},
+				}),
+			},
+		});
+
+		await fireEvent.click(
+			screen.getByRole('button', { name: 'Completed on release date' }),
+		);
+		await screen.findByDisplayValue('2025-03-21');
+		await submitForm();
+
+		const item = (emitted().submit as [Item][])[0]![0];
+		expect(item.status).toBe('complete');
+		expect(item.completed_dates).toStrictEqual(['2025-03-21']);
+	});
+
+	it('fetches the finale air date for a season stored without one', async () => {
+		// An item enriched before `end_date` existed (e.g. the Trakt import):
+		// the button looks the fresh draft up and persists what it learned.
+		const { emitted } = render(ItemForm, {
+			props: {
+				mode: 'edit',
+				initial: inProgress({
+					id: 'show-tmdb-95396-s1',
+					type: 'show',
+					release_date: '2022-02-18',
+					metadata: {
+						show_tmdb_id: 95396,
+						season_number: 1,
+						episode_count: 9,
+						episode_runtime: 55,
+					},
+				}),
+			},
+		});
+
+		await fireEvent.click(
+			screen.getByRole('button', { name: 'Completed on release date' }),
+		);
+		await screen.findByDisplayValue('2022-04-08'); // from /api/draft
+		await submitForm();
+
+		const item = (emitted().submit as [Item][])[0]![0];
+		expect(item.status).toBe('complete');
+		expect(item.completed_dates).toStrictEqual(['2022-04-08']);
+		// The lookup is kept, so the next click needs no fetch.
+		expect((item.metadata as ShowMetadata).end_date).toBe('2022-04-08');
 	});
 });

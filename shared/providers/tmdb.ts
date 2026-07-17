@@ -62,7 +62,7 @@ export interface TmdbSeasonDetails {
 	name?: string;
 	air_date?: string | null;
 	poster_path?: string | null;
-	episodes?: { runtime?: number | null }[];
+	episodes?: { runtime?: number | null; air_date?: string | null }[];
 }
 
 // --- Image helper ------------------------------------------------------------
@@ -167,6 +167,14 @@ export function mapTmdbSeasonDraft(
 	const seasonTitle =
 		seasonName && !/^season\s+\d+$/i.test(seasonName) ? seasonName : undefined;
 
+	// The season's end: the last dated episode's air date (episodes arrive in
+	// order; unaired trailing episodes have no date yet, so take the max).
+	const endDate = (season.episodes ?? [])
+		.map((e) => e.air_date ?? '')
+		.filter(Boolean)
+		.sort()
+		.at(-1);
+
 	const item: Item = {
 		id: makeShowId('tmdb', show.id, seasonNumber),
 		type: 'show',
@@ -180,6 +188,7 @@ export function mapTmdbSeasonDraft(
 			episode_count: episodeCount,
 			episode_runtime: typicalRuntime,
 			...(seasonTitle ? { season_title: seasonTitle } : {}),
+			...(endDate ? { end_date: endDate } : {}),
 		},
 	};
 	const creator = toCreator(show.created_by?.map((c) => c.name) ?? []);

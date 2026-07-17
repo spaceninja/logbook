@@ -120,6 +120,12 @@
 				<button type="button" @click="removeDate(index)">Remove</button>
 			</div>
 			<button type="button" @click="addDate">Add date</button>
+			<!-- One-click completion, mostly for cleaning up imported partial
+			     watches: set the status and a sensible date together. -->
+			<button type="button" @click="completedToday">Completed today</button>
+			<button type="button" :disabled="releaseBusy" @click="completedOnRelease">
+				Completed on release date
+			</button>
 		</fieldset>
 
 		<label>
@@ -208,6 +214,7 @@
 </template>
 
 <script setup lang="ts">
+import { coerceIsoDay } from '~~/shared/import/dates';
 import type {
 	Item,
 	ItemMetadata,
@@ -269,6 +276,8 @@ interface FormState {
 	season_title: string;
 	episode_count: string;
 	episode_runtime: string;
+	/** Finale air date — carried (not user-editable) for "completed on release date". */
+	end_date: string;
 	platform: string;
 }
 
@@ -319,6 +328,7 @@ function initialForm(): FormState {
 		season_title: str(m.season_title),
 		episode_count: numStr(m.episode_count),
 		episode_runtime: numStr(m.episode_runtime),
+		end_date: str(m.end_date),
 		platform: str(m.platform),
 	};
 }
@@ -363,6 +373,7 @@ function applyProviderFields(source: Item) {
 	form.season_title = str(m.season_title);
 	form.episode_count = numStr(m.episode_count);
 	form.episode_runtime = numStr(m.episode_runtime);
+	form.end_date = str(m.end_date);
 	form.platform = str(m.platform);
 }
 
@@ -404,6 +415,69 @@ function addDate() {
 }
 function removeDate(index: number) {
 	form.completed_dates.splice(index, 1);
+}
+
+/** One-click completion: add `day` (deduped) and mark the item complete. */
+function completeOn(day: string) {
+	if (!form.completed_dates.includes(day)) form.completed_dates.push(day);
+	form.status = 'complete';
+}
+
+function completedToday() {
+	completeOn(todayIso());
+}
+
+const releaseBusy = ref(false);
+
+/**
+ * Complete the item on the day it came out — the shortcut for cleaning up
+ * imported items whose real completion date is long lost (issue #20). Sets an
+ * error instead when no release date is on record.
+ */
+async function completedOnRelease() {
+	error.value = '';
+	releaseBusy.value = true;
+	try {
+		// Coerced to a whole day: book release dates are often year-only.
+		const day = coerceIsoDay(await releaseDay());
+		if (!day) {
+			error.value = 'No release date on record for this item.';
+			return;
+		}
+		completeOn(day);
+	} finally {
+		releaseBusy.value = false;
+	}
+}
+
+/**
+ * The day this item "came out". A season is only *over* on its finale's air
+ * date, so shows prefer the metadata `end_date` — fetched fresh when the item
+ * was enriched before that field existed — over `release_date` (the premiere,
+ * which doubles as the last resort when TMDB can't say).
+ */
+async function releaseDay(): Promise<string | undefined> {
+	if (form.type === 'show') {
+		if (form.end_date.trim()) return form.end_date;
+		const id = form.show_tmdb_id.trim();
+		const season = form.season_number.trim();
+		if (id && season) {
+			try {
+				const draft = await $fetch<Item>('/api/draft', {
+					params: { type: 'show', id, season },
+				});
+				const endDate = (draft.metadata as ShowMetadata).end_date;
+				if (endDate) {
+					form.end_date = endDate; // keep it: a save persists the lookup
+					return endDate;
+				}
+				if (draft.release_date) return draft.release_date;
+			} catch {
+				// TMDB unavailable or the season unlisted: use the premiere below.
+			}
+		}
+	}
+	return form.release_date.trim() || undefined;
 }
 
 // `<input type="number">` v-model yields a number once edited, so coerce to a
@@ -458,6 +532,7 @@ function assembleMetadata(): ItemMetadata {
 			};
 			if (form.season_title.trim())
 				meta.season_title = form.season_title.trim();
+			if (form.end_date.trim()) meta.end_date = form.end_date.trim();
 			return meta;
 		}
 		case 'game': {

@@ -61,6 +61,14 @@ export interface ShowMetadata {
 	 * "Book One: Water"). Recorded for display; not used for sorting/filtering.
 	 */
 	season_title?: string;
+	/**
+	 * The finale's air date (`YYYY-MM-DD`) — the season-level counterpart to
+	 * `release_date` (the premiere). Used by the edit form's "completed on
+	 * release date" shortcut, which for a season means the day it *ended*.
+	 * Absent on items enriched before this field existed; the form falls back
+	 * to a fresh draft lookup.
+	 */
+	end_date?: string;
 }
 
 export interface GameMetadata {
