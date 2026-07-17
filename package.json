@@ -46,7 +46,7 @@
 		"@testing-library/jest-dom": "6.9.1",
 		"@testing-library/vue": "8.1.0",
 		"@types/markdown-it": "14.1.2",
-		"@typescript-eslint/parser": "8.63.0",
+		"@typescript-eslint/parser": "8.64.0",
 		"@vitest/eslint-plugin": "1.6.23",
 		"@vue/test-utils": "2.4.11",
 		"eslint": "10.7.0",
