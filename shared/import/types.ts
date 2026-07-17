@@ -1,4 +1,5 @@
 import type { Item, ItemStatus, MediaType } from '../types/item';
+import type { EpisodeWatch } from './rollup';
 
 /**
  * Types for the bulk-import pipeline (issue #20). A service parser turns an
@@ -81,6 +82,14 @@ export interface ImportRecord {
 	 * clobber notes written since (issue #20).
 	 */
 	notes?: string;
+	/**
+	 * Per-episode watches for a Trakt season history record. Whether they add up
+	 * to a *completed* season depends on the season's TMDB episode count, which
+	 * only arrives with enrichment — so the parser ships the raw watches, this
+	 * record's `status`/`completedDates` are provisional, and the pipeline rolls
+	 * them up once the base item is known (see `rollup.ts`).
+	 */
+	seasonEpisodes?: EpisodeWatch[];
 	/**
 	 * A base item built from the export's own fields, used as the enrichment base
 	 * when a provider lookup can't supply one — Goodreads books that carry no ISBN

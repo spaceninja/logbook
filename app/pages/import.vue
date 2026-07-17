@@ -82,6 +82,26 @@
 			</p>
 		</template>
 
+		<!-- Confirm the seasons the rollup wasn't sure about (Trakt). -->
+		<template v-else-if="step === 'review'">
+			<h2>Confirm uncertain seasons</h2>
+			<p>
+				These seasons look finished, but not confidently — uncheck any you
+				didn't actually finish (they'll be filed as in progress instead).
+			</p>
+			<ul>
+				<li v-for="item in reviewItems" :key="item.prompt.id">
+					<label>
+						<input v-model="item.accepted" type="checkbox" />
+						{{ reviewLabel(item.prompt) }}
+					</label>
+				</li>
+			</ul>
+			<p>
+				<button type="button" @click="confirmReview">Continue import</button>
+			</p>
+		</template>
+
 		<!-- Running. -->
 		<template v-else-if="step === 'running'">
 			<template v-if="progress.phase === 'matching'">
@@ -160,11 +180,13 @@ import { FAST_IMPORT_LIMIT } from '~~/app/composables/useImport';
 import type {
 	ImportProgress,
 	ImportSummary,
+	ReviewPrompt,
+	ReviewResolve,
 } from '~~/app/composables/useImport';
 
 definePageMeta({ middleware: 'owner' });
 
-type Step = 'select' | 'preview' | 'running' | 'done';
+type Step = 'select' | 'preview' | 'review' | 'running' | 'done';
 
 const { runImport } = useImport();
 
@@ -204,9 +226,15 @@ const backlogCount = computed(
 const unresolvedCount = computed(
 	() => records.value.filter((r) => resolveDirectId(r.resolve) === null).length,
 );
+// Season records (Trakt) are excluded: undated here, they get their date — or
+// an in-progress verdict — from the episode rollup during the run, never from
+// the date fallback.
 const undatedHistoryRecords = computed(() =>
 	records.value.filter(
-		(r) => r.section === 'history' && r.completedDates.length === 0,
+		(r) =>
+			r.section === 'history' &&
+			r.completedDates.length === 0 &&
+			!r.seasonEpisodes,
 	),
 );
 const undatedHistoryCount = computed(() => undatedHistoryRecords.value.length);
@@ -244,12 +272,57 @@ const importCount = computed(() =>
 	fastImport.value ? `up to ${FAST_IMPORT_LIMIT}` : selectedCount.value,
 );
 
+// Uncertain Trakt seasons awaiting the owner's yes/no, each defaulting to yes.
+const reviewItems = ref<{ prompt: ReviewPrompt; accepted: boolean }[]>([]);
+let resolveReview: ReviewResolve | null = null;
+
+/**
+ * The pipeline's review callback: park its prompts in the review step and hold
+ * the import until `confirmReview` resolves the decisions back to it.
+ */
+function onReview(prompts: ReviewPrompt[]): Promise<Set<string>> {
+	reviewItems.value = prompts.map((prompt) => ({ prompt, accepted: true }));
+	step.value = 'review';
+	return new Promise((resolve) => {
+		resolveReview = resolve;
+	});
+}
+
+function confirmReview() {
+	const accepted = new Set(
+		reviewItems.value
+			.filter((item) => item.accepted)
+			.map((item) => item.prompt.id),
+	);
+	reviewItems.value = [];
+	step.value = 'running';
+	resolveReview?.(accepted);
+	resolveReview = null;
+}
+
+/** One review line: "Doctor Who season 2 — watched 15 of 20 episodes (75%), 2023-03-01 – 2025-07-10". */
+function reviewLabel(prompt: ReviewPrompt): string {
+	const { rollup } = prompt;
+	const watched =
+		rollup.episodeCount > 0
+			? `watched ${rollup.watchedCount} of ${rollup.episodeCount} episodes ` +
+				`(${Math.round(rollup.coverage * 100)}%)`
+			: `watched ${rollup.watchedCount} episodes (season length unknown)`;
+	const when =
+		rollup.firstDay === rollup.lastDay
+			? rollup.lastDay
+			: `${rollup.firstDay} – ${rollup.lastDay}`;
+	return `${prompt.title} season ${prompt.season} — ${watched}, ${when}`;
+}
+
 function reset() {
 	step.value = 'select';
 	error.value = '';
 	records.value = [];
 	skipped.value = [];
 	summary.value = null;
+	reviewItems.value = [];
+	resolveReview = null;
 }
 
 async function onFiles(event: Event) {
@@ -292,6 +365,7 @@ async function run() {
 				progress.value = p;
 			},
 			isDev && fastImport.value ? FAST_IMPORT_LIMIT : undefined,
+			onReview,
 		);
 		step.value = 'done';
 	} catch (e) {

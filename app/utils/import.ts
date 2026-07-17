@@ -2,6 +2,7 @@ import JSZip from 'jszip';
 import { parseGoodreads } from '~~/shared/import/goodreads';
 import { parseInfiniteBacklog } from '~~/shared/import/infiniteBacklog';
 import { parseLetterboxd } from '~~/shared/import/letterboxd';
+import { parseTrakt } from '~~/shared/import/trakt';
 import type { ImportFileMap, ServiceParser } from '~~/shared/import/types';
 
 /**
@@ -22,6 +23,11 @@ export const IMPORT_SERVICES: ServiceParser[] = [
 		// opens with one big backfill — so "date added" would stamp thousands of
 		// films with the same day. Each film's release date at least spreads them.
 		defaultDateFallback: 'release',
+	},
+	{
+		source: 'trakt',
+		label: 'Trakt',
+		parse: parseTrakt,
 	},
 	{
 		source: 'infinite-backlog',

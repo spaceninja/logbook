@@ -2,6 +2,8 @@ import { chooseFallbackDate, coerceIsoDay } from '~~/shared/import/dates';
 import { pickMovieMatch, pickMovieVariantMatch } from '~~/shared/import/match';
 import { applyContribution, toContribution } from '~~/shared/import/merge';
 import { resolveDirectId } from '~~/shared/import/resolve';
+import { rollupSeason } from '~~/shared/import/rollup';
+import type { SeasonRollup } from '~~/shared/import/rollup';
 import type {
 	DateFallback,
 	ImportContribution,
@@ -10,7 +12,12 @@ import type {
 	ResolveHint,
 } from '~~/shared/import/types';
 import { normalizeTitle } from '~~/shared/providers/helpers';
-import type { BookMetadata, Item, MediaType } from '~~/shared/types/item';
+import type {
+	BookMetadata,
+	Item,
+	MediaType,
+	ShowMetadata,
+} from '~~/shared/types/item';
 import type { SearchResult } from '~~/shared/types/search';
 import { makeMovieId } from '~~/shared/utils/itemId';
 
@@ -31,6 +38,28 @@ export interface ImportProgress {
 	updated: number;
 	unchanged: number;
 }
+
+/**
+ * A season the rollup couldn't confidently call finished (see `rollup.ts`),
+ * surfaced mid-import for the owner to confirm or decline. The import waits on
+ * the page's `onReview` callback; accepted ids complete (dated by the rollup's
+ * `completedDay`), declined ones stay in progress.
+ */
+export interface ReviewPrompt {
+	/** The target item id — the key a decision comes back under. */
+	id: string;
+	/** The show's title; the season number lives alongside, for display. */
+	title: string;
+	season: number;
+	year?: string;
+	rollup: SeasonRollup;
+}
+
+/** The page-supplied review step: prompts in, the set of accepted ids out. */
+export type ReviewCallback = (prompts: ReviewPrompt[]) => Promise<Set<string>>;
+
+/** Resolves a pending review step with the ids the owner accepted. */
+export type ReviewResolve = (accepted: Set<string>) => void;
 
 export interface ImportSummary {
 	created: number;
@@ -78,6 +107,10 @@ function effectiveContribution(
 ): ImportContribution {
 	const contribution = toContribution(record);
 	if (record.section !== 'history') return contribution; // backlog: no dates
+	// Only a completion gets dated — a season the rollup left in progress must
+	// not be backfilled with a placeholder completion date.
+	if (record.status !== 'complete' && record.status !== 'dnf')
+		return contribution;
 
 	// This item's import-generated fallback candidates — an existing completion
 	// date matching one is a stale placeholder the merge may replace. Coerced to
@@ -116,6 +149,10 @@ function statusOf(error: unknown): number | undefined {
 function describeError(error: unknown): string {
 	const e = error as { statusMessage?: string; message?: string };
 	const code = statusOf(error);
+	// A 404 on a by-id lookup means the provider has no entry for a perfectly
+	// valid id — usually something announced but not listed yet (a future
+	// season). Say so, rather than a bare "Not Found".
+	if (code === 404) return 'Provider has no entry for this yet (404)';
 	const message = e?.statusMessage || e?.message || 'Lookup failed';
 	return code ? `${message} (${code})` : message;
 }
@@ -166,6 +203,17 @@ function movieKey(record: ImportRecord): string {
 	return `${normalizeTitle(record.title)}|${record.year ?? ''}`;
 }
 
+/**
+ * A record's title for skip/summary lines. A season record's `title` is just
+ * the show's, which made "Silo — Not Found" ambiguous about which season —
+ * so seasons get their number.
+ */
+function displayTitle(record: ImportRecord): string {
+	return record.resolve.kind === 'tmdb-season'
+		? `${record.title} S${record.resolve.season}`
+		: record.title;
+}
+
 /** How many not-yet-imported items a dev-only "fast import" run processes. */
 export const FAST_IMPORT_LIMIT = 100;
 
@@ -205,6 +253,33 @@ function draftRequest(
 /** First author from a `creator`, for a Google Books title+author search. */
 function firstAuthor(creator: Item['creator']): string | undefined {
 	return Array.isArray(creator) ? creator[0] : creator;
+}
+
+/**
+ * The episode count a season item's metadata knows, for the rollup. 0 (which
+ * routes the season to review) when the metadata never carried one — possible
+ * on an item that predates enrichment.
+ */
+function episodeCountOf(item: Item): number {
+	const metadata = item.metadata as Partial<ShowMetadata> | undefined;
+	return typeof metadata?.episode_count === 'number'
+		? metadata.episode_count
+		: 0;
+}
+
+/**
+ * A season record with its provisional status resolved by the rollup verdict
+ * (or the owner's review decision): completed on the rollup's day, or left in
+ * progress with no dates.
+ */
+function resolveSeasonRecord(
+	record: ImportRecord,
+	rollup: SeasonRollup,
+	complete: boolean,
+): ImportRecord {
+	return complete && rollup.completedDay
+		? { ...record, status: 'complete', completedDates: [rollup.completedDay] }
+		: { ...record, status: 'in_progress', completedDates: [] };
 }
 
 /**
@@ -272,83 +347,92 @@ export function useImport() {
 	}
 
 	/**
-	 * Merge one id's records onto its base item. `existing` is the current
+	 * The base item one id's records merge onto. `existing` is the current
 	 * Firestore doc (from the batched prefetch) or undefined for a brand-new id,
 	 * which is enriched via `/api/draft` (books via `enrichBook`). Returns null
 	 * when a new id can't be enriched and the export offers no fallback to import
-	 * from.
+	 * from. Merging is `finalizeItem`'s job — split from here so a season that
+	 * needs the owner's review can pause between the two.
 	 */
-	async function buildItem(
+	async function prepareBase(
 		existing: Item | undefined,
 		group: ImportRecord[],
-		dateFallback: DateFallback,
-	): Promise<{ item: Item; isNew: boolean; unmatched: boolean } | null> {
+	): Promise<{ base: Item; isNew: boolean; unmatched: boolean } | null> {
 		const first = group[0]!;
-		let base: Item;
-		let isNew: boolean;
-		let unmatched = false;
 
-		if (existing) {
-			base = existing;
-			isNew = false;
-		} else if (first.resolve.kind === 'goodreads-book') {
+		if (existing) return { base: existing, isNew: false, unmatched: false };
+
+		if (first.resolve.kind === 'goodreads-book') {
 			const enriched = await enrichBook(first);
 			if (!enriched) return null;
-			base = enriched.item;
-			unmatched = !enriched.matched;
-			isNew = true;
-		} else if (first.resolve.kind === 'tmdb-movie-search') {
+			return { base: enriched.item, isNew: true, unmatched: !enriched.matched };
+		}
+
+		if (first.resolve.kind === 'tmdb-movie-search') {
 			// The matching phase rewrites a matched film's hint to `tmdb-movie`, so a
 			// search hint still standing here means TMDB had nothing: import the film
 			// from Letterboxd's own fields rather than lose the watch history.
 			if (!first.fallbackDraft) return null;
-			base = first.fallbackDraft;
-			unmatched = true;
-			isNew = true;
-		} else {
-			const request = draftRequest(first.resolve);
-			if (!request) return null; // not enrichable by id
-			base = await $fetch<Item>('/api/draft', {
-				params: { type: request.type, ...request.params },
-			});
-			isNew = true;
+			return { base: first.fallbackDraft, isNew: true, unmatched: true };
 		}
 
+		const request = draftRequest(first.resolve);
+		if (!request) return null; // not enrichable by id
+		try {
+			const base = await $fetch<Item>('/api/draft', {
+				params: { type: request.type, ...request.params },
+			});
+			return { base, isNew: true, unmatched: false };
+		} catch (error) {
+			// TMDB has no entry for a perfectly valid id — chiefly a watchlisted
+			// *future* season it doesn't list yet. Import from the export's own
+			// fields under the same deterministic id, so a later re-import (once
+			// TMDB lists it) enriches the item in place.
+			if (statusOf(error) === 404 && first.fallbackDraft)
+				return { base: first.fallbackDraft, isNew: true, unmatched: true };
+			throw error;
+		}
+	}
+
+	/**
+	 * `prepareBase` with a few retries and backoff. Enrichment (`/api/draft`) can
+	 * blip transiently under bulk load; retrying recovers nearly all of those. A
+	 * `null` return (no by-id lookup for this source) is deterministic, not an
+	 * error, so it is passed through without retrying. Existing items no longer
+	 * touch the network here — they were prefetched in one batch.
+	 */
+	async function prepareBaseResilient(
+		existing: Item | undefined,
+		group: ImportRecord[],
+	): Promise<{ base: Item; isNew: boolean; unmatched: boolean } | null> {
+		for (let attempt = 1; ; attempt++) {
+			try {
+				return await prepareBase(existing, group);
+			} catch (error) {
+				if (attempt >= ITEM_ATTEMPTS) throw error;
+				await sleep(400 * attempt);
+			}
+		}
+	}
+
+	/** Merge one id's (rollup-resolved) records onto its prepared base item. */
+	function finalizeItem(
+		base: Item,
+		isNew: boolean,
+		group: ImportRecord[],
+		dateFallback: DateFallback,
+	): Item {
 		// The owner's own review, kept only on an item this import creates — `notes`
 		// is a user-owned field, so a re-import must never overwrite what's there.
 		const notes = group.find((record) => record.notes)?.notes;
-		if (isNew && notes && !base.notes) base = { ...base, notes };
-
-		let item = base;
+		let item = isNew && notes && !base.notes ? { ...base, notes } : base;
 		for (const record of group) {
 			item = applyContribution(
 				item,
 				effectiveContribution(record, base, dateFallback),
 			);
 		}
-		return { item, isNew, unmatched };
-	}
-
-	/**
-	 * `buildItem` with a few retries and backoff. Enrichment (`/api/draft`) can
-	 * blip transiently under bulk load; retrying recovers nearly all of those. A
-	 * `null` return (no by-id lookup for this source) is deterministic, not an
-	 * error, so it is passed through without retrying. Existing items no longer
-	 * touch the network here — they were prefetched in one batch.
-	 */
-	async function buildItemResilient(
-		existing: Item | undefined,
-		group: ImportRecord[],
-		dateFallback: DateFallback,
-	): Promise<{ item: Item; isNew: boolean; unmatched: boolean } | null> {
-		for (let attempt = 1; ; attempt++) {
-			try {
-				return await buildItem(existing, group, dateFallback);
-			} catch (error) {
-				if (attempt >= ITEM_ATTEMPTS) throw error;
-				await sleep(400 * attempt);
-			}
-		}
+		return item;
 	}
 
 	/**
@@ -418,6 +502,7 @@ export function useImport() {
 		dateFallback: DateFallback,
 		onProgress: (progress: ImportProgress) => void,
 		limit?: number,
+		onReview?: ReviewCallback,
 	): Promise<ImportSummary> {
 		const skipped: ImportSummary['skipped'] = [];
 		const unmatched: ImportSummary['unmatched'] = [];
@@ -536,33 +621,93 @@ export function useImport() {
 		total = ids.length;
 		report();
 
+		/** Merge a group onto its base, then count/queue the result for the write. */
+		function commit(
+			prepared: { base: Item; isNew: boolean; unmatched: boolean },
+			group: ImportRecord[],
+			existing: Item | undefined,
+		): void {
+			const item = finalizeItem(
+				prepared.base,
+				prepared.isNew,
+				group,
+				dateFallback,
+			);
+			if (prepared.isNew) {
+				toWrite.push(item);
+				created++;
+				if (prepared.unmatched)
+					unmatched.push({ title: displayTitle(group[0]!) });
+			} else if (existing && importChanged(existing, item)) {
+				// Only re-write existing docs whose merged result actually differs.
+				toWrite.push(item);
+				updated++;
+			} else {
+				unchanged++;
+			}
+		}
+
+		/** Season groups held back for the owner's review, everything else resolved. */
+		const pendingReview: {
+			id: string;
+			prepared: { base: Item; isNew: boolean; unmatched: boolean };
+			group: ImportRecord[];
+			/** Which record in `group` awaits the decision. */
+			index: number;
+			rollup: SeasonRollup;
+			existing?: Item;
+		}[] = [];
+
 		async function worker(): Promise<void> {
 			while (cursor < ids.length) {
 				const id = ids[cursor++]!;
 				const group = groups.get(id)!;
 				const existing = existingItems.get(id);
 				try {
-					const built = await buildItemResilient(existing, group, dateFallback);
-					if (!built) {
+					const prepared = await prepareBaseResilient(existing, group);
+					if (!prepared) {
 						skipped.push({
-							title: group[0]!.title,
+							title: displayTitle(group[0]!),
 							reason: 'No metadata match and nothing to fall back to',
 						});
-					} else if (built.isNew) {
-						toWrite.push(built.item);
-						created++;
-						if (built.unmatched) unmatched.push({ title: built.item.title });
-					} else if (existing && importChanged(existing, built.item)) {
-						// Only re-write existing docs whose merged result actually differs.
-						toWrite.push(built.item);
-						updated++;
 					} else {
-						unchanged++;
+						// Roll each season history record's episode watches up into a
+						// completion verdict, now that the episode count is known.
+						const episodeCount = episodeCountOf(prepared.base);
+						let review: { index: number; rollup: SeasonRollup } | undefined;
+						const resolved = group.map((record, index) => {
+							if (record.section !== 'history' || !record.seasonEpisodes)
+								return record;
+							const rollup = rollupSeason(record.seasonEpisodes, episodeCount);
+							if (rollup.tier !== 'review')
+								return resolveSeasonRecord(
+									record,
+									rollup,
+									rollup.tier === 'complete',
+								);
+							// An item already marked complete re-confirms silently — a
+							// re-import over a library must not re-ask settled questions.
+							if (existing?.status === 'complete')
+								return resolveSeasonRecord(record, rollup, true);
+							review = { index, rollup };
+							return record; // resolved after the owner decides
+						});
+						if (review) {
+							pendingReview.push({
+								id,
+								prepared,
+								group: resolved,
+								...review,
+								existing,
+							});
+						} else {
+							commit(prepared, resolved, existing);
+						}
 					}
 				} catch (error) {
 					// A single failed lookup shouldn't abort the whole import.
 					skipped.push({
-						title: group[0]!.title,
+						title: displayTitle(group[0]!),
 						reason: describeError(error),
 					});
 				}
@@ -574,6 +719,35 @@ export function useImport() {
 		await Promise.all(
 			Array.from({ length: Math.min(CONCURRENCY, ids.length) }, worker),
 		);
+
+		// --- Review: put the uncertain seasons to the owner, then finish them the
+		// same way. Without a callback every prompt takes its default: yes.
+		if (pendingReview.length > 0) {
+			const prompts: ReviewPrompt[] = pendingReview.map((pending) => {
+				const record = pending.group[pending.index]!;
+				return {
+					id: pending.id,
+					title: record.title,
+					season:
+						record.resolve.kind === 'tmdb-season' ? record.resolve.season : 0,
+					year: record.year,
+					rollup: pending.rollup,
+				};
+			});
+			const accepted = onReview
+				? await onReview(prompts)
+				: new Set(prompts.map((prompt) => prompt.id));
+			for (const pending of pendingReview) {
+				const group = [...pending.group];
+				group[pending.index] = resolveSeasonRecord(
+					group[pending.index]!,
+					pending.rollup,
+					accepted.has(pending.id),
+				);
+				commit(pending.prepared, group, pending.existing);
+				report();
+			}
+		}
 
 		phase = 'saving';
 		report();
