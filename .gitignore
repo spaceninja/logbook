@@ -27,3 +27,6 @@ logs
 
 # Sample-dataset generator fetch cache (resumable; not committed)
 scripts/.sample-cache.json
+
+# Per-machine Claude Code settings (the shared ones live in settings.json)
+.claude/settings.local.json
