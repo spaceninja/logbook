@@ -92,10 +92,11 @@ function fallbackDraft(row: Record<string, string>, isbn?: string): Item {
 			...(seriesNumber !== undefined ? { series_number: seriesNumber } : {}),
 		},
 	};
-	const creator = toCreator([
-		row['Author'],
-		...(row['Additional Authors'] ?? '').split(','),
-	]);
+	// "Additional Authors" is dropped: Goodreads strips role labels from the
+	// export, so the column mixes co-writers in with illustrators, translators,
+	// colorists, letterers, and author pseudonyms with no way to tell them apart.
+	// "Author" alone is the primary-writer credit we want.
+	const creator = toCreator([row['Author']]);
 	if (creator !== undefined) item.creator = creator;
 	const year =
 		yearOf(row['Original Publication Year']) ?? yearOf(row['Year Published']);

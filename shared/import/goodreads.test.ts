@@ -147,6 +147,32 @@ describe('parseGoodreads — read shelf → history', () => {
 		);
 		expect(records[0]?.myRating).toBeUndefined();
 	});
+
+	it('credits only the primary author, ignoring "Additional Authors"', () => {
+		const { records } = parseGoodreads(
+			library(
+				csvRow([
+					'2',
+					'Locke Lamora and the Bottled Serpent',
+					'Scott Lynch',
+					// Goodreads strips role labels, so this column mixes co-writers in
+					// with illustrators and translators — here, the illustrator.
+					'Even Amundsen',
+					'="9780000000002"',
+					'="9780000000002"',
+					'0',
+					'100',
+					'2023',
+					'2023',
+					'2024/01/01',
+					'2023/12/31',
+					'read',
+					'0',
+				]),
+			),
+		);
+		expect(records[0]?.fallbackDraft?.creator).toBe('Scott Lynch');
+	});
 });
 
 describe('parseGoodreads — backlog shelves', () => {
