@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { enumParam, flagParam, yearParam } from './viewQuery';
+import { enumParam, flagParam, stringParam, yearParam } from './viewQuery';
 
 describe('enumParam', () => {
 	const codec = enumParam(['book', 'movie', 'show', 'game'] as const, 'book');
@@ -44,6 +44,33 @@ describe('yearParam', () => {
 	it('serializes a year and omits null', () => {
 		expect(codec.serialize(2024)).toBe('2024');
 		expect(codec.serialize(null)).toBeNull();
+	});
+});
+
+describe('stringParam', () => {
+	const codec = stringParam();
+
+	it('defaults to an empty string', () => {
+		expect(codec.default).toBe('');
+	});
+
+	it('parses text, trimming surrounding whitespace', () => {
+		expect(codec.parse('dune')).toBe('dune');
+		expect(codec.parse('  dune  ')).toBe('dune');
+	});
+
+	it('treats a blank param as absent so the default is used', () => {
+		expect(codec.parse('')).toBeUndefined();
+		expect(codec.parse('   ')).toBeUndefined();
+	});
+
+	it('omits a blank value from the URL', () => {
+		expect(codec.serialize('')).toBeNull();
+		expect(codec.serialize('   ')).toBeNull();
+	});
+
+	it('serializes trimmed text', () => {
+		expect(codec.serialize('  dune part  ')).toBe('dune part');
 	});
 });
 

@@ -13,7 +13,7 @@
 <script setup lang="ts">
 defineProps<{
 	items: Item[];
-	view: 'history' | 'backlog';
+	view: 'history' | 'backlog' | 'search';
 	year?: number;
 }>();
 </script>

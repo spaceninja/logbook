@@ -86,6 +86,25 @@ export function useItems() {
 	}
 
 	/**
+	 * Every item of one media type, backing the search view (#40). Search matches
+	 * substrings across title/creator/series, which Firestore cannot express (it
+	 * offers prefix range queries on a single field at best), so the query is
+	 * deliberately coarse and the matching happens client-side in
+	 * `applyItemSearch` — the same shape as the other list views (core design §4).
+	 *
+	 * This reads every item of the type, which is the accepted cost: the result is
+	 * cached per type for the session, and the JSON is a small fraction of the
+	 * cover art the same grid already loads. Revisit only if measurement says so.
+	 */
+	async function getAllByType(type: MediaType): Promise<Item[]> {
+		const snapshot = await withTimeout(
+			getDocs(query(items(), where('type', '==', type))),
+			'Loading items to search',
+		);
+		return snapshot.docs.map((d) => d.data() as Item);
+	}
+
+	/**
 	 * Completed items of one type that have no completion date — the History
 	 * "Undated" bucket. Without this they'd be invisible: History is date-driven
 	 * (so they match no year) and Backlog is `backlog`/`in_progress` only, so a
@@ -251,6 +270,7 @@ export function useItems() {
 		getBacklog,
 		getHistory,
 		getUndated,
+		getAllByType,
 		getCompletionYears,
 		getItem,
 		getItemsByIds,

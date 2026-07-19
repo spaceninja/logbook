@@ -47,3 +47,19 @@ export function formatCompletedDate(isoDate: string): string {
 		timeZone: 'UTC',
 	}).format(date);
 }
+
+/**
+ * As `formatCompletedDate`, but includes the year ("Mar 3, 2024"). The History
+ * view scopes its list to one year so the year is redundant there, but search
+ * results span every year — and the year is the whole point of looking a
+ * completion up (#40).
+ */
+export function formatCompletedDateWithYear(isoDate: string): string {
+	const date = new Date(`${isoDate.slice(0, 10)}T00:00:00Z`);
+	return new Intl.DateTimeFormat('en-US', {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric',
+		timeZone: 'UTC',
+	}).format(date);
+}

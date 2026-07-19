@@ -13,10 +13,19 @@
 		empty-message="Nothing in the backlog."
 		error-message="Failed to load backlog"
 		@update:filter="setFilter"
-	/>
+	>
+		<template #controls>
+			<ItemSearch
+				v-model="search"
+				label="Filter"
+				placeholder="Title, creator…"
+			/>
+		</template>
+	</ItemBrowser>
 </template>
 
 <script setup lang="ts">
+import { watchDebounced } from '@vueuse/core';
 import type { MediaType } from '~~/shared/types/item';
 import type {
 	FilterKey,
@@ -24,7 +33,7 @@ import type {
 	ItemFilters,
 } from '~~/shared/utils/itemFilter';
 import type { SortKey } from '~~/shared/utils/itemSort';
-import { enumParam, flagParam } from '~~/shared/utils/viewQuery';
+import { enumParam, flagParam, stringParam } from '~~/shared/utils/viewQuery';
 
 const MEDIA_TYPES: MediaType[] = ['book', 'movie', 'show', 'game'];
 const SORT_KEYS: SortKey[] = [
@@ -53,6 +62,24 @@ const prioritized = useQueryParam(
 );
 const released = useQueryParam('released', enumParam(FILTER_STATES, 'all'));
 
+// The backlog is already loaded client-side, so search is just another
+// refinement of the current view (#40) — no navigation. Filtering runs off the
+// local ref so typing feels instant; the URL catches up on a debounce, keeping
+// the view bookmarkable without writing a `q` on every keystroke.
+const searchParam = useQueryParam('q', stringParam());
+const search = ref(searchParam.value);
+watchDebounced(
+	search,
+	(q) => {
+		searchParam.value = q;
+	},
+	{ debounce: 300 },
+);
+// Back/forward navigation moves the param, not the field; sync it back.
+watch(searchParam, (q) => {
+	if (q !== search.value) search.value = q;
+});
+
 const filterRefs = { purchased, prioritized, released };
 const filters = computed<ItemFilters>(() => ({
 	purchased: purchased.value,
@@ -80,6 +107,7 @@ const { displayed } = useItemList(items, {
 	sortKey,
 	reversed,
 	filters,
+	search,
 	ratingField: 'community_rating',
 });
 

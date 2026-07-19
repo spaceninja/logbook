@@ -13,6 +13,11 @@
 		error-message="Failed to load history"
 	>
 		<template #controls>
+			<ItemSearch
+				v-model="search"
+				placeholder="All years…"
+				@submit="goToSearch"
+			/>
 			<div class="filter year-switcher">
 				<label for="year-switcher">Year</label>
 				<select id="year-switcher" v-model.number="year">
@@ -108,6 +113,20 @@ watch(
 	},
 	{ immediate: true },
 );
+
+// History only ever holds one year at a time, so filtering it in place would
+// search a single year and silently miss the rest — the exact problem #40 is
+// about. Instead the field hands off to the search view, which spans every year
+// for this media type. Submit (Enter), not live, so we don't push a route per
+// keystroke.
+const search = ref('');
+function goToSearch() {
+	if (!search.value.trim()) return;
+	navigateTo({
+		path: '/search',
+		query: { type: type.value, q: search.value.trim() },
+	});
+}
 
 // For shows, the series sort (show name + numeric season) supersedes the title
 // sort — it groups seasons and orders them numerically — so offer Series, not Title.

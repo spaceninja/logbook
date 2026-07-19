@@ -59,7 +59,7 @@ const {
 	pending: boolean;
 	error?: { message: string } | null;
 	displayed: Item[];
-	view: 'history' | 'backlog';
+	view: 'history' | 'backlog' | 'search';
 	year?: number;
 	emptyMessage: string;
 	errorMessage: string;

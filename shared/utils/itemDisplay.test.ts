@@ -5,6 +5,7 @@ import {
 	formatCreator,
 	formatSeries,
 	formatCompletedDate,
+	formatCompletedDateWithYear,
 } from './itemDisplay';
 
 function makeShow(overrides: Partial<Item> = {}): Item {
@@ -103,5 +104,21 @@ describe('formatCompletedDate', () => {
 
 	it('tolerates a full ISO timestamp', () => {
 		expect(formatCompletedDate('2026-07-04T13:45:00Z')).toBe('Jul 4');
+	});
+});
+
+describe('formatCompletedDateWithYear', () => {
+	it('includes the year, for results that span years', () => {
+		expect(formatCompletedDateWithYear('2024-03-03')).toBe('Mar 3, 2024');
+	});
+
+	it('keeps the calendar day stable regardless of viewer timezone', () => {
+		expect(formatCompletedDateWithYear('2026-12-01')).toBe('Dec 1, 2026');
+	});
+
+	it('tolerates a full ISO timestamp', () => {
+		expect(formatCompletedDateWithYear('2026-07-04T13:45:00Z')).toBe(
+			'Jul 4, 2026',
+		);
 	});
 });

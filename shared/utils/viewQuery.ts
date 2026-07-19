@@ -36,6 +36,18 @@ export function flagParam(def = false): ParamCodec<boolean> {
 }
 
 /**
+ * Free text (the search query). Trimmed on both parse and serialize, so a param
+ * that is empty or all whitespace is treated as absent and omitted from the URL.
+ */
+export function stringParam(): ParamCodec<string> {
+	return {
+		default: '',
+		parse: (raw) => raw.trim() || undefined,
+		serialize: (value) => value.trim() || null,
+	};
+}
+
+/**
  * A calendar year, or `null` when absent. Unlike the others its "default" is not
  * a concrete year — absence means "use the newest available" (resolved by the
  * page), so the default is `null`. Any non-negative integer is valid; `0` is the

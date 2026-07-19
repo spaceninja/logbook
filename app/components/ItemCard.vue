@@ -20,9 +20,10 @@
 		<span v-if="item.status === 'dnf'" class="dnf">DNF</span>
 		<span v-if="completedDates.length" class="dates">
 			<time v-for="d in completedDates" :key="d" :datetime="d">{{
-				formatCompletedDate(d)
+				formatDate(d)
 			}}</time>
 		</span>
+		<span v-if="statusLabel" class="status">{{ statusLabel }}</span>
 	</li>
 </template>
 
@@ -34,11 +35,12 @@ import {
 	formatCreator,
 	formatSeries,
 	formatCompletedDate,
+	formatCompletedDateWithYear,
 } from '~~/shared/utils/itemDisplay';
 
 const { item, view, year } = defineProps<{
 	item: Item;
-	view: 'history' | 'backlog';
+	view: 'history' | 'backlog' | 'search';
 	year?: number;
 }>();
 
@@ -49,19 +51,52 @@ const rating = computed(() => {
 	if (view === 'history' && item.my_rating) {
 		return item.my_rating;
 	}
+	// Search results mix completed and backlog items, so show whichever rating
+	// this item actually has, preferring the owner's own.
+	if (view === 'search') {
+		return item.my_rating || item.community_rating || null;
+	}
 	return null;
 });
 
 /** The release year (the season's air year for shows), for display. */
 const releaseYear = computed(() => item.release_date?.slice(0, 4) ?? '');
 
-/** The completion date(s) for this item that fall in the selected year. */
+/**
+ * The completion date(s) to show. History scopes them to the selected year;
+ * search spans every year, so it shows them all — seeing *when* you finished
+ * something is the whole point of searching for it (#40).
+ */
 const completedDates = computed(() => {
+	if (view === 'search') return item.completed_dates;
 	if (!year) return [];
 	return item.completed_dates.filter(
 		(d) => Number.parseInt(d.slice(0, 4), 10) === year,
 	);
 });
+
+/**
+ * Unfinished status, spelled out on search results only. Those results mix
+ * backlog and completed items, so a card with no date would otherwise read as
+ * "completed, date unknown" rather than "not started". Driven by `status`, not
+ * by the absence of dates: an item can be re-read/re-watched and so carry both a
+ * completion date *and* backlog status, in which case both show. `complete` and
+ * `dnf` get no label — `dnf` already has its own badge.
+ */
+const statusLabel = computed(() => {
+	if (view !== 'search') return null;
+	if (item.status === 'backlog') return 'Backlog';
+	if (item.status === 'in_progress') return 'In progress';
+	return null;
+});
+
+// The year is redundant on History (the list is already one year) but essential
+// in search results, which span years.
+function formatDate(isoDate: string): string {
+	return view === 'search'
+		? formatCompletedDateWithYear(isoDate)
+		: formatCompletedDate(isoDate);
+}
 
 const length = computed(() => {
 	if (!item.length) return '';
@@ -103,11 +138,17 @@ img {
 }
 
 /* TODO maybe these should be list items? */
+
+/* One fact per line. `.length` and `.dates` used to be inline, which ran them
+   together with no separator ("20 hrsMay 16, 1988"). */
 .title,
 .series,
 .creator, /* TODO just show one creator */
 .year,
-.rating {
+.rating,
+.length,
+.dates,
+.status {
 	display: block;
 }
 
@@ -118,8 +159,14 @@ img {
 .rating,
 .dnf,
 .dates,
-.length {
+.length,
+.status {
 	font-size: smaller;
+}
+
+.status {
+	font-style: italic;
+	opacity: 0.8;
 }
 
 .rating,

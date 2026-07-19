@@ -1,6 +1,7 @@
 import { toValue, type MaybeRefOrGetter, type Ref } from 'vue';
 import type { Item } from '~~/shared/types/item';
 import { applyItemFilters, type ItemFilters } from '~~/shared/utils/itemFilter';
+import { applyItemSearch } from '~~/shared/utils/itemSearch';
 import {
 	makeItemComparator,
 	type RatingField,
@@ -14,6 +15,8 @@ export interface ItemListConfig {
 	reversed: Ref<boolean>;
 	/** Active filter states; an empty object means no filtering. */
 	filters: MaybeRefOrGetter<ItemFilters>;
+	/** Free-text query matched against title/creator/series; blank means no search. */
+	search?: MaybeRefOrGetter<string>;
 	/** Which rating the `rating` sort uses on this view. */
 	ratingField: RatingField;
 	/** Scopes `completion_date` to the selected History year. */
@@ -28,7 +31,10 @@ export interface ItemListConfig {
  */
 export function useItemList(items: Ref<Item[]>, config: ItemListConfig) {
 	const displayed = computed(() => {
-		const filtered = applyItemFilters(items.value, toValue(config.filters));
+		const filtered = applyItemSearch(
+			applyItemFilters(items.value, toValue(config.filters)),
+			toValue(config.search) ?? '',
+		);
 		const comparator = makeItemComparator(
 			config.sortKey.value,
 			config.reversed.value,
