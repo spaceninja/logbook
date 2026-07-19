@@ -6,6 +6,9 @@
 				:src="item.thumbnail"
 				:alt="`${itemDisplayTitle(item)} cover`"
 			/>
+			<div v-else class="placeholder">
+				{{ itemDisplayTitle(item) }}
+			</div>
 		</NuxtLink>
 		<strong class="title">{{ itemDisplayTitle(item) }}</strong>
 		<em v-if="formatSeries(item)" class="series">{{ formatSeries(item) }}</em>
@@ -120,6 +123,11 @@ const length = computed(() => {
 </script>
 
 <style scoped>
+a {
+	color: currentcolor;
+	text-decoration: none;
+}
+
 li {
 	font-size: small;
 	position: relative;
@@ -127,7 +135,8 @@ li {
 	text-wrap: balance;
 }
 
-img {
+img,
+.placeholder {
 	height: auto;
 	outline: 1px solid light-dark(hotpink, cyan);
 	width: 100%;
@@ -185,5 +194,43 @@ img {
 
 .dates time:not(:last-child)::after {
 	content: ', ';
+}
+
+.placeholder {
+	--gradient-bg-color: #006dca;
+	--gradient-spot1-color: #001a39;
+	--gradient-spot1-w: 75%;
+	--gradient-spot1-h: 75%;
+	--gradient-spot1-x: 0%;
+	--gradient-spot1-y: 0%;
+	--gradient-spot2-color: #9b70ff;
+	--gradient-spot2-w: 75%;
+	--gradient-spot2-h: 75%;
+	--gradient-spot2-x: 100%;
+	--gradient-spot2-y: 0%;
+	--gradient-spot3-color: #42ffc6;
+	--gradient-spot3-w: 75%;
+	--gradient-spot3-h: 75%;
+	--gradient-spot3-x: 100%;
+	--gradient-spot3-y: 100%;
+	--gradient-spot4-color: #ff3b8d;
+	--gradient-spot4-w: 75%;
+	--gradient-spot4-h: 75%;
+	--gradient-spot4-x: 0%;
+	--gradient-spot4-y: 100%;
+	align-items: center;
+	aspect-ratio: 2/3;
+	background:
+		radial-gradient(rgb(0 0 0 / 80%), transparent),
+		linear-gradient(darkorchid, teal);
+	color: rgb(255 255 255 / 80%);
+	display: flex;
+	font-size: 1.2em;
+	font-stretch: 66%;
+	font-weight: 700;
+	justify-content: center;
+	letter-spacing: 0.05ch;
+	padding: 1em;
+	text-wrap: balance;
 }
 </style>
