@@ -1,5 +1,10 @@
 import type { Item } from '../types/item';
-import type { SearchResult, SeasonSummary } from '../types/search';
+import type {
+	SearchResult,
+	SeasonSummary,
+	WatchAvailability,
+	WatchProvider,
+} from '../types/search';
 import { htmlToMarkdown } from '../utils/htmlToMarkdown';
 import { makeMovieId, makeShowId } from '../utils/itemId';
 import {
@@ -58,6 +63,22 @@ export interface TmdbShowDetails {
 	created_by?: { name: string }[];
 	seasons?: TmdbSeasonSummary[];
 }
+interface TmdbWatchProvider {
+	provider_id: number;
+	provider_name: string;
+	logo_path?: string | null;
+	/** TMDB's own ordering hint; lower sorts first. */
+	display_priority?: number;
+}
+interface TmdbWatchCountry {
+	link?: string;
+	flatrate?: TmdbWatchProvider[];
+	rent?: TmdbWatchProvider[];
+	buy?: TmdbWatchProvider[];
+}
+export interface TmdbWatchProviders {
+	results?: Record<string, TmdbWatchCountry | undefined>;
+}
 export interface TmdbSeasonDetails {
 	name?: string;
 	air_date?: string | null;
@@ -70,6 +91,7 @@ export interface TmdbSeasonDetails {
 const COVER_SIZE = 'w500';
 const THUMB_SIZE = 'w185';
 const BACKDROP_SIZE = 'w1280';
+const LOGO_SIZE = 'w92';
 
 function tmdbImage(
 	path: string | null | undefined,
@@ -214,4 +236,47 @@ export function mapTmdbSeasonDraft(
 	if (thumbnail) item.thumbnail = thumbnail;
 	if (backdrop) item.backdrop = backdrop;
 	return item;
+}
+
+// --- Watch providers ---------------------------------------------------------
+
+/**
+ * One `flatrate`/`rent`/`buy` list, in TMDB's `display_priority` order (which
+ * roughly tracks how prominent the service is). Ad-supported tiers arrive as
+ * their own entries ("Netflix" and "Netflix Standard with Ads" are separate
+ * provider ids with separate names) and are kept — they're genuinely different
+ * ways to watch, and collapsing them would need name guessing.
+ */
+function mapProviderList(list: TmdbWatchProvider[] = []): WatchProvider[] {
+	return [...list]
+		.sort((a, b) => (a.display_priority ?? 0) - (b.display_priority ?? 0))
+		.map((p) => {
+			const provider: WatchProvider = {
+				id: p.provider_id,
+				name: p.provider_name.trim(),
+			};
+			const logo = tmdbImage(p.logo_path, LOGO_SIZE);
+			if (logo) provider.logo = logo;
+			return provider;
+		});
+}
+
+/**
+ * Availability for one country, from `/movie/{id}/watch/providers` or the `/tv`
+ * equivalent. TMDB keys the response by country and omits countries with no
+ * availability at all, so an unknown/unserved country maps to empty lists
+ * rather than an error.
+ */
+export function mapTmdbWatchProviders(
+	res: TmdbWatchProviders,
+	country: string,
+): WatchAvailability {
+	const entry = res.results?.[country];
+	const availability: WatchAvailability = {
+		flatrate: mapProviderList(entry?.flatrate),
+		rent: mapProviderList(entry?.rent),
+		buy: mapProviderList(entry?.buy),
+	};
+	if (entry?.link) availability.link = entry.link;
+	return availability;
 }

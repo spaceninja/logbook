@@ -1,4 +1,4 @@
-import type { MediaType, Provider } from '../types/item';
+import type { Item, MediaType, Provider, ShowMetadata } from '../types/item';
 
 /**
  * Item id helpers. The id is also the Firestore document id, so it must be
@@ -50,4 +50,20 @@ export function makeShowId(
  */
 export function makeManualId(type: MediaType): string {
 	return `${type}-manual-${crypto.randomUUID()}`;
+}
+
+/**
+ * The TMDB id to look a movie or show up by, or `undefined` when there isn't
+ * one. Movies carry it in their id, but only when TMDB is the provider — the
+ * Letterboxd-sourced stragglers have no TMDB record at all. Shows are tracked
+ * per season and their id is season-scoped, so the parent show id comes from
+ * metadata instead (season-level availability isn't published anyway).
+ */
+export function tmdbIdForItem(item: Item): string | undefined {
+	if (item.type === 'show') {
+		const showId = (item.metadata as ShowMetadata).show_tmdb_id;
+		return showId ? String(showId) : undefined;
+	}
+	if (item.type !== 'movie' || item.provider !== 'tmdb') return undefined;
+	return item.id.slice('movie-tmdb-'.length) || undefined;
 }

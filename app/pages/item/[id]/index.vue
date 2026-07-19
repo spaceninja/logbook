@@ -111,6 +111,12 @@
 						<dd>{{ value }}</dd>
 					</template>
 				</dl>
+
+				<WatchProviders
+					v-if="watchTarget"
+					:type="watchTarget.type"
+					:tmdb-id="watchTarget.tmdbId"
+				/>
 			</article>
 		</ClientOnly>
 	</section>
@@ -118,6 +124,7 @@
 
 <script setup lang="ts">
 import { itemDisplayTitle, formatCreator } from '~~/shared/utils/itemDisplay';
+import { tmdbIdForItem } from '~~/shared/utils/itemId';
 
 const route = useRoute();
 const id = computed(() => String(route.params.id));
@@ -145,6 +152,15 @@ const {
 const backlogLink = computed(() => {
 	const type = item.value?.type;
 	return type && type !== 'book' ? { path: '/', query: { type } } : '/';
+});
+
+// Streaming availability is movies/shows only, and needs a TMDB id to look up —
+// manual and Letterboxd-only titles have none, and books/games have no source.
+const watchTarget = computed(() => {
+	const value = item.value;
+	if (!value || (value.type !== 'movie' && value.type !== 'show')) return null;
+	const tmdbId = tmdbIdForItem(value);
+	return tmdbId ? { type: value.type, tmdbId } : null;
 });
 
 // Entries of the type-specific metadata map, for display.

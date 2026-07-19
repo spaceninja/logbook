@@ -7,9 +7,11 @@ import {
 	mapTmdbSeasonDraft,
 	mapTmdbSeasons,
 	mapTmdbShowSearch,
+	mapTmdbWatchProviders,
 	type TmdbMovieDetails,
 	type TmdbSeasonDetails,
 	type TmdbShowDetails,
+	type TmdbWatchProviders,
 } from '../../shared/providers/tmdb';
 
 const BASE = 'https://api.themoviedb.org/3';
@@ -86,4 +88,20 @@ export async function tmdbMovieSeries(movieId: string) {
 	return mapTmdbMovieSearch(collection.parts ?? []).sort((a, b) =>
 		(a.year ?? '').localeCompare(b.year ?? ''),
 	);
+}
+
+/**
+ * Where a movie or show can be streamed, rented, or bought, per TMDB's
+ * JustWatch-sourced data. Shows are tracked per season but availability is
+ * only published per series, so callers pass the parent show id.
+ */
+export async function tmdbWatchProviders(
+	type: 'movie' | 'tv',
+	id: string,
+	country: string,
+) {
+	const res = await tmdbFetch<TmdbWatchProviders>(
+		`/${type}/${id}/watch/providers`,
+	);
+	return mapTmdbWatchProviders(res, country);
 }

@@ -23,6 +23,11 @@ export default defineNuxtConfig({
 		// normally | completely. Defaults to normally (main-story pace); forks can
 		// override via NUXT_IGDB_TIME_TO_BEAT_STAT. Unknown values fall back to normally.
 		igdbTimeToBeatStat: 'normally', // NUXT_IGDB_TIME_TO_BEAT_STAT
+		// ISO 3166-1 country whose streaming availability is shown on movie/show
+		// detail pages. TMDB keys its watch-provider data by country; a country
+		// with no listings simply shows nothing. Override via
+		// NUXT_WATCH_PROVIDER_COUNTRY.
+		watchProviderCountry: 'US', // NUXT_WATCH_PROVIDER_COUNTRY
 		public: {
 			firebase: {
 				apiKey: '',

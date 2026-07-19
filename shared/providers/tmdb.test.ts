@@ -4,9 +4,11 @@ import {
 	mapTmdbMovieSearch,
 	mapTmdbSeasonDraft,
 	mapTmdbSeasons,
+	mapTmdbWatchProviders,
 	type TmdbMovieDetails,
 	type TmdbSeasonDetails,
 	type TmdbShowDetails,
+	type TmdbWatchProviders,
 } from './tmdb';
 
 describe('mapTmdbMovieSearch', () => {
@@ -133,6 +135,68 @@ describe('show seasons', () => {
 			episode_count: 9,
 			episode_runtime: 55, // mean of 50 & 60
 			end_date: '2022-04-08', // last *dated* episode: the finale so far
+		});
+	});
+});
+
+describe('mapTmdbWatchProviders', () => {
+	const res: TmdbWatchProviders = {
+		results: {
+			US: {
+				link: 'https://www.themoviedb.org/movie/27205/watch?locale=US',
+				flatrate: [
+					{
+						provider_id: 1796,
+						provider_name: 'Netflix Standard with Ads',
+						logo_path: '/ads.jpg',
+						display_priority: 5,
+					},
+					{
+						provider_id: 8,
+						provider_name: 'Netflix',
+						logo_path: '/nf.jpg',
+						display_priority: 0,
+					},
+				],
+				rent: [{ provider_id: 3, provider_name: 'Apple TV' }],
+			},
+		},
+	};
+
+	it('maps a country into stream/rent/buy lists', () => {
+		const availability = mapTmdbWatchProviders(res, 'US');
+		expect(availability.flatrate).toStrictEqual([
+			{
+				id: 8,
+				name: 'Netflix',
+				logo: 'https://image.tmdb.org/t/p/w92/nf.jpg',
+			},
+			{
+				id: 1796,
+				name: 'Netflix Standard with Ads',
+				logo: 'https://image.tmdb.org/t/p/w92/ads.jpg',
+			},
+		]);
+		expect(availability.rent).toStrictEqual([{ id: 3, name: 'Apple TV' }]);
+		expect(availability.buy).toStrictEqual([]);
+		expect(availability.link).toBe(
+			'https://www.themoviedb.org/movie/27205/watch?locale=US',
+		);
+	});
+
+	it('returns empty lists for a country with no listings', () => {
+		expect(mapTmdbWatchProviders(res, 'JP')).toStrictEqual({
+			flatrate: [],
+			rent: [],
+			buy: [],
+		});
+	});
+
+	it('returns empty lists when the title has no availability at all', () => {
+		expect(mapTmdbWatchProviders({}, 'US')).toStrictEqual({
+			flatrate: [],
+			rent: [],
+			buy: [],
 		});
 	});
 });
