@@ -62,7 +62,12 @@ const {
 	pending,
 	error,
 } = useFetch<WatchAvailability>('/api/watch', {
-	query: { type: () => props.type, id: () => props.tmdbId },
+	// Per-key computed refs, not getters — `useFetch` doesn't call plain function
+	// values, it stringifies them, which silently sends the literal "undefined".
+	query: {
+		type: computed(() => props.type),
+		id: computed(() => props.tmdbId),
+	},
 	// Firestore items only exist client-side, so this can't run during SSR.
 	server: false,
 	lazy: true,

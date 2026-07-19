@@ -5,10 +5,31 @@ import type { WatchAvailability } from '~~/shared/types/search';
 import WatchProviders from './WatchProviders.vue';
 
 let availability: WatchAvailability = { flatrate: [], rent: [], buy: [] };
+/** The query the component actually asked for, so tests can assert on it. */
+let requestUrl = '';
 
-registerEndpoint('/api/watch', (): WatchAvailability => availability);
+registerEndpoint('/api/watch', (event): WatchAvailability => {
+	requestUrl = String(event.node.req.url);
+	return availability;
+});
 
 describe('WatchProviders', () => {
+	// Regression: the props were once passed to `useFetch` as getter functions,
+	// which it stringifies rather than calls — every lookup went out as the
+	// literal `type=undefined&id=undefined` and came back a 400.
+	it('sends the type and id it was given', async () => {
+		availability = { flatrate: [], rent: [], buy: [] };
+		requestUrl = '';
+
+		await renderSuspended(WatchProviders, {
+			props: { type: 'show', tmdbId: '655' },
+		});
+		await screen.findByText(/Not currently available/);
+
+		expect(requestUrl).toContain('type=show');
+		expect(requestUrl).toContain('id=655');
+	});
+
 	it('groups providers by stream, rent, and buy', async () => {
 		availability = {
 			flatrate: [{ id: 8, name: 'Netflix', logo: 'https://img/nf.jpg' }],
