@@ -60,7 +60,7 @@
 		"firebase-tools": "15.24.0",
 		"jsdom": "29.1.1",
 		"npm-run-all2": "9.0.2",
-		"prettier": "3.9.5",
+		"prettier": "3.9.6",
 		"stylelint": "17.14.1",
 		"stylelint-config-recommended-vue": "1.6.1",
 		"stylelint-config-spaceninja": "17.0.0",
