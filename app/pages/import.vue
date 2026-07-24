@@ -160,6 +160,13 @@
 					</li>
 				</ul>
 			</details>
+			<p v-if="summary.hardcoverErrors">
+				{{ summary.hardcoverErrors }} book{{
+					summary.hardcoverErrors === 1 ? '' : 's'
+				}}
+				couldn’t be enriched from Hardcover — they’ll be retried on the next
+				sync.
+			</p>
 			<p>
 				<button type="button" @click="reset">Import more</button>
 				<NuxtLink to="/">Done</NuxtLink>

@@ -42,6 +42,14 @@ export interface BookMetadata {
 	 * from the item id and is stored here instead (like a show's `show_tmdb_id`).
 	 */
 	google_books_id?: string;
+	/**
+	 * Canonical Hardcover book id — the handle for the supplemental tag/rating
+	 * enrichment (see `providers/hardcover.ts`). Its presence marks a book as
+	 * already matched against Hardcover, so import and the RSS sync skip re-matching
+	 * it; its absence triggers an enrichment attempt. Matched by ISBN, which always
+	 * resolves to the canonical (editions-bearing) record.
+	 */
+	hardcover_id?: string;
 }
 
 // Movies carry only optional series/franchise info; `creator` holds the director.

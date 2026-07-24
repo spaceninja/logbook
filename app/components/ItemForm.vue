@@ -271,6 +271,8 @@ interface FormState {
 	isbn: string;
 	/** Google Books volume id — carried (not user-editable) so a save keeps the book's refresh handle. */
 	google_books_id: string;
+	/** Canonical Hardcover book id — carried (not user-editable) so a save keeps the tag-enrichment handle. */
+	hardcover_id: string;
 	show_tmdb_id: string;
 	season_number: string;
 	season_title: string;
@@ -323,6 +325,7 @@ function initialForm(): FormState {
 		series_number: numStr(m.series_number),
 		isbn: str(m.isbn),
 		google_books_id: str(m.google_books_id),
+		hardcover_id: str(m.hardcover_id),
 		show_tmdb_id: numStr(m.show_tmdb_id),
 		season_number: numStr(m.season_number),
 		season_title: str(m.season_title),
@@ -366,8 +369,12 @@ function applyProviderFields(source: Item) {
 	if (m.series) form.series = str(m.series);
 	if (m.series_number !== undefined)
 		form.series_number = numStr(m.series_number);
+	// Tags come from the provider (Google Books categories, now Hardcover genres);
+	// a refresh pulls the latest, so overwrite when the fresh draft carries any.
+	if (source.tags.length > 0) form.tags = source.tags.join(', ');
 	form.isbn = str(m.isbn);
 	form.google_books_id = str(m.google_books_id);
+	if (m.hardcover_id) form.hardcover_id = str(m.hardcover_id);
 	form.show_tmdb_id = numStr(m.show_tmdb_id);
 	form.season_number = numStr(m.season_number);
 	form.season_title = str(m.season_title);
@@ -519,6 +526,8 @@ function assembleMetadata(): ItemMetadata {
 			if (form.isbn.trim()) meta.isbn = form.isbn.trim();
 			if (form.google_books_id.trim())
 				meta.google_books_id = form.google_books_id.trim();
+			if (form.hardcover_id.trim())
+				meta.hardcover_id = form.hardcover_id.trim();
 			return meta;
 		}
 		case 'movie':

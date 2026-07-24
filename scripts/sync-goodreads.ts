@@ -8,6 +8,7 @@ import {
 import type { Item } from '../shared/types/item';
 import { makeBookId } from '../shared/utils/itemId';
 import { itemsEqual, readItems, writeItems } from './lib/firestore-admin';
+import { enrichBooksWithHardcover } from './lib/hardcover';
 
 /**
  * Daily Goodreads sync (issue #17). Fetches the tracked shelf RSS feeds, maps
@@ -69,18 +70,42 @@ async function main(): Promise<void> {
 
 	const existing = await readItems([...books.keys()]);
 
+	// Merge every book first, so the supplemental Hardcover enrichment below can
+	// run before the change diff — enriching a book that was otherwise unchanged
+	// (imported before it had a hardcover_id) turns it into a write.
+	const merged = [...books].map(([id, rss]) => ({
+		prev: existing.get(id),
+		item: mergeSyncedBook(existing.get(id), rss),
+	}));
+
+	// Populate community tags for books lacking a hardcover_id. Rating stays
+	// Goodreads (only an absent one is filled). Best-effort: a Hardcover failure
+	// is logged, never fatal — the books simply retry on the next run.
+	const enrichment = await enrichBooksWithHardcover(
+		merged.map((m) => m.item),
+		process.env.HARDCOVER_TOKEN,
+	);
+	if (
+		enrichment.enriched > 0 ||
+		enrichment.errors > 0 ||
+		enrichment.skipped > 0
+	) {
+		console.log(
+			`Hardcover: enriched ${enrichment.enriched}, errors ${enrichment.errors}, skipped ${enrichment.skipped}` +
+				(enrichment.skipped > 0 ? ' (HARDCOVER_TOKEN not set)' : ''),
+		);
+	}
+
 	const toWrite: Item[] = [];
 	let created = 0;
 	let updated = 0;
 	let unchanged = 0;
-	for (const [id, rss] of books) {
-		const prev = existing.get(id);
-		const merged = mergeSyncedBook(prev, rss);
+	for (const { prev, item } of merged) {
 		if (!prev) {
-			toWrite.push(merged);
+			toWrite.push(item);
 			created++;
-		} else if (!itemsEqual(prev, merged)) {
-			toWrite.push(merged);
+		} else if (!itemsEqual(prev, item)) {
+			toWrite.push(item);
 			updated++;
 		} else {
 			unchanged++;

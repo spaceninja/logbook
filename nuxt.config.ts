@@ -17,6 +17,12 @@ export default defineNuxtConfig({
 		// v4 read token (Bearer); IGDB uses Twitch client-credentials.
 		tmdbReadToken: '', // NUXT_TMDB_READ_TOKEN
 		googleBooksApiKey: '', // NUXT_GOOGLE_BOOKS_API_KEY
+		// Hardcover (hardcover.app) personal API token — a Bearer JWT that expires
+		// yearly (resets Jan 1). Supplemental book tag/rating enrichment. Read from
+		// HARDCOVER_TOKEN (no NUXT_ prefix, shared with the sync script's env) rather
+		// than the auto-mapped NUXT_HARDCOVER_TOKEN.
+		hardcoverToken: process.env.HARDCOVER_TOKEN ?? '',
+
 		twitchClientId: '', // NUXT_TWITCH_CLIENT_ID
 		twitchClientSecret: '', // NUXT_TWITCH_CLIENT_SECRET
 		// Which IGDB time-to-beat stat pre-fills a game's length: hastily |

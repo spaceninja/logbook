@@ -11,6 +11,10 @@ import type {
 	ImportSection,
 	ResolveHint,
 } from '~~/shared/import/types';
+import {
+	applyHardcoverEnrichment,
+	type HardcoverEnrichment,
+} from '~~/shared/providers/hardcover';
 import { normalizeTitle } from '~~/shared/providers/helpers';
 import type {
 	BookMetadata,
@@ -75,6 +79,64 @@ export interface ImportSummary {
 	 * hand.
 	 */
 	unmatched: { title: string }[];
+	/**
+	 * How many new books couldn't be enriched from Hardcover because a batch
+	 * errored (rate-limited / unavailable / token expired) — distinct from books
+	 * Hardcover simply had no match for. Non-actionable: they import fine and get
+	 * retried on the next RSS sync. Surfaced so a failed run isn't silent.
+	 */
+	hardcoverErrors: number;
+}
+
+/** Client-side chunk size for `/api/hardcover` — one Hardcover call per POST, well under the function timeout. */
+const HARDCOVER_CHUNK = 50;
+
+/** Normalize an ISBN to the digit/X form the enrichment map is keyed by. */
+function normalizeIsbn(isbn: string | undefined): string | undefined {
+	const digits = (isbn ?? '').replace(/[^0-9Xx]/g, '').toUpperCase();
+	return digits.length === 10 || digits.length === 13 ? digits : undefined;
+}
+
+/**
+ * Batched, best-effort Hardcover enrichment for freshly-imported books. Enriches
+ * only books that have an ISBN and no `hardcover_id` yet, in chunks so each
+ * request is a single Hardcover call. Mutates the items in place (they're the
+ * same objects queued for the write). Returns how many books a failed batch left
+ * un-enriched, for the results view. Never throws — enrichment is supplemental.
+ */
+async function enrichBooksWithHardcover(newItems: Item[]): Promise<number> {
+	const targets = newItems.filter(
+		(it) =>
+			it.type === 'book' &&
+			!(it.metadata as BookMetadata).hardcover_id &&
+			!!normalizeIsbn((it.metadata as BookMetadata).isbn),
+	);
+	let errors = 0;
+	for (let i = 0; i < targets.length; i += HARDCOVER_CHUNK) {
+		const chunk = targets.slice(i, i + HARDCOVER_CHUNK);
+		const isbns = chunk
+			.map((it) => normalizeIsbn((it.metadata as BookMetadata).isbn)!)
+			.filter(Boolean);
+		try {
+			const { results, error } = await $fetch<{
+				results: Record<string, HardcoverEnrichment>;
+				error: boolean;
+			}>('/api/hardcover', { method: 'POST', body: { isbns } });
+			if (error) {
+				errors += chunk.length;
+				continue;
+			}
+			for (const it of chunk) {
+				const isbn = normalizeIsbn((it.metadata as BookMetadata).isbn);
+				const enrichment = isbn ? results[isbn] : undefined;
+				if (enrichment)
+					Object.assign(it, applyHardcoverEnrichment(it, enrichment));
+			}
+		} catch {
+			errors += chunk.length;
+		}
+	}
+	return errors;
 }
 
 /** Whether the merge changed any import-owned field vs the existing doc. */
@@ -506,6 +568,8 @@ export function useImport() {
 	): Promise<ImportSummary> {
 		const skipped: ImportSummary['skipped'] = [];
 		const unmatched: ImportSummary['unmatched'] = [];
+		/** New items this run creates — the set Hardcover enrichment runs over. */
+		const newItems: Item[] = [];
 
 		/** Records that share a target item id, and so merge into one item. */
 		const groups = new Map<string, ImportRecord[]>();
@@ -635,6 +699,7 @@ export function useImport() {
 			);
 			if (prepared.isNew) {
 				toWrite.push(item);
+				newItems.push(item);
 				created++;
 				if (prepared.unmatched)
 					unmatched.push({ title: displayTitle(group[0]!) });
@@ -749,10 +814,14 @@ export function useImport() {
 			}
 		}
 
+		// Supplemental Hardcover tag/rating enrichment for the new books, batched
+		// and best-effort — a failure just leaves them for the next RSS sync.
+		const hardcoverErrors = await enrichBooksWithHardcover(newItems);
+
 		phase = 'saving';
 		report();
 		await saveItems(toWrite);
-		return { created, updated, unchanged, skipped, unmatched };
+		return { created, updated, unchanged, skipped, unmatched, hardcoverErrors };
 	}
 
 	return { runImport };

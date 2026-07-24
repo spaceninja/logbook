@@ -46,6 +46,7 @@
 					Metadata provided by <a href="https://www.themoviedb.org">TMDB</a>,
 					<a href="https://www.igdb.com">IGDB</a>,
 					<a href="https://books.google.com">Google Books</a>,
+					<a href="https://hardcover.app">Hardcover</a>,
 					<a href="https://www.goodreads.com">Goodreads</a>, and
 					<a href="https://www.justwatch.com">JustWatch</a>
 				</div>

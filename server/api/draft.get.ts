@@ -1,6 +1,7 @@
 import type { Item, MediaType } from '../../shared/types/item';
 import { tmdbMovieDraft, tmdbSeasonDraft } from '../utils/tmdb';
 import { googleBooksDraft } from '../utils/googleBooks';
+import { enrichBookItemWithHardcover } from '../utils/hardcover';
 import { igdbDraft } from '../utils/igdb';
 
 /**
@@ -29,7 +30,9 @@ export default defineEventHandler(async (event): Promise<Item> => {
 				return await tmdbSeasonDraft(providerId, Number(season));
 			}
 			case 'book':
-				return await googleBooksDraft(providerId);
+				return await enrichBookItemWithHardcover(
+					await googleBooksDraft(providerId),
+				);
 			case 'game':
 				return await igdbDraft(providerId);
 			default:
