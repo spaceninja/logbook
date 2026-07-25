@@ -68,7 +68,7 @@
 		"typescript": "6.0.3",
 		"vitest": "4.1.10",
 		"vue-eslint-parser": "10.4.1",
-		"vue-tsc": "3.3.7"
+		"vue-tsc": "3.3.8"
 	},
 	"overrides": {
 		"@vue/server-renderer": "$vue"
