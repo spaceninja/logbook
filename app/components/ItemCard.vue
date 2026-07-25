@@ -66,13 +66,15 @@ const rating = computed(() => {
 const releaseYear = computed(() => item.release_date?.slice(0, 4) ?? '');
 
 /**
- * The completion date(s) to show. History scopes them to the selected year;
- * search spans every year, so it shows them all — seeing *when* you finished
- * something is the whole point of searching for it (#40).
+ * The completion date(s) to show. A year-scoped list (History on a single year)
+ * shows only that year's; any other completion list — search, or History's
+ * all-years scopes (#33) — shows them all, since seeing *when* you finished
+ * something is the whole point of those views (#40). The backlog shows none: a
+ * re-read can sit there carrying old dates, which aren't what that view is about.
  */
 const completedDates = computed(() => {
-	if (view === 'search') return item.completed_dates;
-	if (!year) return [];
+	if (view === 'backlog') return [];
+	if (!year) return item.completed_dates;
 	return item.completed_dates.filter(
 		(d) => Number.parseInt(d.slice(0, 4), 10) === year,
 	);
@@ -93,12 +95,12 @@ const statusLabel = computed(() => {
 	return null;
 });
 
-// The year is redundant on History (the list is already one year) but essential
-// in search results, which span years.
+// The year is redundant when the list is already scoped to one, but essential in
+// any list that spans years (search, History's all-years scopes).
 function formatDate(isoDate: string): string {
-	return view === 'search'
-		? formatCompletedDateWithYear(isoDate)
-		: formatCompletedDate(isoDate);
+	return year
+		? formatCompletedDate(isoDate)
+		: formatCompletedDateWithYear(isoDate);
 }
 
 const length = computed(() => {

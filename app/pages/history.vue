@@ -8,7 +8,7 @@
 		:error="error"
 		:displayed="displayed"
 		view="history"
-		:year="year"
+		:year="scopeYear"
 		:empty-message="emptyMessage"
 		error-message="Failed to load history"
 	>
@@ -18,12 +18,20 @@
 				placeholder="All years…"
 				@submit="goToSearch"
 			/>
-			<div class="filter year-switcher">
-				<label for="year-switcher">Year</label>
-				<select id="year-switcher" v-model.number="year">
-					<option v-for="y in years" :key="y" :value="y">{{ y }}</option>
-					<!-- Completed items with no date, otherwise unreachable (#20). -->
-					<option :value="UNDATED">Undated</option>
+			<div class="filter scope-switcher">
+				<label for="history-scope">Show</label>
+				<select id="history-scope" v-model="selection">
+					<optgroup label="Year">
+						<option v-for="y in years" :key="y" :value="String(y)">
+							{{ y }}
+						</option>
+					</optgroup>
+					<optgroup label="All years">
+						<!-- Completed items with no date, otherwise unreachable (#20). -->
+						<option value="undated">Undated</option>
+						<option value="unrated">Unrated</option>
+						<option value="top100">Top 100</option>
+					</optgroup>
 				</select>
 			</div>
 		</template>
@@ -33,12 +41,16 @@
 <script setup lang="ts">
 import type { MediaType } from '~~/shared/types/item';
 import type { CompletionYearsByType } from '~~/shared/utils/completionYears';
+import {
+	HISTORY_SCOPES,
+	topRatedItems,
+	unratedItems,
+	type HistoryScope,
+} from '~~/shared/utils/historyScope';
 import type { SortKey } from '~~/shared/utils/itemSort';
 import { enumParam, flagParam, yearParam } from '~~/shared/utils/viewQuery';
 
 const MEDIA_TYPES: MediaType[] = ['book', 'movie', 'show', 'game'];
-/** The year-switcher sentinel for the "Undated" bucket (completions with no date). */
-const UNDATED = 0;
 const SORT_KEYS: SortKey[] = [
 	'completion_date',
 	'rating',
@@ -49,17 +61,21 @@ const SORT_KEYS: SortKey[] = [
 	'release_date',
 ];
 
-const { getHistory, getUndated, getCompletionYears } = useItems();
+const { getHistory, getUndated, getAllByType, getCompletionYears } = useItems();
 const route = useRoute();
 const router = useRouter();
 
-// View state is bound to the URL so the view is bookmarkable. Content type and
-// year each push a browser-history entry (back button steps through them like
-// separate pages); sort and direction update the URL in place (core design §4).
+// View state is bound to the URL so the view is bookmarkable. Content type,
+// scope, and year each push a browser-history entry (back button steps through
+// them like separate pages); sort and direction update the URL in place (core
+// design §4).
 const type = useQueryParam('type', enumParam(MEDIA_TYPES, 'book'), 'push');
 const sortKey = useQueryParam('sort', enumParam(SORT_KEYS, 'completion_date'));
 const reversed = useQueryParam('reverse', flagParam());
 const urlYear = useQueryParam('year', yearParam(), 'push');
+// What the list is showing: one year (the default, using `year`), or one of the
+// all-years scopes (#33), which ignore `year` entirely.
+const scope = useQueryParam('scope', enumParam(HISTORY_SCOPES, 'year'), 'push');
 
 // Years offered by the switcher come from the maintained `meta/completionYears`
 // aggregate (core design §15), scoped to the selected type so we never offer a
@@ -92,20 +108,33 @@ const year = computed<number>({
 	},
 });
 
+// One control drives both params: an all-years scope clears the year, and
+// picking a year returns to the `year` scope. `useRouteQuery` batches param
+// writes on nextTick, so the pair lands as a single navigation.
+const selection = computed<string>({
+	get: () => (scope.value === 'year' ? String(year.value) : scope.value),
+	set: (value) => {
+		if (value !== 'year' && HISTORY_SCOPES.includes(value as HistoryScope)) {
+			scope.value = value as HistoryScope;
+			urlYear.value = null;
+		} else {
+			scope.value = 'year';
+			year.value = Number(value);
+		}
+	},
+});
+
 // Self-correct a bookmarked year that has no entries for the current type: drop
 // the param (replace, not push) so the view falls back to newest. Only after the
 // aggregate has actually loaded, and client-side, to avoid clearing valid years
 // prematurely or replacing during SSR.
 watch(
-	[yearsStatus, type, urlYear],
+	[yearsStatus, type, urlYear, scope],
 	() => {
 		if (!import.meta.client || yearsStatus.value !== 'success') return;
+		if (scope.value !== 'year') return;
 		const available = completionYears.value[type.value] ?? [];
-		if (
-			urlYear.value != null &&
-			urlYear.value !== UNDATED &&
-			!available.includes(urlYear.value)
-		) {
+		if (urlYear.value != null && !available.includes(urlYear.value)) {
 			const query = { ...route.query };
 			delete query.year;
 			router.replace({ query });
@@ -134,9 +163,17 @@ const sortKeys = computed<SortKey[]>(() =>
 	type.value === 'show' ? SORT_KEYS.filter((k) => k !== 'title') : SORT_KEYS,
 );
 
-// Keyed by year + type and cached per key (#24) so re-selecting a year/type
-// shows its list instantly; writes invalidate the cache via useItems.
-const historyKey = computed(() => `history:${year.value}:${type.value}`);
+// Keyed by scope (plus year and type) and cached per key (#24) so re-selecting a
+// year/type/scope shows its list instantly; writes invalidate the cache via
+// useItems. The all-years scopes need every item of the type, so they share the
+// search view's `all:` read rather than paying for a second one.
+const historyKey = computed(() =>
+	scope.value === 'year'
+		? `history:${year.value}:${type.value}`
+		: scope.value === 'undated'
+			? `undated:${type.value}`
+			: `all:${type.value}`,
+);
 const {
 	data: items,
 	pending,
@@ -144,24 +181,59 @@ const {
 } = useItemQuery(
 	historyKey,
 	() =>
-		year.value === UNDATED
-			? getUndated(type.value)
-			: getHistory(year.value, type.value),
-	[year, type],
+		scope.value === 'year'
+			? getHistory(year.value, type.value)
+			: scope.value === 'undated'
+				? getUndated(type.value)
+				: getAllByType(type.value),
+	[year, type, scope],
 );
 
-const emptyMessage = computed(() =>
-	year.value === UNDATED
-		? `No undated ${type.value} completions.`
-		: `Nothing completed in ${year.value}.`,
+// The all-years scopes refine that whole-type read down to what they're for
+// (#33). `getHistory`/`getUndated` already return exactly their scope's items.
+const scopedItems = computed(() => {
+	switch (scope.value) {
+		case 'unrated':
+			return unratedItems(items.value);
+		case 'top100':
+			return topRatedItems(items.value);
+		default:
+			return items.value;
+	}
+});
+
+// Only a year-scoped list has a year to scope by: the all-years scopes sort on
+// each item's latest completion overall, and their cards show every date.
+const scopeYear = computed<number | undefined>(() =>
+	scope.value === 'year' ? year.value : undefined,
 );
 
-const { displayed } = useItemList(items, {
+const emptyMessage = computed(() => {
+	switch (scope.value) {
+		case 'undated':
+			return `No undated ${type.value} completions.`;
+		case 'unrated':
+			return `No unrated ${type.value} completions.`;
+		case 'top100':
+			return `No rated ${type.value} completions yet.`;
+		default:
+			return `Nothing completed in ${year.value}.`;
+	}
+});
+
+const { displayed } = useItemList(scopedItems, {
 	sortKey,
 	reversed,
 	filters: () => ({}),
 	ratingField: 'my_rating',
-	year,
+	year: scopeYear,
+});
+
+// Top 100 is a ranking, so open it ranked. Only on entering the scope, not on
+// load, so a bookmarked `?scope=top100&sort=title` keeps its sort — the list's
+// membership is the rating ranking either way, so re-sorting is free.
+watch(scope, (s) => {
+	if (s === 'top100' && sortKey.value !== 'rating') sortKey.value = 'rating';
 });
 
 // If the active sort is no longer offered (e.g. title → switched to shows), fall

@@ -19,8 +19,12 @@ export interface ItemListConfig {
 	search?: MaybeRefOrGetter<string>;
 	/** Which rating the `rating` sort uses on this view. */
 	ratingField: RatingField;
-	/** Scopes `completion_date` to the selected History year. */
-	year?: Ref<number>;
+	/**
+	 * Scopes `completion_date` to the selected History year. Omitted or
+	 * `undefined` sorts on each item's latest completion overall — what the
+	 * all-years views (search, History's Unrated/Top 100 scopes) want.
+	 */
+	year?: MaybeRefOrGetter<number | undefined>;
 }
 
 /**
@@ -29,16 +33,19 @@ export interface ItemListConfig {
  * the URL-bound refs are the single source of truth; this composable only
  * derives `displayed`.
  */
-export function useItemList(items: Ref<Item[]>, config: ItemListConfig) {
+export function useItemList(
+	items: MaybeRefOrGetter<Item[]>,
+	config: ItemListConfig,
+) {
 	const displayed = computed(() => {
 		const filtered = applyItemSearch(
-			applyItemFilters(items.value, toValue(config.filters)),
+			applyItemFilters(toValue(items), toValue(config.filters)),
 			toValue(config.search) ?? '',
 		);
 		const comparator = makeItemComparator(
 			config.sortKey.value,
 			config.reversed.value,
-			{ ratingField: config.ratingField, year: config.year?.value },
+			{ ratingField: config.ratingField, year: toValue(config.year) },
 		);
 		return [...filtered].sort(comparator);
 	});

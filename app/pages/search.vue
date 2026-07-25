@@ -67,9 +67,11 @@ const sortKeys = computed<SortKey[]>(() =>
 // Every item of the type, filtered client-side (Firestore can't do substring
 // matching — see `getAllByType`). Keyed by type and cached per key (#24), so
 // switching type and coming back is instant and refining the query never
-// re-reads. Backlog items are included deliberately: searching "Dune" should
-// tell you both when you read it and that the sequel is still queued.
-const searchKey = computed(() => `search:${type.value}`);
+// re-reads. History's all-years scopes (#33) read the same thing under the same
+// key, so a session pays for one whole-type read, not two. Backlog items are
+// included deliberately: searching "Dune" should tell you both when you read it
+// and that the sequel is still queued.
+const searchKey = computed(() => `all:${type.value}`);
 const {
 	data: items,
 	pending,

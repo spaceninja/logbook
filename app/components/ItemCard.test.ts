@@ -126,6 +126,37 @@ describe('ItemCard completion dates', () => {
 		expect(screen.getByText('Nov 16')).toBeInTheDocument();
 	});
 
+	it('shows every completion, with years, on an all-years history scope', async () => {
+		await renderSuspended(ItemCard, {
+			props: {
+				item: makeItem({
+					status: 'complete',
+					completed_dates: ['2019-11-16', '2024-03-03'],
+					completed_years: [2019, 2024],
+				}),
+				view: 'history',
+			},
+		});
+
+		expect(screen.getByText('Nov 16, 2019')).toBeInTheDocument();
+		expect(screen.getByText('Mar 3, 2024')).toBeInTheDocument();
+	});
+
+	it('shows no completion dates on the backlog', async () => {
+		await renderSuspended(ItemCard, {
+			props: {
+				item: makeItem({
+					status: 'backlog',
+					completed_dates: ['2019-11-16'],
+					completed_years: [2019],
+				}),
+				view: 'backlog',
+			},
+		});
+
+		expect(screen.queryByText('Nov 16, 2019')).not.toBeInTheDocument();
+	});
+
 	it('shows every completion on search, not just the selected year', async () => {
 		await renderSuspended(ItemCard, {
 			props: {

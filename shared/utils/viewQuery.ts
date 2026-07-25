@@ -50,8 +50,11 @@ export function stringParam(): ParamCodec<string> {
 /**
  * A calendar year, or `null` when absent. Unlike the others its "default" is not
  * a concrete year — absence means "use the newest available" (resolved by the
- * page), so the default is `null`. Any non-negative integer is valid; `0` is the
- * History view's "Undated" bucket (completions with no date).
+ * page), so the default is `null`. Any non-negative integer parses; History
+ * drops a year its `completionYears` aggregate doesn't offer, so a nonsense one
+ * self-corrects rather than needing rejecting here. The views that aren't scoped
+ * to a year (Undated, Unrated, Top 100) are a separate `scope` param, not a
+ * sentinel year.
  */
 export function yearParam(): ParamCodec<number | null> {
 	return {

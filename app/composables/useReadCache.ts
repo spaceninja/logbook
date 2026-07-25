@@ -3,7 +3,7 @@ import type { NuxtApp } from '#app';
 /**
  * Shared client-side read cache for the list views (#24). The Backlog and
  * History reads are cached in Nuxt's payload keyed by query
- * (`backlog:<type>`, `history:<year>:<type>`, `search:<type>`,
+ * (`backlog:<type>`, `history:<year>:<type>`, `undated:<type>`, `all:<type>`,
  * `completionYears`), so
  * re-selecting a previously viewed query serves the cached list with no
  * refetch — switching is instant and we don't re-hit Firestore.
@@ -20,7 +20,8 @@ function isReadCacheKey(key: string): boolean {
 	return (
 		key.startsWith('backlog:') ||
 		key.startsWith('history:') ||
-		key.startsWith('search:') ||
+		key.startsWith('undated:') ||
+		key.startsWith('all:') ||
 		key === 'completionYears'
 	);
 }
