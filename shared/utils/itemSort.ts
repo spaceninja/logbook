@@ -3,9 +3,21 @@ import { deriveCreatorSort } from './creatorSort';
 import { itemDisplayTitle } from './itemDisplay';
 import { itemSeries } from './series';
 
-/** Ignore a leading article so "The Hobbit" files under "h" (core design §4). */
-function stripLeadingArticle(title: string): string {
-	return title.replace(/^(the|a|an)\s+/i, '');
+/** Leading quotes, brackets, ellipses — anything before the first letter or digit. */
+const LEADING_PUNCTUATION = /^[^\p{L}\p{N}]+/u;
+
+/**
+ * The string a title actually files under: no leading article, so "The Hobbit"
+ * files under "h" (core design §4), and no leading punctuation, so
+ * `"Surely You're Joking, Mr. Feynman!"` files under "s" rather than sorting
+ * ahead of the entire alphabet on its opening quote mark. Punctuation is
+ * stripped on both sides of the article for titles like `The "Great" Gatsby`.
+ */
+function titleSortKey(title: string): string {
+	return title
+		.replace(LEADING_PUNCTUATION, '')
+		.replace(/^(the|a|an)\s+/i, '')
+		.replace(LEADING_PUNCTUATION, '');
 }
 
 /** Which two-tier sort to apply. `completion_date` is History-only. */
@@ -57,7 +69,7 @@ interface Tier {
 
 const ratingValue: Accessor = (item, ctx) => item[ctx.ratingField];
 const titleValue: Accessor = (item) =>
-	stripLeadingArticle(itemDisplayTitle(item)).toLowerCase();
+	titleSortKey(itemDisplayTitle(item)).toLowerCase();
 const creatorValue: Accessor = (item) =>
 	(
 		item.creator_sort ??
@@ -66,7 +78,7 @@ const creatorValue: Accessor = (item) =>
 	).toLowerCase();
 const seriesValue: Accessor = (item) => {
 	const name = itemSeries(item).name;
-	return name ? stripLeadingArticle(name).toLowerCase() : undefined;
+	return name ? titleSortKey(name).toLowerCase() : undefined;
 };
 const seriesNumberValue: Accessor = (item) => itemSeries(item).number;
 const lengthValue: Accessor = (item) => item.length;

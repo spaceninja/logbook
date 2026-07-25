@@ -79,6 +79,33 @@ describe('makeItemComparator', () => {
 		]);
 	});
 
+	it('ignores leading punctuation in the title sort', () => {
+		// A title opening with a quote mark used to sort ahead of the whole
+		// alphabet; it belongs under its first real letter.
+		const feynman = makeItem({
+			id: 'feynman',
+			title: `"Surely You're Joking, Mr. Feynman!"`,
+		});
+		const rama = makeItem({ id: 'rama', title: 'Rendezvous with Rama' });
+		const tehanu = makeItem({ id: 'tehanu', title: 'Tehanu' });
+		expect(sortedIds([tehanu, feynman, rama], 'title', false, ctx)).toEqual([
+			'rama',
+			'feynman',
+			'tehanu',
+		]);
+	});
+
+	it('keeps a leading digit, and strips punctuation around an article', () => {
+		const thousands = makeItem({ id: 'thousands', title: '2,000 to 10,000' });
+		const gatsby = makeItem({ id: 'gatsby', title: 'The "Great" Gatsby' });
+		const zoo = makeItem({ id: 'zoo', title: 'Zoo' });
+		expect(sortedIds([zoo, gatsby, thousands], 'title', false, ctx)).toEqual([
+			'thousands',
+			'gatsby',
+			'zoo',
+		]);
+	});
+
 	it('orders the series number numerically, not lexically (2, 2.5, 10)', () => {
 		const ten = makeItem({
 			id: 'ten',
