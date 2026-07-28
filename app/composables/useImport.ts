@@ -11,6 +11,7 @@ import type {
 	ImportSection,
 	ResolveHint,
 } from '~~/shared/import/types';
+import { preferGoodreadsFields } from '~~/shared/providers/bookFields';
 import {
 	applyHardcoverEnrichment,
 	type HardcoverEnrichment,
@@ -91,49 +92,99 @@ export interface ImportSummary {
 /** Client-side chunk size for `/api/hardcover` — one Hardcover call per POST, well under the function timeout. */
 const HARDCOVER_CHUNK = 50;
 
+/**
+ * Chunk size for the title-search fallback. Unlike an ISBN batch (one call for 50
+ * books), each title costs two Hardcover calls serialized by the server's 1.1s
+ * rate-limit chain — roughly 2.2s per book. Two per POST keeps a request near 4.5s,
+ * inside a serverless function's 10s ceiling. A first import of a few hundred
+ * ISBN-less books therefore trails for several minutes; it only happens once,
+ * since each match stamps a `hardcover_id`.
+ */
+const HARDCOVER_TITLE_CHUNK = 2;
+
 /** Normalize an ISBN to the digit/X form the enrichment map is keyed by. */
 function normalizeIsbn(isbn: string | undefined): string | undefined {
 	const digits = (isbn ?? '').replace(/[^0-9Xx]/g, '').toUpperCase();
 	return digits.length === 10 || digits.length === 13 ? digits : undefined;
 }
 
+/** First author from a `creator`, for a Hardcover title search. */
+function creatorName(creator: Item['creator']): string {
+	return (Array.isArray(creator) ? creator[0] : creator) ?? '';
+}
+
+/** POST one `/api/hardcover` batch; null when the call or Hardcover failed. */
+async function fetchHardcover(
+	body: Record<string, unknown>,
+): Promise<Record<string, HardcoverEnrichment> | null> {
+	try {
+		const { results, error } = await $fetch<{
+			results: Record<string, HardcoverEnrichment>;
+			error: boolean;
+		}>('/api/hardcover', { method: 'POST', body });
+		return error ? null : results;
+	} catch {
+		return null;
+	}
+}
+
 /**
  * Batched, best-effort Hardcover enrichment for freshly-imported books. Enriches
- * only books that have an ISBN and no `hardcover_id` yet, in chunks so each
- * request is a single Hardcover call. Mutates the items in place (they're the
- * same objects queued for the write). Returns how many books a failed batch left
- * un-enriched, for the results view. Never throws — enrichment is supplemental.
+ * books with no `hardcover_id` yet: those with an ISBN in chunks keyed by ISBN,
+ * and the rest — Goodreads carries no ISBN for roughly a quarter of a library —
+ * by title, which used to skip them entirely (#69). Mutates the items in place
+ * (they're the same objects queued for the write). Returns how many books a failed
+ * batch left un-enriched, for the results view. Never throws — supplemental.
  */
 async function enrichBooksWithHardcover(newItems: Item[]): Promise<number> {
-	const targets = newItems.filter(
-		(it) =>
-			it.type === 'book' &&
-			!(it.metadata as BookMetadata).hardcover_id &&
-			!!normalizeIsbn((it.metadata as BookMetadata).isbn),
+	const books = newItems.filter(
+		(it) => it.type === 'book' && !(it.metadata as BookMetadata).hardcover_id,
 	);
+	const targets = books.filter(
+		(it) => !!normalizeIsbn((it.metadata as BookMetadata).isbn),
+	);
+	const untitled = books.filter(
+		(it) => !normalizeIsbn((it.metadata as BookMetadata).isbn),
+	);
+
 	let errors = 0;
 	for (let i = 0; i < targets.length; i += HARDCOVER_CHUNK) {
 		const chunk = targets.slice(i, i + HARDCOVER_CHUNK);
 		const isbns = chunk
 			.map((it) => normalizeIsbn((it.metadata as BookMetadata).isbn)!)
 			.filter(Boolean);
-		try {
-			const { results, error } = await $fetch<{
-				results: Record<string, HardcoverEnrichment>;
-				error: boolean;
-			}>('/api/hardcover', { method: 'POST', body: { isbns } });
-			if (error) {
-				errors += chunk.length;
-				continue;
-			}
-			for (const it of chunk) {
-				const isbn = normalizeIsbn((it.metadata as BookMetadata).isbn);
-				const enrichment = isbn ? results[isbn] : undefined;
-				if (enrichment)
-					Object.assign(it, applyHardcoverEnrichment(it, enrichment));
-			}
-		} catch {
+		const results = await fetchHardcover({ isbns });
+		if (!results) {
 			errors += chunk.length;
+			continue;
+		}
+		for (const it of chunk) {
+			const isbn = normalizeIsbn((it.metadata as BookMetadata).isbn);
+			const enrichment = isbn ? results[isbn] : undefined;
+			if (enrichment)
+				Object.assign(it, applyHardcoverEnrichment(it, enrichment));
+		}
+	}
+
+	// Title searches are one Hardcover call each, serialized server-side by the
+	// rate-limit chain, so these chunks are smaller than the ISBN ones.
+	for (let i = 0; i < untitled.length; i += HARDCOVER_TITLE_CHUNK) {
+		const chunk = untitled.slice(i, i + HARDCOVER_TITLE_CHUNK);
+		const results = await fetchHardcover({
+			books: chunk.map((it) => ({
+				key: it.id,
+				title: it.title,
+				author: creatorName(it.creator),
+			})),
+		});
+		if (!results) {
+			errors += chunk.length;
+			continue;
+		}
+		for (const it of chunk) {
+			const enrichment = results[it.id];
+			if (enrichment)
+				Object.assign(it, applyHardcoverEnrichment(it, enrichment));
 		}
 	}
 	return errors;
@@ -361,6 +412,10 @@ export function useImport() {
 	 * 404 (no match) falls through; a transient failure rethrows so the caller
 	 * retries it. `matched` is false when we fell back, so the caller can report
 	 * the book as imported without a cover or description.
+	 *
+	 * A match is filtered through `preferGoodreadsFields` first: Google resolves an
+	 * ISBN or title to one *edition* and reports that edition's reprint date and
+	 * page count, which Goodreads gets right. See `providers/bookFields.ts`. (#69)
 	 */
 	async function enrichBook(
 		record: ImportRecord,
@@ -375,7 +430,8 @@ export function useImport() {
 				title: record.title,
 				author: firstAuthor(fallbackDraft?.creator) ?? '',
 			}));
-		const draft = found ?? fallbackDraft ?? null;
+		const enriched = found ? preferGoodreadsFields(found, fallbackDraft) : null;
+		const draft = enriched ?? fallbackDraft ?? null;
 		if (!draft) return null;
 
 		// Google Books has no series data, so the series parsed from the Goodreads

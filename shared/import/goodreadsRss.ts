@@ -181,6 +181,9 @@ export function newBookSkeleton(rss: RssBook): Item {
 				? { series_number: rss.seriesNumber }
 				: {}),
 			...(rss.isbn ? { isbn: rss.isbn } : {}),
+			// A brand-new book takes the feed's cover unconditionally (something
+			// beats nothing), so record it as evaluated — no measurement needed.
+			...(rss.coverLarge ? { goodreads_cover: rss.coverLarge } : {}),
 		},
 	};
 	const creator = toCreator([rss.author]);
@@ -212,15 +215,50 @@ function overwrite<K extends keyof Item>(
 }
 
 /**
+ * Set a provider field from the fresh draft, keeping the existing value when RSS
+ * omits it. For the fields Google Books can also supply (`providers/bookFields.ts`)
+ * an absent feed value means "Goodreads has nothing here", not "this book has no
+ * value" — a few entries ship an empty `book_published` (Dracula Daily, Locke
+ * Lamora and the Bottled Serpent), and `overwrite` would delete a good imported
+ * release date on every run. (#69)
+ */
+function preferFresh<K extends keyof Item>(
+	target: Item,
+	key: K,
+	value: Item[K] | undefined,
+): void {
+	if (value !== undefined) target[key] = value;
+}
+
+/**
+ * Below this width, Goodreads' cover loses to whatever the import already stored.
+ * Matches `COVER_WIDTH` in `providers/googleBooks.ts` — the width we ask both
+ * providers for.
+ */
+export const MIN_COVER_WIDTH = 640;
+
+/** Whether a stored cover came from Google Books (the fallback worth keeping). */
+function isGoogleCover(url: string | undefined): boolean {
+	return !!url && url.startsWith('https://books.google.com/');
+}
+
+/**
  * Merge one feed entry onto the existing Firestore doc (or create it). RSS is the
  * authoritative source, so every provider field is refreshed each run; user-owned
  * fields (`notes`, `tags`, `recommended_by`, `is_prioritized`) and `is_purchased`
  * are left untouched, and completion dates/status/rating go through the shared
  * merge engine so the result is idempotent and never demotes a completed book.
+ *
+ * `goodreadsCoverWidth` is the measured pixel width of `rss.coverLarge` (see
+ * `scripts/lib/coverSize.ts`), used to decide whether Goodreads' art beats the
+ * cover already stored. The caller measures, so this stays a pure function; when
+ * it's undefined the feed's cover is treated as unverified and only used to fill
+ * a gap. (#69)
  */
 export function mergeSyncedBook(
 	existing: Item | undefined,
 	rss: RssBook,
+	goodreadsCoverWidth?: number,
 ): Item {
 	const fresh = newBookSkeleton(rss);
 	if (!existing) return fresh;
@@ -233,16 +271,29 @@ export function mergeSyncedBook(
 		metadata: { ...existing.metadata, ...fresh.metadata },
 	};
 	overwrite(merged, 'creator', fresh.creator);
-	overwrite(merged, 'description', fresh.description);
-	overwrite(merged, 'release_date', fresh.release_date);
-	overwrite(merged, 'length', fresh.length);
-	overwrite(merged, 'length_unit', fresh.length_unit);
 	overwrite(merged, 'community_rating', fresh.community_rating);
+	// Fields Google Books also supplies: an absent feed value must not delete one
+	// the import found. See `providers/bookFields.ts` for the precedence table.
+	preferFresh(merged, 'description', fresh.description);
+	preferFresh(merged, 'release_date', fresh.release_date);
+	preferFresh(merged, 'length', fresh.length);
+	preferFresh(merged, 'length_unit', fresh.length_unit);
+
 	// Cover only when Goodreads has a real one — a `nophoto` must not clobber a
-	// cover the owner picked from Google Books.
+	// cover the owner picked from Google Books. Goodreads' art is the exact edition
+	// shelved, so it wins when it's genuinely high-res; but it's served off a CDN
+	// that only scales *down*, and over half the library's originals are narrower
+	// than we ask for, so a small one yields to a Google cover already in place.
 	if (fresh.cover) {
-		merged.cover = fresh.cover;
-		if (fresh.thumbnail) merged.thumbnail = fresh.thumbnail;
+		const bigEnough =
+			goodreadsCoverWidth !== undefined &&
+			goodreadsCoverWidth >= MIN_COVER_WIDTH;
+		if (bigEnough || !isGoogleCover(merged.cover)) {
+			merged.cover = fresh.cover;
+			if (fresh.thumbnail) merged.thumbnail = fresh.thumbnail;
+		}
+		// `fresh.metadata` already carries `goodreads_cover`, spread in above, so
+		// the URL just evaluated is recorded whichever branch won.
 	}
 
 	return applyContribution(merged, {

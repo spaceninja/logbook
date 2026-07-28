@@ -13,10 +13,15 @@ import type { ImportFileMap, ImportRecord, ParseResult } from './types';
  *
  * The stable id is the Goodreads `Book Id` (`book-goodreads-<id>`) — Goodreads
  * killed its API, so metadata is enriched from Google Books at import time by
- * ISBN (then a title/author search). About a third of books — Kindle editions —
- * carry no ISBN, so each record also ships a `fallbackDraft` built from the
- * export's own fields (title, author, pages, year) for when enrichment finds
- * nothing. (issue #20)
+ * ISBN (then a title/author search). Roughly a quarter of rows carry no ISBN at
+ * all, so each record also ships a `fallbackDraft` built from the export's own
+ * fields (title, author, pages, year) for when enrichment finds nothing. (#20)
+ *
+ * ISBN presence doesn't track binding the way it looks like it should: about half
+ * of Kindle rows do carry one, and it's often the print edition's. Don't infer a
+ * format from it. What Google Books returns for that ISBN is one *edition*, whose
+ * reprint date and page count lose to the export's own fields — see
+ * `providers/bookFields.ts` for the full precedence table. (#69)
  */
 
 /** Goodreads' single exclusive shelf → how we file the book. */

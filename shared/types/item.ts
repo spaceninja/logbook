@@ -46,10 +46,18 @@ export interface BookMetadata {
 	 * Canonical Hardcover book id — the handle for the supplemental tag/rating
 	 * enrichment (see `providers/hardcover.ts`). Its presence marks a book as
 	 * already matched against Hardcover, so import and the RSS sync skip re-matching
-	 * it; its absence triggers an enrichment attempt. Matched by ISBN, which always
-	 * resolves to the canonical (editions-bearing) record.
+	 * it; its absence triggers an enrichment attempt. Matched by ISBN, falling back
+	 * to a title search; either way it resolves to the canonical (editions-bearing)
+	 * record.
 	 */
 	hardcover_id?: string;
+	/**
+	 * The last Goodreads cover URL the sync measured for its width check (#69).
+	 * Goodreads' art is only preferred when it's actually high-res, which takes a
+	 * real pixel measurement; recording the URL that was measured lets an unchanged
+	 * cover skip the fetch on every subsequent run.
+	 */
+	goodreads_cover?: string;
 }
 
 // Movies carry only optional series/franchise info; `creator` holds the director.

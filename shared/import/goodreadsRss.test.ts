@@ -43,6 +43,22 @@ const TO_READ_ITEM = `
 		<book_published>2026</book_published>
 	</item>`;
 
+/**
+ * An item the feed carries almost nothing for: Goodreads ships an empty
+ * `book_published` and no `num_pages` for a few titles (Dracula Daily, Locke
+ * Lamora and the Bottled Serpent).
+ */
+const SPARSE_ITEM = `
+	<item>
+		<title>Dracula Daily</title>
+		<book_id>444</book_id>
+		<book_large_image_url><![CDATA[https://i.gr-assets.com/images/S/x/444._SY475_.jpg]]></book_large_image_url>
+		<author_name>Bram Stoker</author_name>
+		<user_rating>0</user_rating>
+		<average_rating>4.1</average_rating>
+		<book_published></book_published>
+	</item>`;
+
 /** An item whose cover is the Goodreads `nophoto` placeholder. */
 const NOPHOTO_ITEM = `
 	<item>
@@ -202,6 +218,107 @@ describe('mergeSyncedBook', () => {
 			rss!,
 		);
 		expect(merged.cover).toBe('https://example/mine.jpg');
+	});
+
+	it('keeps imported date/length/description when the feed omits them', () => {
+		const [rss] = parseFeed(feed(SPARSE_ITEM), 'to-read');
+		const merged = mergeSyncedBook(
+			existingDoc({
+				id: 'book-goodreads-444',
+				release_date: '1897',
+				length: 418,
+				length_unit: 'pages',
+				description: 'From the import.',
+			}),
+			rss!,
+		);
+		expect(merged).toMatchObject({
+			release_date: '1897',
+			length: 418,
+			length_unit: 'pages',
+			description: 'From the import.',
+		});
+	});
+
+	describe('cover precedence', () => {
+		const GOOGLE_COVER =
+			'https://books.google.com/books/content?id=abc123&fife=w640';
+		const FEED_COVER =
+			'https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1731705848l/217582924._SX640_.jpg';
+
+		it("takes Goodreads' cover when it measures at least 640px wide", () => {
+			const [rss] = parseFeed(feed(READ_ITEM), 'read');
+			const merged = mergeSyncedBook(
+				existingDoc({ cover: GOOGLE_COVER }),
+				rss!,
+				1125,
+			);
+			expect(merged.cover).toBe(FEED_COVER);
+		});
+
+		it("keeps a Google cover when Goodreads' art is too small", () => {
+			const [rss] = parseFeed(feed(READ_ITEM), 'read');
+			const merged = mergeSyncedBook(
+				existingDoc({ cover: GOOGLE_COVER }),
+				rss!,
+				313,
+			);
+			expect(merged.cover).toBe(GOOGLE_COVER);
+		});
+
+		it('keeps a Google cover when the width could not be measured', () => {
+			const [rss] = parseFeed(feed(READ_ITEM), 'read');
+			const merged = mergeSyncedBook(
+				existingDoc({ cover: GOOGLE_COVER }),
+				rss!,
+				undefined,
+			);
+			expect(merged.cover).toBe(GOOGLE_COVER);
+		});
+
+		it("takes Goodreads' small cover over a non-Google one", () => {
+			const [rss] = parseFeed(feed(READ_ITEM), 'read');
+			const merged = mergeSyncedBook(
+				existingDoc({ cover: 'https://i.gr-assets.com/old.jpg' }),
+				rss!,
+				313,
+			);
+			expect(merged.cover).toBe(FEED_COVER);
+		});
+
+		it('takes a small Goodreads cover when the book has none at all', () => {
+			const [rss] = parseFeed(feed(READ_ITEM), 'read');
+			const merged = mergeSyncedBook(
+				existingDoc({ cover: undefined }),
+				rss!,
+				313,
+			);
+			expect(merged.cover).toBe(FEED_COVER);
+		});
+
+		it('records the evaluated URL so the next run skips measuring', () => {
+			const [rss] = parseFeed(feed(READ_ITEM), 'read');
+			const merged = mergeSyncedBook(
+				existingDoc({ cover: GOOGLE_COVER }),
+				rss!,
+				313,
+			);
+			expect(
+				(merged.metadata as { goodreads_cover?: string }).goodreads_cover,
+			).toBe(FEED_COVER);
+		});
+
+		it('leaves the stored cover untouched for a nophoto placeholder', () => {
+			const [rss] = parseFeed(feed(NOPHOTO_ITEM), 'to-read');
+			const merged = mergeSyncedBook(
+				existingDoc({ id: 'book-goodreads-333', cover: GOOGLE_COVER }),
+				rss!,
+			);
+			expect(merged.cover).toBe(GOOGLE_COVER);
+			expect(
+				(merged.metadata as { goodreads_cover?: string }).goodreads_cover,
+			).toBeUndefined();
+		});
 	});
 
 	it('does not demote a completed book when it reappears on to-read', () => {

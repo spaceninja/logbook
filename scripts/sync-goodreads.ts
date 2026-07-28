@@ -5,8 +5,9 @@ import {
 	type RssBook,
 	type SyncShelf,
 } from '../shared/import/goodreadsRss';
-import type { Item } from '../shared/types/item';
+import type { BookMetadata, Item } from '../shared/types/item';
 import { makeBookId } from '../shared/utils/itemId';
+import { coverWidth } from './lib/coverSize';
 import { itemsEqual, readItems, writeItems } from './lib/firestore-admin';
 import { enrichBooksWithHardcover } from './lib/hardcover';
 
@@ -52,6 +53,46 @@ function requireEnv(name: string): string {
 	return value;
 }
 
+/** How many covers to measure at once — small enough to stay polite to the CDN. */
+const COVER_CONCURRENCY = 8;
+
+/**
+ * Measured widths for the feed covers `mergeSyncedBook` needs to judge (#69), keyed
+ * by item id. Only covers the sync hasn't already evaluated are fetched: a book
+ * records the URL it was measured against in `metadata.goodreads_cover`, so an
+ * unchanged cover costs nothing. The first run measures the whole window; steady
+ * state measures only books whose art actually changed.
+ */
+async function measureCovers(
+	books: Map<string, RssBook>,
+	existing: Map<string, Item>,
+): Promise<Map<string, number>> {
+	const pending = [...books].filter(([id, rss]) => {
+		const prev = existing.get(id);
+		if (!rss.coverLarge || !prev) return false; // new books take it unconditionally
+		return (prev.metadata as BookMetadata).goodreads_cover !== rss.coverLarge;
+	});
+
+	const widths = new Map<string, number>();
+	for (let i = 0; i < pending.length; i += COVER_CONCURRENCY) {
+		const batch = pending.slice(i, i + COVER_CONCURRENCY);
+		const measured = await Promise.all(
+			batch.map(
+				async ([id, rss]) => [id, await coverWidth(rss.coverLarge!)] as const,
+			),
+		);
+		for (const [id, width] of measured) {
+			if (width !== undefined) widths.set(id, width);
+		}
+	}
+	if (pending.length > 0) {
+		console.log(
+			`Covers: measured ${pending.length}, resolved ${widths.size} widths`,
+		);
+	}
+	return widths;
+}
+
 async function main(): Promise<void> {
 	const dryRun = process.argv.includes('--dry-run');
 
@@ -70,12 +111,16 @@ async function main(): Promise<void> {
 
 	const existing = await readItems([...books.keys()]);
 
+	// Goodreads' cover only beats a stored Google one when it's actually high-res,
+	// which takes a real measurement — done here so `mergeSyncedBook` stays pure.
+	const coverWidths = await measureCovers(books, existing);
+
 	// Merge every book first, so the supplemental Hardcover enrichment below can
 	// run before the change diff — enriching a book that was otherwise unchanged
 	// (imported before it had a hardcover_id) turns it into a write.
 	const merged = [...books].map(([id, rss]) => ({
 		prev: existing.get(id),
-		item: mergeSyncedBook(existing.get(id), rss),
+		item: mergeSyncedBook(existing.get(id), rss, coverWidths.get(id)),
 	}));
 
 	// Populate community tags for books lacking a hardcover_id. Rating stays
