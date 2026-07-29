@@ -4,6 +4,7 @@ import {
 	deleteDoc,
 	doc,
 	documentId,
+	FirestoreError,
 	getDoc,
 	getDocs,
 	query,
@@ -11,14 +12,25 @@ import {
 	where,
 	writeBatch,
 	type Firestore,
+	type SnapshotMetadata,
 } from 'firebase/firestore';
 import type { Item, MediaType } from '~~/shared/types/item';
 import { deriveCompletedYears } from '~~/shared/utils/completedYears';
 import type { CompletionYearsByType } from '~~/shared/utils/completionYears';
 import { deriveCreatorSort } from '~~/shared/utils/creatorSort';
 
-/** ms to wait on a Firestore read before treating a stall as a failure (#23). */
-const READ_TIMEOUT_MS = 10_000;
+/**
+ * ms to wait on a Firestore read before treating a stall as a failure (#23).
+ *
+ * Deliberately longer than the SDK's own 10s `ONLINE_STATE_TIMEOUT_MS`. `getDocs`
+ * is not a one-shot request — it registers a snapshot listener on a shared Listen
+ * stream — so a read that arrives while that stream is reconnecting waits on the
+ * SDK's own offline detection and backoff. At 10s this timer fired at exactly the
+ * moment the SDK was deciding to recover, converting a recoverable stall into a
+ * page error. The cost of the longer window is that a genuinely dead read shows
+ * "Loading…" for longer before failing (#34).
+ */
+const READ_TIMEOUT_MS = 30_000;
 
 /**
  * Reject if `promise` hasn't settled within `READ_TIMEOUT_MS`. The modular
@@ -26,17 +38,59 @@ const READ_TIMEOUT_MS = 10_000;
  * never settles; racing a timer turns that silent hang into the pages' existing
  * `error` branch instead of an endless "Loading…" (#23). The orphaned read
  * resolving late is harmless — Nuxt has already taken the rejection.
+ *
+ * A read that fails for a reason Firestore actually reported is re-thrown with
+ * its error code attached. The code is the diagnostic that matters
+ * (`resource-exhausted` and `unavailable` are different problems with different
+ * fixes) and it lives on `FirestoreError.code`, not in the message, so without
+ * this it never reaches the console or the page's error branch (#34).
+ *
+ * A cache-sourced snapshot is treated as a failure. `getDocs`/`getDoc` don't
+ * reject when the client goes offline mid-read — the SDK raises whatever the
+ * local cache holds and the promise *resolves*. This app runs a memory-only
+ * cache, so that is an empty result, and the views render it as "you have no
+ * items" rather than as an error: with Firestore blackholed, the Backlog sat at
+ * zero cards for 36s with no error and no log. Rejecting here is what turns an
+ * unreachable backend back into the pages' `error` branch (#34).
  */
-function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
-	let timer: ReturnType<typeof setTimeout>;
+async function withTimeout<T extends { metadata: SnapshotMetadata }>(
+	promise: Promise<T>,
+	label: string,
+): Promise<T> {
+	let timer: ReturnType<typeof setTimeout> | undefined;
 	const timeout = new Promise<never>((_, reject) => {
 		timer = setTimeout(() => {
-			const message = `${label} timed out — a content blocker or network issue may be interfering with the connection.`;
-			console.error(`[logbook] ${message}`);
+			// Deliberately states only what we know. An earlier version blamed a
+			// content blocker, which sent #34's investigation chasing the wrong cause.
+			const message = `Timed out after ${READ_TIMEOUT_MS / 1000}s.`;
+			console.error(
+				`[logbook] ${label} timed out after ${READ_TIMEOUT_MS / 1000}s.`,
+			);
 			reject(new Error(message));
 		}, READ_TIMEOUT_MS);
 	});
-	return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+
+	try {
+		const snapshot = await Promise.race([promise, timeout]);
+		// Only reachable when the client is offline: reads are issued with the
+		// SDK's default source, which waits for server sync while it believes it
+		// is online, so a healthy read is never cache-sourced.
+		if (snapshot.metadata.fromCache) {
+			console.error(`[logbook] ${label} fell back to cache — client offline`);
+			throw new Error('Could not reach the server.');
+		}
+		return snapshot;
+	} catch (error) {
+		if (error instanceof FirestoreError) {
+			console.error(`[logbook] ${label} failed [${error.code}]`, error);
+			// The pages prepend their own "Failed to load …", so the thrown message
+			// carries only the detail they don't have: Firestore's reason and code.
+			throw new Error(`${error.message} (${error.code})`, { cause: error });
+		}
+		throw error;
+	} finally {
+		clearTimeout(timer);
+	}
 }
 
 /**
