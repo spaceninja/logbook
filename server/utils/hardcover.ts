@@ -55,7 +55,8 @@ function hardcoverGql<T>(
 	variables: Record<string, unknown>,
 ): Promise<T> {
 	const { hardcoverToken } = useRuntimeConfig();
-	if (!hardcoverToken) throw new Error('HARDCOVER_TOKEN is not configured');
+	if (!hardcoverToken)
+		throw new Error('NUXT_HARDCOVER_TOKEN is not configured');
 	return schedule(async () => {
 		for (let attempt = 0; ; attempt++) {
 			try {

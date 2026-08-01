@@ -128,7 +128,9 @@ async function main(): Promise<void> {
 	// is logged, never fatal — the books simply retry on the next run.
 	const enrichment = await enrichBooksWithHardcover(
 		merged.map((m) => m.item),
-		process.env.HARDCOVER_TOKEN,
+		// NUXT_-prefixed so one variable serves both this script and the app's
+		// runtimeConfig; the bare name is still honoured for older environments.
+		process.env.NUXT_HARDCOVER_TOKEN ?? process.env.HARDCOVER_TOKEN,
 	);
 	if (
 		enrichment.enriched > 0 ||
@@ -137,7 +139,7 @@ async function main(): Promise<void> {
 	) {
 		console.log(
 			`Hardcover: enriched ${enrichment.enriched}, errors ${enrichment.errors}, skipped ${enrichment.skipped}` +
-				(enrichment.skipped > 0 ? ' (HARDCOVER_TOKEN not set)' : ''),
+				(enrichment.skipped > 0 ? ' (NUXT_HARDCOVER_TOKEN not set)' : ''),
 		);
 	}
 

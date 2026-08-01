@@ -18,10 +18,11 @@ export default defineNuxtConfig({
 		tmdbReadToken: '', // NUXT_TMDB_READ_TOKEN
 		googleBooksApiKey: '', // NUXT_GOOGLE_BOOKS_API_KEY
 		// Hardcover (hardcover.app) personal API token — a Bearer JWT that expires
-		// yearly (resets Jan 1). Supplemental book tag/rating enrichment. Read from
-		// HARDCOVER_TOKEN (no NUXT_ prefix, shared with the sync script's env) rather
-		// than the auto-mapped NUXT_HARDCOVER_TOKEN.
-		hardcoverToken: process.env.HARDCOVER_TOKEN ?? '',
+		// yearly (resets Jan 1). Supplemental book tag/rating enrichment. Must keep
+		// the NUXT_ prefix: Nitro only maps prefixed env vars onto runtimeConfig at
+		// runtime, so reading process.env here instead would inline the token into
+		// the build output and leave the deployed server with an empty token.
+		hardcoverToken: '', // NUXT_HARDCOVER_TOKEN
 
 		twitchClientId: '', // NUXT_TWITCH_CLIENT_ID
 		twitchClientSecret: '', // NUXT_TWITCH_CLIENT_SECRET
