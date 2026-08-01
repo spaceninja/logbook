@@ -32,8 +32,8 @@
 		"deploy:indexes:prod": "firebase deploy --only firestore:indexes --project prod --config firebase.json"
 	},
 	"dependencies": {
-		"@vueuse/core": "14.3.0",
-		"@vueuse/router": "14.3.0",
+		"@vueuse/core": "14.4.0",
+		"@vueuse/router": "14.4.0",
 		"fast-xml-parser": "5.10.1",
 		"firebase": "12.16.0",
 		"firebase-admin": "14.2.0",
