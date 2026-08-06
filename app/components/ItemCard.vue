@@ -21,6 +21,7 @@
 		<span v-if="rating" class="rating">{{ rating }}</span>
 		<span v-if="length" class="length">{{ length }}</span>
 		<span v-if="item.status === 'dnf'" class="dnf">DNF</span>
+		<span v-if="item.status === 'in_progress'" class="in-progress">In Progress</span>
 		<span v-if="completedDates.length" class="dates">
 			<time v-for="d in completedDates" :key="d" :datetime="d">{{
 				formatDate(d)

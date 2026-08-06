@@ -3,214 +3,287 @@
 		:aria-label="mode === 'create' ? 'Add item' : 'Edit item'"
 		@submit.prevent="onSubmit"
 	>
-		<p v-if="error" role="alert">{{ error }}</p>
+		<p v-if="error" role="alert" class="full-width">{{ error }}</p>
 
-		<label>
-			Type
-			<select v-model="form.type">
+		<div class="narrow">
+			<label for="type">Type</label>
+			<select id="type" v-model="form.type">
 				<option v-for="t in MEDIA_TYPES" :key="t" :value="t">{{ t }}</option>
 			</select>
-		</label>
+		</div>
 
-		<label>
-			Title
-			<input v-model="form.title" type="text" required />
-		</label>
-
-		<label>
-			Creator <small>(comma-separated for multiple)</small>
-			<input v-model="form.creator" type="text" />
-		</label>
-
-		<label>
-			Creator sort key <small>(surname first; blank = auto)</small>
-			<input v-model="form.creator_sort" type="text" />
-		</label>
-
-		<label>
-			Status
-			<select v-model="form.status">
+		<div class="narrow">
+			<label for="status">Status</label>
+			<select id="status" v-model="form.status">
 				<option v-for="s in STATUSES" :key="s" :value="s">{{ s }}</option>
 			</select>
-		</label>
+		</div>
 
-		<label>
-			Release date
-			<input v-model="form.release_date" type="date" />
-		</label>
+		<div class="narrow">
+			<label>
+				<input v-model="form.is_purchased" type="checkbox" />
+				Purchased
+			</label>
+		</div>
 
-		<label>
-			Description
-			<textarea v-model="form.description" />
-		</label>
+		<div class="narrow">
+			<label>
+				<input v-model="form.is_prioritized" type="checkbox" />
+				Prioritized
+			</label>
+		</div>
 
-		<label>
-			Cover URL
-			<input v-model="form.cover" type="url" />
-		</label>
+		<div>
+			<label for="title">Title</label>
+			<input id="title" v-model="form.title" type="text" required />
+		</div>
 
-		<label>
-			Thumbnail URL
-			<input v-model="form.thumbnail" type="url" />
-		</label>
+		<div>
+			<label for="release_date">Release date</label>
+			<input id="release_date" v-model="form.release_date" type="date" />
+		</div>
 
-		<label>
-			Backdrop URL
-			<input v-model="form.backdrop" type="url" />
-		</label>
+		<div>
+			<label for="creator">
+				Creator <small>(comma-separated for multiple)</small>
+			</label>
+			<input id="creator" v-model="form.creator" type="text" />
+		</div>
 
-		<label>
-			Length
-			<input v-model="form.length" type="number" min="0" />
-		</label>
+		<div>
+			<label for="creator_sort">
+				Creator sort key <small>(surname first; blank = auto)</small>
+			</label>
+			<input id="creator_sort" v-model="form.creator_sort" type="text" />
+		</div>
 
-		<label>
-			Length unit
-			<select v-model="form.length_unit">
+		<div>
+			<label for="cover">Cover URL</label>
+			<input id="cover" v-model="form.cover" type="url" />
+		</div>
+
+		<div>
+			<label for="thumbnail">Thumbnail URL</label>
+			<input id="thumbnail" v-model="form.thumbnail" type="url" />
+		</div>
+
+		<div>
+			<label for="backdrop">Backdrop URL</label>
+			<input id="backdrop" v-model="form.backdrop" type="url" />
+		</div>
+
+		<div class="addon">
+			<label for="length">Length</label>
+			<input id="length" v-model="form.length" type="number" min="0" />
+			<label for="length_unit" class="visually-hidden">Length unit</label>
+			<select id="length_unit" v-model="form.length_unit">
 				<option v-for="u in LENGTH_UNITS" :key="u" :value="u">{{ u }}</option>
 			</select>
-		</label>
+		</div>
 
-		<label>
-			Community rating <small>(0–10)</small>
+		<div>
+			<label for="community_rating">
+				Community rating <small>(0–10)</small>
+			</label>
 			<input
+				id="community_rating"
 				v-model="form.community_rating"
 				type="number"
 				min="0"
 				max="10"
 				step="any"
 			/>
-		</label>
+		</div>
 
-		<label>
-			My rating <small>(0–10)</small>
+		<div>
+			<label for="my_rating">My rating <small>(0–10)</small></label>
 			<input
+				id="my_rating"
 				v-model="form.my_rating"
 				type="number"
 				min="0"
 				max="10"
 				step="any"
 			/>
-		</label>
+		</div>
 
-		<!-- Data source is provenance, not an editable field: it's the id namespace
-		     (e.g. a book's id is book-goodreads-…) and the refresh key, so changing
-		     it only desyncs those. Shown read-only; it round-trips on submit. -->
-		<p>Data source: {{ form.provider }}</p>
+		<div>
+			<label for="recommended_by">Recommended by</label>
+			<input id="recommended_by" v-model="form.recommended_by" type="text" />
+		</div>
 
-		<label>
-			Recommended by
-			<input v-model="form.recommended_by" type="text" />
-		</label>
+		<div>
+			<label for="tags">Tags <small>(comma-separated)</small></label>
+			<input id="tags" v-model="form.tags" type="text" />
+		</div>
 
-		<label>
-			<input v-model="form.is_purchased" type="checkbox" />
-			Purchased
-		</label>
+		<div>
+			<label for="description">Description</label>
+			<textarea id="description" v-model="form.description" />
+		</div>
 
-		<label>
-			<input v-model="form.is_prioritized" type="checkbox" />
-			Prioritized
-		</label>
-
-		<fieldset>
-			<legend>Completed dates</legend>
-			<div v-for="(date, index) in form.completed_dates" :key="index">
-				<input v-model="form.completed_dates[index]" type="date" />
-				<button type="button" @click="removeDate(index)">Remove</button>
-			</div>
-			<button type="button" @click="addDate">Add date</button>
-			<!-- One-click completion, mostly for cleaning up imported partial
-			     watches: set the status and a sensible date together. -->
-			<button type="button" @click="completedToday">Completed today</button>
-			<button type="button" :disabled="releaseBusy" @click="completedOnRelease">
-				Completed on release date
-			</button>
-		</fieldset>
-
-		<label>
-			Notes
-			<textarea v-model="form.notes" />
-		</label>
-
-		<label>
-			Tags <small>(comma-separated)</small>
-			<input v-model="form.tags" type="text" />
-		</label>
+		<div>
+			<label for="notes">Notes</label>
+			<textarea id="notes" v-model="form.notes" />
+		</div>
 
 		<!-- Type-specific metadata -->
-		<fieldset v-if="form.type === 'book'">
+		<fieldset v-if="form.type === 'book'" class="full-width">
 			<legend>Book details</legend>
-			<label>
-				Series
-				<input v-model="form.series" type="text" />
-			</label>
-			<label>
-				Series number
-				<input v-model="form.series_number" type="number" min="0" step="any" />
-			</label>
-			<label>
-				ISBN
-				<input v-model="form.isbn" type="text" />
-			</label>
+			<div>
+				<label for="series">Series Name</label>
+				<input id="series" v-model="form.series" type="text" />
+			</div>
+			<div>
+				<label for="series_number">Series number</label>
+				<input
+					id="series_number"
+					v-model="form.series_number"
+					type="number"
+					min="0"
+					step="any"
+				/>
+			</div>
+			<div>
+				<label for="isbn">ISBN</label>
+				<input id="isbn" v-model="form.isbn" type="text" />
+			</div>
 		</fieldset>
 
-		<fieldset v-else-if="form.type === 'movie'">
+		<fieldset v-else-if="form.type === 'movie'" class="full-width">
 			<legend>Movie details</legend>
-			<label>
-				Series
-				<input v-model="form.series" type="text" />
-			</label>
-			<label>
-				Series number
-				<input v-model="form.series_number" type="number" min="0" step="any" />
-			</label>
+			<div>
+				<label for="series">Series Name</label>
+				<input id="series" v-model="form.series" type="text" />
+			</div>
+			<div>
+				<label for="series_number">Series number</label>
+				<input
+					id="series_number"
+					v-model="form.series_number"
+					type="number"
+					min="0"
+					step="any"
+				/>
+			</div>
 		</fieldset>
 
-		<fieldset v-else-if="form.type === 'show'">
+		<fieldset v-else-if="form.type === 'show'" class="full-width">
 			<legend>Show details</legend>
-			<label>
-				Show TMDB id
-				<input v-model="form.show_tmdb_id" type="number" min="0" />
-			</label>
-			<label>
-				Season number
-				<input v-model="form.season_number" type="number" min="0" step="any" />
-			</label>
-			<label>
-				Season title <small>(if different from the show name)</small>
-				<input v-model="form.season_title" type="text" />
-			</label>
-			<label>
-				Episode count
-				<input v-model="form.episode_count" type="number" min="0" />
-			</label>
-			<label>
-				Episode runtime <small>(min)</small>
-				<input v-model="form.episode_runtime" type="number" min="0" />
-			</label>
+			<div>
+				<label for="show_tmdb_id">Show TMDB id</label>
+				<input
+					id="show_tmdb_id"
+					v-model="form.show_tmdb_id"
+					type="number"
+					min="0"
+				/>
+			</div>
+			<div>
+				<label for="season_number">Season number</label>
+				<input
+					id="season_number"
+					v-model="form.season_number"
+					type="number"
+					min="0"
+					step="any"
+				/>
+			</div>
+			<div>
+				<label for="season_title">
+					Season title <small>(if different from the show name)</small>
+				</label>
+				<input id="season_title" v-model="form.season_title" type="text" />
+			</div>
+			<div>
+				<label for="episode_count">Episode count</label>
+				<input
+					id="episode_count"
+					v-model="form.episode_count"
+					type="number"
+					min="0"
+				/>
+			</div>
+			<div>
+				<label for="episode_runtime">
+					Episode runtime <small>(min)</small>
+				</label>
+				<input
+					id="episode_runtime"
+					v-model="form.episode_runtime"
+					type="number"
+					min="0"
+				/>
+			</div>
 		</fieldset>
 
-		<fieldset v-else-if="form.type === 'game'">
+		<fieldset v-else-if="form.type === 'game'" class="full-width">
 			<legend>Game details</legend>
-			<label>
-				Series
-				<input v-model="form.series" type="text" />
-			</label>
-			<label>
-				Series number
-				<input v-model="form.series_number" type="number" min="0" step="any" />
-			</label>
-			<label>
-				Platform
-				<input v-model="form.platform" type="text" />
-			</label>
+			<div>
+				<label for="series">Series</label>
+				<input id="series" v-model="form.series" type="text" />
+			</div>
+			<div>
+				<label for="series_number">Series number</label>
+				<input
+					id="series_number"
+					v-model="form.series_number"
+					type="number"
+					min="0"
+					step="any"
+				/>
+			</div>
+			<div>
+				<label for="platform">Platform</label>
+				<input id="platform" v-model="form.platform" type="text" />
+			</div>
 		</fieldset>
 
-		<button type="submit">
-			{{ mode === 'create' ? 'Add item' : 'Save changes' }}
-		</button>
+		<fieldset class="full-width">
+			<legend>Completed dates</legend>
+			<div
+				v-for="(date, index) in form.completed_dates"
+				:key="index"
+				class="addon"
+			>
+				<label :for="`completed-date-${index}`" class="visually-hidden">
+					Date
+				</label>
+				<input
+					:id="`completed-date-${index}`"
+					v-model="form.completed_dates[index]"
+					type="date"
+				/>
+				<button type="button" @click="removeDate(index)">Remove</button>
+			</div>
+			<div class="buttons">
+				<button type="button" @click="addDate">Add date</button>
+				<!-- One-click completion, mostly for cleaning up imported partial
+						 watches: set the status and a sensible date together. -->
+				<button type="button" @click="completedToday">Completed today</button>
+				<button
+					type="button"
+					:disabled="releaseBusy"
+					@click="completedOnRelease"
+				>
+					Completed on release date
+				</button>
+			</div>
+		</fieldset>
+
+		<div class="full-width">
+			<button type="submit">
+				{{ mode === 'create' ? 'Add item' : 'Save changes' }}
+			</button>
+		</div>
 	</form>
+
+	<!-- Data source is provenance, not an editable field: it's the id namespace
+			(e.g. a book's id is book-goodreads-…) and the refresh key, so changing
+			it only desyncs those. Shown read-only; it round-trips on submit. -->
+	<div>
+		<p>Data source: {{ form.provider }}</p>
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -614,3 +687,90 @@ function onSubmit() {
 	emit('submit', assemble());
 }
 </script>
+
+<style scoped>
+form {
+	display: grid;
+	gap: 1em;
+	grid-template-columns: repeat(2, 1fr);
+
+	@media screen and (width >= 768px) {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+
+form > div {
+	align-self: end;
+	grid-column: span 2;
+}
+
+.narrow {
+	grid-column: span 1;
+}
+
+.full-width {
+	grid-column: span 2;
+
+	@media screen and (width >= 768px) {
+		grid-column: span 4;
+	}
+}
+
+label,
+legend {
+	display: block;
+	font-size: 0.75em;
+	font-stretch: 125%;
+	font-weight: 600;
+	text-transform: uppercase;
+
+	small {
+		font-stretch: 100%;
+		font-weight: normal;
+		text-transform: none;
+	}
+}
+
+label {
+	align-items: center;
+	display: flex;
+	gap: 0.25em;
+	margin-bottom: 0.25em;
+}
+
+input:not([type='checkbox']),
+select,
+textarea {
+	font-size: 16px;
+	padding: 0.15em 0.33em;
+	width: 100%;
+}
+
+textarea {
+	font-family: system-ui, sans-serif;
+	height: calc(5lh + 0.3em);
+}
+
+.addon {
+	column-gap: 0.25em;
+	display: grid;
+	grid-template-columns: 1fr max-content;
+
+	label {
+		grid-column: span 2;
+	}
+}
+
+fieldset {
+	display: grid;
+	gap: 1em;
+	grid-template-columns: 1fr 1fr;
+	padding: 1em;
+}
+
+.buttons {
+	display: flex;
+	gap: 0.5em;
+	grid-column: span 2;
+}
+</style>
