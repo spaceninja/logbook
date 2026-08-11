@@ -101,7 +101,7 @@ describe('ItemForm', () => {
 
 		await fireEvent.update(screen.getByLabelText('Type'), 'book');
 		expect(screen.getByText('Book details')).toBeInTheDocument();
-		expect(screen.getByLabelText('Series')).toBeInTheDocument();
+		expect(screen.getByLabelText('Series Name')).toBeInTheDocument();
 
 		await fireEvent.update(screen.getByLabelText('Type'), 'show');
 		expect(screen.getByText('Show details')).toBeInTheDocument();
@@ -334,7 +334,7 @@ describe('ItemForm', () => {
 			'The Fellowship of the Ring',
 		);
 		await fireEvent.update(
-			screen.getByLabelText('Series'),
+			screen.getByLabelText('Series Name'),
 			'The Lord of the Rings',
 		);
 		await fireEvent.update(screen.getByLabelText('Series number'), '1');
