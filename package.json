@@ -24,6 +24,7 @@
 		"test:watch": "vitest",
 		"generate:sample": "node scripts/generate-sample.js",
 		"sync:goodreads": "tsx scripts/sync-goodreads.ts",
+		"migrate:book-list": "tsx scripts/migrate-book-list.ts",
 		"validate": "run-s lint:check type-check test",
 		"firebase": "firebase",
 		"deploy:rules:dev": "firebase deploy --only firestore:rules --project dev --config firebase.dev.json",

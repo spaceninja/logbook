@@ -49,6 +49,16 @@ export async function readItems(ids: string[]): Promise<Map<string, Item>> {
 	return found;
 }
 
+/**
+ * Every book in the collection. The Book List migration matches on title and
+ * author as well as ISBN, so unlike `readItems` it can't name the ids it wants
+ * up front — it needs the whole set to search.
+ */
+export async function readBooks(): Promise<Item[]> {
+	const snapshot = await items().where('type', '==', 'book').get();
+	return snapshot.docs.map((doc) => doc.data() as Item);
+}
+
 /** The stored record for an item: `completed_years`/`creator_sort` normalized. */
 function normalize(item: Item): Item {
 	const creatorSort =
