@@ -106,6 +106,11 @@ describe('ItemForm', () => {
 		await fireEvent.update(screen.getByLabelText('Type'), 'show');
 		expect(screen.getByText('Show details')).toBeInTheDocument();
 		expect(screen.getByLabelText('Season number')).toBeInTheDocument();
+
+		// Games carry a series too, under the same label as books and movies.
+		await fireEvent.update(screen.getByLabelText('Type'), 'game');
+		expect(screen.getByText('Game details')).toBeInTheDocument();
+		expect(screen.getByLabelText('Series Name')).toBeInTheDocument();
 	});
 
 	it('blocks submit and shows an error when the title is empty', async () => {

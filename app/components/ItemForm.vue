@@ -220,7 +220,7 @@
 		<fieldset v-else-if="form.type === 'game'" class="full-width">
 			<legend>Game details</legend>
 			<div>
-				<label for="series">Series</label>
+				<label for="series">Series Name</label>
 				<input id="series" v-model="form.series" type="text" />
 			</div>
 			<div>
