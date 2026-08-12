@@ -50,7 +50,7 @@
 		"@testing-library/jest-dom": "7.0.0",
 		"@testing-library/vue": "8.1.0",
 		"@types/markdown-it": "14.1.2",
-		"@typescript-eslint/parser": "8.65.0",
+		"@typescript-eslint/parser": "8.66.0",
 		"@vitest/eslint-plugin": "1.6.26",
 		"@vue/test-utils": "2.4.11",
 		"dotenv": "17.4.2",
