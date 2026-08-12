@@ -1,4 +1,5 @@
 import { XMLParser } from 'fast-xml-parser';
+import { isReleaseDateDowngrade } from '../providers/bookFields';
 import { draftDefaults, toCreator } from '../providers/helpers';
 import type { Item, ItemStatus } from '../types/item';
 import { deriveCompletedYears } from '../utils/completedYears';
@@ -275,7 +276,11 @@ export function mergeSyncedBook(
 	// Fields Google Books also supplies: an absent feed value must not delete one
 	// the import found. See `providers/bookFields.ts` for the precedence table.
 	preferFresh(merged, 'description', fresh.description);
-	preferFresh(merged, 'release_date', fresh.release_date);
+	// The feed carries only a bare year, and re-applying it every run would undo
+	// any finer date the library holds for that same year. (#97)
+	if (!isReleaseDateDowngrade(merged.release_date, fresh.release_date)) {
+		preferFresh(merged, 'release_date', fresh.release_date);
+	}
 	preferFresh(merged, 'length', fresh.length);
 	preferFresh(merged, 'length_unit', fresh.length_unit);
 

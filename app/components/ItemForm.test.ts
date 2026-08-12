@@ -651,4 +651,103 @@ describe('ItemForm — quick completion', () => {
 		// The lookup is kept, so the next click needs no fetch.
 		expect((item.metadata as ShowMetadata).end_date).toBe('2022-04-08');
 	});
+
+	describe('release date (#97)', () => {
+		function dated(release_date?: string): Item {
+			return {
+				id: 'book-goodreads-1',
+				type: 'book',
+				title: 'Neuromancer',
+				provider: 'goodreads',
+				status: 'backlog',
+				is_purchased: false,
+				is_prioritized: false,
+				completed_dates: [],
+				completed_years: [],
+				tags: [],
+				metadata: {},
+				...(release_date ? { release_date } : {}),
+			};
+		}
+
+		it('shows a year-only date instead of rendering blank', async () => {
+			render(ItemForm, { props: { mode: 'edit', initial: dated('1984') } });
+
+			// `type="date"` renders "1984" as an empty control; text does not.
+			const field = screen.getByLabelText('Release date');
+			expect(field).toHaveAttribute('type', 'text');
+			expect(field).toHaveValue('1984');
+		});
+
+		it('round-trips a year-only date through submit untouched', async () => {
+			const { emitted } = render(ItemForm, {
+				props: { mode: 'edit', initial: dated('1984') },
+			});
+
+			await submitForm();
+
+			expect((emitted().submit as [Item][])[0]![0].release_date).toBe('1984');
+		});
+
+		it('keeps the native picker for a full date', async () => {
+			render(ItemForm, {
+				props: { mode: 'edit', initial: dated('2026-05-12') },
+			});
+
+			expect(screen.getByLabelText('Release date')).toHaveAttribute(
+				'type',
+				'date',
+			);
+		});
+
+		it('keeps the native picker when there is no date yet', async () => {
+			render(ItemForm, { props: { mode: 'edit', initial: dated() } });
+
+			expect(screen.getByLabelText('Release date')).toHaveAttribute(
+				'type',
+				'date',
+			);
+		});
+
+		it('does not swap the control out mid-edit', async () => {
+			render(ItemForm, { props: { mode: 'edit', initial: dated('1984') } });
+
+			const field = screen.getByLabelText('Release date');
+			await fireEvent.update(field, '1984-07-01');
+
+			// A computed type would flip to `date` the moment the value completed,
+			// resetting the caret; the type is fixed when the field is populated.
+			expect(field).toHaveAttribute('type', 'text');
+		});
+
+		it('saves a month-precision date', async () => {
+			const { emitted } = render(ItemForm, {
+				props: { mode: 'edit', initial: dated('1984') },
+			});
+
+			await fireEvent.update(screen.getByLabelText('Release date'), '1984-07');
+			await submitForm();
+
+			expect((emitted().submit as [Item][])[0]![0].release_date).toBe(
+				'1984-07',
+			);
+		});
+
+		it('blocks submit on a date that is not a year, month, or day', async () => {
+			const { emitted } = render(ItemForm, {
+				props: { mode: 'edit', initial: dated('1984') },
+			});
+
+			await fireEvent.update(
+				screen.getByLabelText('Release date'),
+				'July 1984',
+			);
+			await submitForm();
+
+			expect(emitted().submit).toBeUndefined();
+			expect(screen.getByRole('alert')).toHaveTextContent(
+				'Release date must be YYYY, YYYY-MM, or YYYY-MM-DD.',
+			);
+		});
+	});
 });

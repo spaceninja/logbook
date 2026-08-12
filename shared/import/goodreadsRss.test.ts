@@ -240,6 +240,26 @@ describe('mergeSyncedBook', () => {
 		});
 	});
 
+	it('does not flatten a stored full date back to the feed year (#97)', () => {
+		// Radiant Star: the feed says "2026" every morning; the library holds the
+		// day the backfill found. Re-applying the year would undo it each run.
+		const [rss] = parseFeed(feed(TO_READ_ITEM), 'to-read');
+		const merged = mergeSyncedBook(
+			existingDoc({ id: 'book-goodreads-111', release_date: '2026-05-12' }),
+			rss!,
+		);
+		expect(merged.release_date).toBe('2026-05-12');
+	});
+
+	it('still corrects a stored date whose year the feed disagrees with', () => {
+		const [rss] = parseFeed(feed(TO_READ_ITEM), 'to-read');
+		const merged = mergeSyncedBook(
+			existingDoc({ id: 'book-goodreads-111', release_date: '2024-10-01' }),
+			rss!,
+		);
+		expect(merged.release_date).toBe('2026');
+	});
+
 	describe('cover precedence', () => {
 		const GOOGLE_COVER =
 			'https://books.google.com/books/content?id=abc123&fife=w640';

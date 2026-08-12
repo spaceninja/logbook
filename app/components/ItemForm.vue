@@ -40,7 +40,18 @@
 
 		<div>
 			<label for="release_date">Release date</label>
-			<input id="release_date" v-model="form.release_date" type="date" />
+			<input
+				id="release_date"
+				v-model="form.release_date"
+				:type="releaseDateType"
+				:pattern="releaseDateType === 'text' ? RELEASE_DATE_PATTERN : undefined"
+				:placeholder="releaseDateType === 'text' ? 'YYYY-MM-DD' : undefined"
+				:title="
+					releaseDateType === 'text'
+						? 'A year, year-month, or full date: 1984, 1984-07, or 1984-07-01'
+						: undefined
+				"
+			/>
 		</div>
 
 		<div>
@@ -413,6 +424,31 @@ const form = reactive<FormState>(initialForm());
 const error = ref('');
 
 /**
+ * What a release date may look like on save: `YYYY`, `YYYY-MM`, or `YYYY-MM-DD`.
+ * A string, because it doubles as the text input's `pattern` attribute. (#97)
+ */
+const RELEASE_DATE_PATTERN = '\\d{4}(-\\d{2}(-\\d{2})?)?';
+const RELEASE_DATE_RE = new RegExp(`^${RELEASE_DATE_PATTERN}$`);
+
+/**
+ * Which control the release-date field uses. `type="date"` renders a partial value
+ * like "1984" as *blank*, which is how every year-only book looked empty in the
+ * edit form and one stray interaction could erase its year. Books are the only
+ * media type that store a partial date, so a value the native picker can't hold
+ * falls back to a plain text input; movies, shows, games, and fully-dated books
+ * keep the picker.
+ *
+ * Fixed when the field is populated rather than computed from the live value: a
+ * computed would swap the control mid-keystroke — the moment a typed "1984-07-0"
+ * became "1984-07-01" — which resets the caret and the input's own edit state.
+ */
+const releaseDateType = ref(releaseDateInputType(form.release_date));
+
+function releaseDateInputType(value: string): 'date' | 'text' {
+	return !value || /^\d{4}-\d{2}-\d{2}$/.test(value) ? 'date' : 'text';
+}
+
+/**
  * Overwrite only the provider-sourced fields from `source`, leaving the user's
  * fields (status, ratings, completion, notes, tags, …) and any unsaved edits
  * intact. Used by the edit page's "Refresh metadata" action.
@@ -427,6 +463,7 @@ function applyProviderFields(source: Item) {
 	form.thumbnail = source.thumbnail ?? '';
 	form.backdrop = source.backdrop ?? '';
 	form.release_date = source.release_date ?? '';
+	releaseDateType.value = releaseDateInputType(form.release_date);
 	form.description = source.description ?? '';
 	// length is user-maintainable and the provider's coverage is thin (IGDB
 	// time-to-beat is often absent), so a refresh must not wipe a hand-entered
@@ -681,6 +718,11 @@ function assemble(): Item {
 function onSubmit() {
 	if (!form.title.trim()) {
 		error.value = 'Title is required.';
+		return;
+	}
+	const releaseDate = form.release_date.trim();
+	if (releaseDate && !RELEASE_DATE_RE.test(releaseDate)) {
+		error.value = 'Release date must be YYYY, YYYY-MM, or YYYY-MM-DD.';
 		return;
 	}
 	error.value = '';
