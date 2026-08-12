@@ -3,6 +3,7 @@ import {
 	mapGoogleBooksDraft,
 	mapGoogleBooksSearch,
 	rankGoogleBooksVolumes,
+	volumeMatchesBook,
 	type GoogleBooksVolume,
 } from './googleBooks';
 
@@ -146,5 +147,58 @@ describe('mapGoogleBooksDraft', () => {
 		const item = mapGoogleBooksDraft(noImages);
 		expect(item.cover).toBeUndefined();
 		expect(item.thumbnail).toBeUndefined();
+	});
+});
+
+describe('volumeMatchesBook', () => {
+	function vol(title: string, authors?: string[]): GoogleBooksVolume {
+		return { id: 'v1', volumeInfo: { title, ...(authors ? { authors } : {}) } };
+	}
+
+	it('accepts a volume agreeing on both title and author', () => {
+		expect(
+			volumeMatchesBook(vol('Dune', ['Frank Herbert']), {
+				title: 'Dune',
+				creator: 'Frank Herbert',
+			}),
+		).toBe(true);
+	});
+
+	it('rejects a title match whose author disagrees', () => {
+		// "Home" is a real title many authors have used; the author is the only
+		// thing separating Okorafor's from a stranger's. (#98)
+		expect(
+			volumeMatchesBook(vol('Home', ['Toni Morrison']), {
+				title: 'Home',
+				creator: 'Nnedi Okorafor',
+			}),
+		).toBe(false);
+	});
+
+	it('rejects a volume that names no author at all', () => {
+		expect(
+			volumeMatchesBook(vol('Untitled'), {
+				title: 'Untitled',
+				creator: 'George R.R. Martin',
+			}),
+		).toBe(false);
+	});
+
+	it('rejects the anthology a short story appears in', () => {
+		expect(
+			volumeMatchesBook(
+				vol('The Sword & Laser Anthology', ['Ann Leckie', 'Others']),
+				{ title: "Night's Slow Poison", creator: 'Ann Leckie' },
+			),
+		).toBe(false);
+	});
+
+	it('accepts an edition carrying an extra subtitle', () => {
+		expect(
+			volumeMatchesBook(vol('Dune (Movie Tie-In)', ['Frank Herbert']), {
+				title: 'Dune',
+				creator: 'Frank Herbert',
+			}),
+		).toBe(true);
 	});
 });

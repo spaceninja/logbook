@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	authorsMatch,
 	cleanCoverUrl,
 	normalizeTags,
 	titlesMatch,
@@ -113,5 +114,44 @@ describe('titlesMatch', () => {
 		expect(
 			titlesMatch('Gideon la novena / Gideon the Ninth', 'Gideon the Ninth'),
 		).toBe(false);
+	});
+});
+
+describe('authorsMatch', () => {
+	it('accepts the same name spelled with different punctuation', () => {
+		// Google writes "James S. A. Corey"; Goodreads writes "James S.A. Corey".
+		expect(authorsMatch(['James S. A. Corey'], 'James S.A. Corey')).toBe(true);
+	});
+
+	it('accepts a name Goodreads double-spaced', () => {
+		expect(authorsMatch(['Sara Hashem'], 'Sara  Hashem')).toBe(true);
+	});
+
+	it('accepts initials against the spelled-out given names', () => {
+		expect(authorsMatch(['John Ronald Reuel Tolkien'], 'J.R.R. Tolkien')).toBe(
+			true,
+		);
+	});
+
+	it('accepts an overlap when either side lists several authors', () => {
+		expect(
+			authorsMatch(['Neil Gaiman', 'Terry Pratchett'], ['Terry Pratchett']),
+		).toBe(true);
+	});
+
+	it('rejects a different author with the same surname', () => {
+		expect(authorsMatch(['Ann Leckie'], 'George R.R. Martin')).toBe(false);
+		expect(authorsMatch(['Nora Roberts'], 'John Roberts')).toBe(false);
+	});
+
+	it('rejects when the candidate names no author', () => {
+		// Unverifiable is not verified — this is what keeps a generic title like
+		// "Home" from being matched to an unrelated volume. (#98)
+		expect(authorsMatch([], 'Nnedi Okorafor')).toBe(false);
+		expect(authorsMatch(undefined, 'Nnedi Okorafor')).toBe(false);
+	});
+
+	it('rejects when the library book itself names no author', () => {
+		expect(authorsMatch(['Nnedi Okorafor'], undefined)).toBe(false);
 	});
 });

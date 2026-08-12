@@ -85,6 +85,48 @@ export function titlesMatch(candidate: string, wanted: string): boolean {
 	return a === b || a.startsWith(b) || b.startsWith(a);
 }
 
+/** A creator field flattened to plain name strings. */
+function creatorNames(creator: Item['creator']): string[] {
+	if (creator === undefined) return [];
+	return (Array.isArray(creator) ? creator : [creator]).filter(Boolean);
+}
+
+/**
+ * Whether two names plausibly belong to the same person. Exact after
+ * normalization, or the same surname with the same first initial — which is what
+ * makes "J.R.R. Tolkien" and "John Ronald Reuel Tolkien" agree, and absorbs the
+ * punctuation and spacing drift between providers ("James S.A. Corey" against
+ * Google's "James S. A. Corey", Goodreads' double-spaced "Sara  Hashem").
+ */
+function namesMatch(a: string, b: string): boolean {
+	const left = normalizeTitle(a).split(' ').filter(Boolean);
+	const right = normalizeTitle(b).split(' ').filter(Boolean);
+	if (left.length === 0 || right.length === 0) return false;
+	if (left.join(' ') === right.join(' ')) return true;
+	const surname = (parts: string[]) => parts[parts.length - 1]!;
+	return surname(left) === surname(right) && left[0]![0] === right[0]![0];
+}
+
+/**
+ * Whether a candidate's authors overlap an item's creator — the corroboration
+ * that makes a title-search match safe to keep (#98).
+ *
+ * `titlesMatch` alone is not enough for books the library holds no ISBN for. A
+ * generic title ("Home", "Untitled") matches some unrelated book's title exactly,
+ * and acting on it would stamp a permanent, wrong provider id. Requiring an author
+ * in common as well is what keeps those out. Returns false when either side names
+ * no author at all: unverifiable is not the same as verified.
+ */
+export function authorsMatch(
+	candidate: Item['creator'],
+	wanted: Item['creator'],
+): boolean {
+	const left = creatorNames(candidate);
+	const right = creatorNames(wanted);
+	if (left.length === 0 || right.length === 0) return false;
+	return left.some((a) => right.some((b) => namesMatch(a, b)));
+}
+
 /**
  * The user-owned and structural fields every provider draft starts with. Provider
  * mappers spread provider-sourced fields on top of these. Keeping these concrete

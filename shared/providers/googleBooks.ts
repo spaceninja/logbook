@@ -3,10 +3,12 @@ import type { SearchResult } from '../types/search';
 import { htmlToMarkdown } from '../utils/htmlToMarkdown';
 import { makeBookId } from '../utils/itemId';
 import {
+	authorsMatch,
 	draftDefaults,
 	normalizeTags,
 	round2,
 	titleTier,
+	titlesMatch,
 	toCreator,
 	yearOf,
 } from './helpers';
@@ -122,6 +124,31 @@ export function mapGoogleBooksSearch(
 			subtitle: info.authors?.join(', '),
 		};
 	});
+}
+
+/**
+ * Whether a volume is a safe match for a book the library already holds — the
+ * gate on stamping `metadata.google_books_id` from a title search (#98).
+ *
+ * An id is a permanent, load-bearing stamp: it stops the book being re-matched
+ * and it is what "Refresh metadata" later pulls from, so a wrong one silently
+ * overwrites the book with a different book's data. That makes a wrong id worse
+ * than no id, and a title match alone is not enough evidence — 22 of the library's
+ * books carry no ISBN, and they include generic titles ("Home", "Untitled") and
+ * short fiction that only exists inside anthologies, all of which match some real
+ * but unrelated volume. Requiring the author to corroborate is what excludes them.
+ *
+ * An ISBN match needs none of this: it identifies one edition outright.
+ */
+export function volumeMatchesBook(
+	volume: GoogleBooksVolume,
+	item: Pick<Item, 'title' | 'creator'>,
+): boolean {
+	const info = volume.volumeInfo ?? {};
+	return (
+		titlesMatch(info.title ?? '', item.title) &&
+		authorsMatch(toCreator(info.authors ?? []), item.creator)
+	);
 }
 
 export function mapGoogleBooksDraft(volume: GoogleBooksVolume): Item {

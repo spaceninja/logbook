@@ -9,6 +9,7 @@ import type { BookMetadata, Item } from '../shared/types/item';
 import { makeBookId } from '../shared/utils/itemId';
 import { coverWidth } from './lib/coverSize';
 import { itemsEqual, readItems, writeItems } from './lib/firestore-admin';
+import { enrichBooksWithGoogleBooks } from './lib/googleBooks';
 import { enrichBooksWithHardcover } from './lib/hardcover';
 
 /**
@@ -140,6 +141,20 @@ async function main(): Promise<void> {
 		console.log(
 			`Hardcover: enriched ${enrichment.enriched}, errors ${enrichment.errors}, skipped ${enrichment.skipped}` +
 				(enrichment.skipped > 0 ? ' (NUXT_HARDCOVER_TOKEN not set)' : ''),
+		);
+	}
+
+	// Resolve a Google Books volume for books that have no `google_books_id` — the
+	// handle "Refresh metadata" needs, and the only route to a day-level release
+	// date, since the feed's `book_published` is year-only by design. Narrow on
+	// purpose: id and date only, never fields the feed or Hardcover own. (#98)
+	const googleBooks = await enrichBooksWithGoogleBooks(
+		merged.map((m) => m.item),
+	);
+	if (googleBooks.matched > 0 || googleBooks.unmatched > 0) {
+		console.log(
+			`Google Books: matched ${googleBooks.matched} (${googleBooks.dated} gained a full date), ` +
+				`unmatched ${googleBooks.unmatched}, errors ${googleBooks.errors}`,
 		);
 	}
 
