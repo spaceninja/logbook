@@ -142,13 +142,14 @@ li {
 
 img,
 .placeholder {
+	aspect-ratio: 2/3;
+	filter: drop-shadow(1px 1px 0 light-dark(hotpink, cyan)) drop-shadow(-1px -1px 0 light-dark(hotpink, cyan));
 	height: auto;
-	outline: 1px solid light-dark(hotpink, cyan);
 	width: 100%;
 }
 
-.title {
-	margin: 0.33em;
+img {
+	object-fit: contain;
 }
 
 /* TODO maybe these should be list items? */
@@ -164,6 +165,14 @@ img,
 .dates,
 .status {
 	display: block;
+}
+
+.title {
+	-webkit-box-orient: vertical;
+	display: -webkit-box;
+	-webkit-line-clamp: 5;
+	margin: 0.33em;
+	overflow: hidden;
 }
 
 /* TODO hey man, maybe just change the root font size? */
@@ -183,6 +192,7 @@ img,
 	opacity: 0.8;
 }
 
+/*
 .rating,
 .dnf {
 	background: rgb(0 0 0 / 50%);
@@ -192,6 +202,7 @@ img,
 	right: 0;
 	top: 0;
 }
+*/
 
 .status-dnf {
 	filter: sepia(100%) grayscale(50%);
@@ -235,6 +246,7 @@ img,
 	font-weight: 700;
 	justify-content: center;
 	letter-spacing: 0.05ch;
+	overflow: hidden;
 	padding: 1em;
 	text-wrap: balance;
 }
