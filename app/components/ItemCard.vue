@@ -143,7 +143,8 @@ li {
 img,
 .placeholder {
 	aspect-ratio: 2/3;
-	filter: drop-shadow(1px 1px 0 light-dark(hotpink, cyan)) drop-shadow(-1px -1px 0 light-dark(hotpink, cyan));
+	filter: drop-shadow(1px 1px 0 light-dark(hotpink, cyan))
+		drop-shadow(-1px -1px 0 light-dark(hotpink, cyan));
 	height: auto;
 	width: 100%;
 }
