@@ -19,6 +19,7 @@ import {
 } from './lib/firestore-admin';
 import { enrichBooksWithGoogleBooks } from './lib/googleBooks';
 import { enrichBooksWithHardcover } from './lib/hardcover';
+import { paginate } from './lib/paginate';
 
 /**
  * Daily Goodreads sync (issue #17). Fetches the tracked shelf RSS feeds, maps
@@ -35,25 +36,61 @@ import { enrichBooksWithHardcover } from './lib/hardcover';
 
 const SHELVES: SyncShelf[] = ['to-read', 'currently-reading', 'read'];
 
-/** Fetch and parse one shelf; throws on a bad response so nothing is written. */
-async function fetchShelf(shelf: SyncShelf): Promise<RssBook[]> {
+/** Books per feed page — Goodreads' fixed page size, not a preference. */
+const PAGE_SIZE = 100;
+
+/** Hard stop on paging: 100 pages is 10,000 books, far past any real shelf. */
+const MAX_PAGES = 100;
+
+/** Pause between page requests, to stay polite to Goodreads. */
+const PAGE_DELAY_MS = 1000;
+
+/** Fetch and parse one page of a shelf; throws on a bad response. */
+async function fetchShelfPage(
+	shelf: SyncShelf,
+	page: number,
+): Promise<RssBook[]> {
 	const userId = requireEnv('GOODREADS_USER_ID');
 	const key = requireEnv('GOODREADS_RSS_KEY');
-	const url = `https://www.goodreads.com/review/list_rss/${userId}?key=${key}&shelf=${encodeURIComponent(shelf)}`;
+	const url =
+		`https://www.goodreads.com/review/list_rss/${userId}` +
+		`?key=${key}&shelf=${encodeURIComponent(shelf)}&page=${page}`;
 
 	const response = await fetch(url, {
 		headers: { 'user-agent': 'logbook-goodreads-sync' },
 	});
 	if (!response.ok) {
-		throw new Error(`${shelf} feed: HTTP ${response.status}`);
+		throw new Error(`${shelf} feed page ${page}: HTTP ${response.status}`);
 	}
 	const xml = await response.text();
 	if (!xml.includes('<rss')) {
 		throw new Error(
-			`${shelf} feed: not RSS (Goodreads may have returned an error page)`,
+			`${shelf} feed page ${page}: not RSS (Goodreads may have returned an error page)`,
 		);
 	}
 	return parseFeed(xml, shelf);
+}
+
+/**
+ * Every book on a shelf, paging until the feed runs out. Goodreads serves 100
+ * books per page and silently truncates there, so an unpaged read saw only the
+ * newest 100 of a 491-book `read` shelf — the rest never synced at all (#103).
+ *
+ * Pages until a short (or empty) page arrives, which is the feed's only
+ * end-of-list signal. Throws on a bad page rather than returning a partial shelf:
+ * a truncated feed read as complete is indistinguishable from books being
+ * removed, and the caller aborts the whole run before writing anything.
+ */
+async function fetchShelf(shelf: SyncShelf): Promise<RssBook[]> {
+	try {
+		return await paginate((page) => fetchShelfPage(shelf, page), {
+			pageSize: PAGE_SIZE,
+			maxPages: MAX_PAGES,
+			delayMs: PAGE_DELAY_MS,
+		});
+	} catch (error) {
+		throw new Error(`${shelf} feed: ${(error as Error).message}`);
+	}
 }
 
 function requireEnv(name: string): string {
@@ -150,6 +187,9 @@ async function main(): Promise<void> {
 	// All feeds first: if any fetch/parse fails the whole run aborts before a
 	// single write, so partial/garbage state is never committed.
 	const feeds = await Promise.all(SHELVES.map(fetchShelf));
+	console.log(
+		`Shelves: ${SHELVES.map((shelf, i) => `${shelf} ${feeds[i]!.length}`).join(', ')}`,
+	);
 
 	// Key by the Goodreads document id. The exclusive shelves don't overlap, so
 	// no book appears twice.
