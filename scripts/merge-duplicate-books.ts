@@ -1,4 +1,6 @@
 import 'dotenv/config';
+import { absorbTwin, bookTitlesMatch } from '../shared/import/bookTwin';
+import { authorsMatch } from '../shared/providers/helpers';
 import type { Item } from '../shared/types/item';
 import { deleteItems, readBooks, writeItems } from './lib/firestore-admin';
 
@@ -29,72 +31,19 @@ import { deleteItems, readBooks, writeItems } from './lib/firestore-admin';
  * Requires FIREBASE_SERVICE_ACCOUNT.
  */
 
-/** A loose key for "the same work": title and author, punctuation-insensitive. */
-function matchKey(book: Item): string {
-	const creator = Array.isArray(book.creator)
-		? (book.creator[0] ?? '')
-		: (book.creator ?? '');
-	return [book.title, creator]
-		.map((part) => part.toLowerCase().replace(/[^a-z0-9]/g, ''))
-		.join('|');
-}
-
-/** The fields the sync never writes, so only the app-created twin can hold them. */
-interface Carried {
-	field: string;
-	from: unknown;
-	to: unknown;
-}
-
-/**
- * Fold the app-created twin's user-owned fields onto the Goodreads keeper. The
- * keeper wins any field it already has — it's the document that stayed in sync, so
- * a value on it is at least as fresh — except the booleans, where either side
- * saying "yes" is the answer, and `completed_dates`, which unions.
- */
-function carryOver(
-	keeper: Item,
-	loser: Item,
-): { item: Item; carried: Carried[] } {
-	const item: Item = { ...keeper };
-	const carried: Carried[] = [];
-
-	const note = (field: string, from: unknown, to: unknown) => {
-		carried.push({ field, from, to });
-	};
-
-	if (loser.notes && !item.notes) {
-		note('notes', loser.notes, undefined);
-		item.notes = loser.notes;
+/** Books naming the same work, grouped. Uses the same rules as the sync (#105). */
+function groupByWork(books: Item[]): Item[][] {
+	const groups: Item[][] = [];
+	for (const book of books) {
+		const group = groups.find(
+			(g) =>
+				bookTitlesMatch(g[0]!.title, book.title) &&
+				authorsMatch(g[0]!.creator, book.creator),
+		);
+		if (group) group.push(book);
+		else groups.push([book]);
 	}
-	if (loser.recommended_by && !item.recommended_by) {
-		note('recommended_by', loser.recommended_by, undefined);
-		item.recommended_by = loser.recommended_by;
-	}
-	if (loser.my_rating !== undefined && item.my_rating === undefined) {
-		note('my_rating', loser.my_rating, undefined);
-		item.my_rating = loser.my_rating;
-	}
-	if (loser.is_purchased && !item.is_purchased) {
-		note('is_purchased', true, false);
-		item.is_purchased = true;
-	}
-	if (loser.is_prioritized && !item.is_prioritized) {
-		note('is_prioritized', true, false);
-		item.is_prioritized = true;
-	}
-
-	const dates = new Set([
-		...(item.completed_dates ?? []),
-		...(loser.completed_dates ?? []),
-	]);
-	if (dates.size > (item.completed_dates ?? []).length) {
-		const merged = [...dates].sort();
-		note('completed_dates', merged, item.completed_dates);
-		item.completed_dates = merged;
-	}
-
-	return { item, carried };
+	return groups;
 }
 
 function describe(value: unknown): string {
@@ -108,17 +57,13 @@ async function main(): Promise<void> {
 	const dryRun = process.argv.includes('--dry-run');
 
 	const books = await readBooks();
-	const groups = new Map<string, Item[]>();
-	for (const book of books) {
-		const key = matchKey(book);
-		groups.set(key, [...(groups.get(key) ?? []), book]);
-	}
+	const groups = groupByWork(books);
 
 	const toWrite: Item[] = [];
 	const toDelete: string[] = [];
 	const unhandled: Item[][] = [];
 
-	for (const group of groups.values()) {
+	for (const group of groups) {
 		if (group.length < 2) continue;
 
 		const keepers = group.filter((b) => b.id.startsWith('book-goodreads-'));
@@ -139,10 +84,10 @@ async function main(): Promise<void> {
 			console.log(
 				`  delete ${loser.id}  (community ${describe(loser.community_rating)})`,
 			);
-			const { item, carried } = carryOver(keeper, loser);
+			const { item, carried } = absorbTwin(keeper, loser);
 			keeper = item;
-			for (const { field, from, to } of carried) {
-				console.log(`    carry ${field}: ${describe(to)} → ${describe(from)}`);
+			for (const { field, value } of carried) {
+				console.log(`    carry ${field}: ${describe(value)}`);
 			}
 		}
 		toWrite.push(keeper);

@@ -56,7 +56,7 @@ function toDay(value: string): string | undefined {
 }
 
 /** Union of ISO dates, normalized to `YYYY-MM-DD`, deduped, sorted ascending. */
-function unionDates(existing: string[], incoming: string[]): string[] {
+export function unionDates(existing: string[], incoming: string[]): string[] {
 	const days = new Set<string>();
 	for (const value of [...existing, ...incoming]) {
 		const day = toDay(value);

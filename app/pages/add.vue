@@ -36,8 +36,12 @@
 
 		<template v-else-if="step === 'form'">
 			<p><button type="button" @click="reset">← Back to search</button></p>
+			<p v-if="existing" role="status">
+				Already in your logbook as “{{ existing.title }}” — editing that entry
+				instead of adding a second copy.
+			</p>
 			<ItemForm
-				mode="create"
+				:mode="existing ? 'edit' : 'create'"
 				:initial="formInitial"
 				:initial-type="manualType"
 				@submit="onFormSubmit"
@@ -47,12 +51,13 @@
 </template>
 
 <script setup lang="ts">
+import { findBookTwin } from '~~/shared/import/bookTwin';
 import type { Item, MediaType } from '~~/shared/types/item';
 import type { SearchResult } from '~~/shared/types/search';
 
 definePageMeta({ middleware: 'owner' });
 
-const { saveItem } = useItems();
+const { getAllByType, saveItem } = useItems();
 
 type Step = 'search' | 'seasons' | 'series' | 'batch' | 'form';
 const step = ref<Step>('search');
@@ -65,26 +70,56 @@ const seriesType = ref<MediaType>('movie');
 const batchDrafts = ref<Item[]>([]);
 const batchUnit = ref('item');
 const error = ref('');
+/** The library entry this book already has, when the search found one (#105). */
+const existing = ref<Item | undefined>();
 
 function reset() {
 	step.value = 'search';
 	formInitial.value = undefined;
+	existing.value = undefined;
 	showResult.value = null;
 	seriesMembers.value = [];
 	error.value = '';
 }
 
+/**
+ * The document this book is already tracked under, if any.
+ *
+ * A book drafted from search is keyed by its Google Books volume id, but the same
+ * book shelved on Goodreads lives under a Goodreads id — two id spaces that never
+ * collide, so adding it again would silently create a second document the daily
+ * sync can't see (#105). Editing the entry that already exists is what the owner
+ * meant either way.
+ *
+ * Best-effort: if the library read fails, the add proceeds as a new item rather
+ * than blocking on a check.
+ */
+async function findExisting(draft: Item): Promise<Item | undefined> {
+	try {
+		const match = findBookTwin(await getAllByType('book'), draft);
+		return match.kind === 'isbn' || match.kind === 'title'
+			? match.twin
+			: undefined;
+	} catch {
+		return undefined;
+	}
+}
+
 async function onSelect(result: SearchResult) {
 	error.value = '';
+	existing.value = undefined;
 	if (result.type === 'show') {
 		showResult.value = result;
 		step.value = 'seasons';
 		return;
 	}
 	try {
-		formInitial.value = await $fetch<Item>('/api/draft', {
+		const draft = await $fetch<Item>('/api/draft', {
 			params: { type: result.type, id: result.providerId },
 		});
+		existing.value =
+			result.type === 'book' ? await findExisting(draft) : undefined;
+		formInitial.value = existing.value ?? draft;
 		step.value = 'form';
 	} catch {
 		error.value = 'Could not load that item. Try entering it manually.';

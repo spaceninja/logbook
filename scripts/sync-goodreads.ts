@@ -1,6 +1,8 @@
 import 'dotenv/config';
+import { absorbTwin, findBookTwin } from '../shared/import/bookTwin';
 import {
 	mergeSyncedBook,
+	newBookSkeleton,
 	parseFeed,
 	type RssBook,
 	type SyncShelf,
@@ -8,7 +10,13 @@ import {
 import type { BookMetadata, Item } from '../shared/types/item';
 import { makeBookId } from '../shared/utils/itemId';
 import { coverWidth } from './lib/coverSize';
-import { itemsEqual, readItems, writeItems } from './lib/firestore-admin';
+import {
+	deleteItems,
+	itemsEqual,
+	readBooks,
+	readItems,
+	writeItems,
+} from './lib/firestore-admin';
 import { enrichBooksWithGoogleBooks } from './lib/googleBooks';
 import { enrichBooksWithHardcover } from './lib/hardcover';
 
@@ -94,6 +102,48 @@ async function measureCovers(
 	return widths;
 }
 
+/**
+ * App-created twins for the feed books that have no Goodreads document yet,
+ * keyed by the id the sync is about to create (#105).
+ *
+ * A book added through the app's search is keyed by its Google Books volume id,
+ * so shelving it on Goodreads afterwards would mint a *second* document and leave
+ * the first — the one holding the owner's notes — orphaned and never refreshed
+ * again. Rather than create alongside it, the sync absorbs it: the user-owned
+ * fields move onto the new Goodreads document and the twin is deleted.
+ *
+ * Only runs when the feed actually holds a book we've never seen, so the steady
+ * state (no new books) costs nothing. Candidates exclude anything already keyed by
+ * Goodreads: two Goodreads documents for one book is a duplicate on the *shelf*,
+ * which is the owner's to resolve there, not ours to merge away silently.
+ */
+async function findTwins(
+	books: Map<string, RssBook>,
+	existing: Map<string, Item>,
+): Promise<Map<string, Item>> {
+	const unseen = [...books].filter(([id]) => !existing.has(id));
+	const twins = new Map<string, Item>();
+	if (unseen.length === 0) return twins;
+
+	const candidates = (await readBooks()).filter(
+		(book) => !book.id.startsWith('book-goodreads-'),
+	);
+	if (candidates.length === 0) return twins;
+
+	for (const [id, rss] of unseen) {
+		const match = findBookTwin(candidates, newBookSkeleton(rss));
+		if (match.kind === 'ambiguous') {
+			console.log(
+				`  ? ${rss.title}: ${match.candidates.length} possible twins ` +
+					`(${match.candidates.map((c) => c.id).join(', ')}) — left alone`,
+			);
+			continue;
+		}
+		if (match.kind !== 'none') twins.set(id, match.twin);
+	}
+	return twins;
+}
+
 async function main(): Promise<void> {
 	const dryRun = process.argv.includes('--dry-run');
 
@@ -112,6 +162,11 @@ async function main(): Promise<void> {
 
 	const existing = await readItems([...books.keys()]);
 
+	// A book the app already holds under a Google Books id must be absorbed, not
+	// duplicated. Found before the merge so its owner-typed fields ride along into
+	// the new document. (#105)
+	const twins = await findTwins(books, existing);
+
 	// Goodreads' cover only beats a stored Google one when it's actually high-res,
 	// which takes a real measurement — done here so `mergeSyncedBook` stays pure.
 	const coverWidths = await measureCovers(books, existing);
@@ -119,10 +174,19 @@ async function main(): Promise<void> {
 	// Merge every book first, so the supplemental Hardcover enrichment below can
 	// run before the change diff — enriching a book that was otherwise unchanged
 	// (imported before it had a hardcover_id) turns it into a write.
-	const merged = [...books].map(([id, rss]) => ({
-		prev: existing.get(id),
-		item: mergeSyncedBook(existing.get(id), rss, coverWidths.get(id)),
-	}));
+	const merged = [...books].map(([id, rss]) => {
+		const item = mergeSyncedBook(existing.get(id), rss, coverWidths.get(id));
+		const twin = twins.get(id);
+		if (!twin) return { prev: existing.get(id), item };
+		const absorbed = absorbTwin(item, twin);
+		console.log(
+			`Absorbed ${twin.id} into ${id} (${item.title})` +
+				(absorbed.carried.length > 0
+					? `: ${absorbed.carried.map((c) => c.field).join(', ')}`
+					: ''),
+		);
+		return { prev: existing.get(id), item: absorbed.item };
+	});
 
 	// Populate community tags for books lacking a hardcover_id. Rating stays
 	// Goodreads (only an absent one is filled). Best-effort: a Hardcover failure
@@ -177,6 +241,7 @@ async function main(): Promise<void> {
 	console.log(
 		`Goodreads sync: ${books.size} books across ${SHELVES.length} shelves`,
 	);
+	const absorbed = [...twins.values()].map((twin) => twin.id);
 	if (dryRun) {
 		console.log('--dry-run: no writes.');
 		for (const item of toWrite.slice(0, 5)) {
@@ -185,10 +250,16 @@ async function main(): Promise<void> {
 			);
 		}
 	} else {
+		// Write the absorbing document before dropping the twin, so an interruption
+		// between the two leaves a harmless duplicate rather than losing the notes.
 		await writeItems(toWrite);
+		await deleteItems(absorbed);
 	}
 
-	console.log(`created ${created}, updated ${updated}, unchanged ${unchanged}`);
+	console.log(
+		`created ${created}, updated ${updated}, unchanged ${unchanged}` +
+			(absorbed.length > 0 ? `, absorbed ${absorbed.length}` : ''),
+	);
 }
 
 main().catch((error: unknown) => {
