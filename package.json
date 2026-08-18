@@ -26,6 +26,7 @@
 		"sync:goodreads": "tsx scripts/sync-goodreads.ts",
 		"migrate:book-list": "tsx scripts/migrate-book-list.ts",
 		"backfill:google-books": "tsx scripts/backfill-google-books.ts",
+		"merge:duplicate-books": "tsx scripts/merge-duplicate-books.ts",
 		"validate": "run-s lint:check type-check test",
 		"firebase": "firebase",
 		"deploy:rules:dev": "firebase deploy --only firestore:rules --project dev --config firebase.dev.json",

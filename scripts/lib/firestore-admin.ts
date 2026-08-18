@@ -93,6 +93,19 @@ export function itemsEqual(existing: Item, merged: Item): boolean {
 	return canonical(existing) === canonical(normalize(merged));
 }
 
+/** Delete the given item ids, batched at Firestore's 500-op limit. */
+export async function deleteItems(ids: string[]): Promise<void> {
+	if (ids.length === 0) return;
+	const database = db();
+	for (let start = 0; start < ids.length; start += 500) {
+		const batch = database.batch();
+		for (const id of ids.slice(start, start + 500)) {
+			batch.delete(items().doc(id));
+		}
+		await batch.commit();
+	}
+}
+
 /**
  * Create/replace items and fold their completion years into the
  * `meta/completionYears` aggregate (one merge per media type), mirroring
