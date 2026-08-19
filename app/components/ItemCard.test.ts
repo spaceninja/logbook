@@ -78,6 +78,14 @@ describe('ItemCard status label (search view)', () => {
 		expect(screen.queryByText('Backlog')).not.toBeInTheDocument();
 	});
 
+	it('drops the in-progress badge on the backlog, which groups those items already', async () => {
+		await renderSuspended(ItemCard, {
+			props: { item: makeItem({ status: 'in_progress' }), view: 'backlog' },
+		});
+
+		expect(screen.queryByText('In Progress')).not.toBeInTheDocument();
+	});
+
 	it('shows no label for a did-not-finish item, which has its own badge', async () => {
 		await renderSuspended(ItemCard, {
 			props: {

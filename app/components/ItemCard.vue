@@ -21,9 +21,7 @@
 		<span v-if="rating" class="rating">{{ rating }}</span>
 		<span v-if="length" class="length">{{ length }}</span>
 		<span v-if="item.status === 'dnf'" class="dnf">DNF</span>
-		<span v-if="item.status === 'in_progress'" class="in-progress"
-			>In Progress</span
-		>
+		<span v-if="showInProgress" class="in-progress">In Progress</span>
 		<span v-if="completedDates.length" class="dates">
 			<time v-for="d in completedDates" :key="d" :datetime="d">{{
 				formatDate(d)
@@ -64,6 +62,15 @@ const rating = computed(() => {
 	}
 	return null;
 });
+
+/**
+ * The badge marking something as underway. Suppressed on the Backlog, where
+ * in-progress items are already gathered under their own "In Progress" heading
+ * (#96) and the badge would just repeat it on every card in that group.
+ */
+const showInProgress = computed(
+	() => item.status === 'in_progress' && view !== 'backlog',
+);
 
 /** The release year (the season's air year for shows), for display. */
 const releaseYear = computed(() => item.release_date?.slice(0, 4) ?? '');

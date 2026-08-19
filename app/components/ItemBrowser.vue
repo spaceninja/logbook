@@ -32,7 +32,12 @@
 			<p v-if="pending">Loading…</p>
 			<p v-else-if="error">{{ errorMessage }}: {{ error.message }}</p>
 			<p v-else-if="displayed.length === 0">{{ emptyMessage }}</p>
-			<ItemCardList v-else :items="displayed" :view="view" :year="year" />
+			<template v-else>
+				<template v-for="group in groups" :key="group.key">
+					<h2 v-if="group.label">{{ group.label }}</h2>
+					<ItemCardList :items="group.items" :view="view" :year="year" />
+				</template>
+			</template>
 		</ClientOnly>
 	</section>
 </template>
@@ -44,11 +49,14 @@ import type {
 	FilterState,
 	ItemFilters,
 } from '~~/shared/utils/itemFilter';
+import { groupBacklogItems, type ItemGroup } from '~~/shared/utils/itemGroups';
 import type { SortKey } from '~~/shared/utils/itemSort';
 
 const mediaTypes: MediaType[] = ['book', 'movie', 'show', 'game'];
 
 const {
+	displayed,
+	view,
 	filterKeys = [],
 	filters = {},
 	year = undefined,
@@ -69,6 +77,14 @@ const emit = defineEmits<{
 	'update:filter': [key: FilterKey, state: FilterState];
 }>();
 
+// Only the Backlog splits its list: History and search are date- and query-driven,
+// where an item being underway isn't what the list is organized around.
+const groups = computed<ItemGroup[]>(() =>
+	view === 'backlog'
+		? groupBacklogItems(displayed)
+		: [{ key: 'all', items: displayed }],
+);
+
 const type = defineModel<MediaType>('type', { required: true });
 const sortKey = defineModel<SortKey>('sortKey', { required: true });
 const reversed = defineModel<boolean>('reversed', { required: true });
@@ -83,5 +99,11 @@ const reversed = defineModel<boolean>('reversed', { required: true });
 
 .type-switcher {
 	margin-right: auto;
+}
+
+/* Sits directly above its list, so the space below is tighter than above. */
+h2 {
+	font-size: 1.2em;
+	margin-block: 1em 0.5em;
 }
 </style>
