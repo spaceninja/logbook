@@ -1,6 +1,14 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
 	compatibilityDate: '2025-07-15',
+	// The log emoji from the site header, as an SVG favicon — the glyph is drawn by
+	// the viewer's own emoji font, so there's no bitmap to maintain. The default
+	// title lives in app.vue, where the template can be a function.
+	app: {
+		head: {
+			link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+		},
+	},
 	css: ['~/assets/css/global.css'],
 	devtools: { enabled: false },
 	router: {

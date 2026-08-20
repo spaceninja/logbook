@@ -8,5 +8,14 @@
 <script setup lang="ts">
 import type { NuxtError } from '#app';
 
-defineProps<{ error: NuxtError }>();
+const props = defineProps<{ error: NuxtError }>();
+
+// The error page replaces app.vue, so app.vue's title template never runs here —
+// this title carries the site name itself.
+useHead({
+	title: () =>
+		props.error.status === 404
+			? 'Page Not Found - Logbook'
+			: `Error ${props.error.status} - Logbook`,
+});
 </script>

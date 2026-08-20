@@ -20,6 +20,7 @@
 <script setup lang="ts">
 import { watchDebounced } from '@vueuse/core';
 import type { MediaType } from '~~/shared/types/item';
+import { mediaTypeLabel } from '~~/shared/utils/itemDisplay';
 import type { SortKey } from '~~/shared/utils/itemSort';
 import { enumParam, flagParam, stringParam } from '~~/shared/utils/viewQuery';
 
@@ -56,6 +57,17 @@ watchDebounced(
 );
 watch(searchParam, (q) => {
 	if (q !== search.value) search.value = q;
+});
+
+// Follows the debounced param, not the field, so the title doesn't churn on
+// every keystroke.
+useHead({
+	title: () => {
+		const label = `Search ${mediaTypeLabel(type.value)}`;
+		return searchParam.value.trim()
+			? `${label}: ${searchParam.value.trim()}`
+			: label;
+	},
 });
 
 // For shows, the series sort (show name + numeric season) supersedes the title

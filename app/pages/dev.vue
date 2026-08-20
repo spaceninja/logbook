@@ -46,6 +46,8 @@ definePageMeta({
 	],
 });
 
+useHead({ title: 'Dev — Seed data' });
+
 const { loadDataset } = useSeed();
 const { isOwner, login } = useAuth();
 

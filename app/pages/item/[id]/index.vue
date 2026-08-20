@@ -123,7 +123,11 @@
 </template>
 
 <script setup lang="ts">
-import { itemDisplayTitle, formatCreator } from '~~/shared/utils/itemDisplay';
+import {
+	itemDisplayTitle,
+	itemPageTitle,
+	formatCreator,
+} from '~~/shared/utils/itemDisplay';
 import { tmdbIdForItem } from '~~/shared/utils/itemId';
 
 const route = useRoute();
@@ -145,6 +149,12 @@ const {
 		watch: [id],
 	},
 );
+
+// The item itself is read client-side, so SSR emits the bare site title and the
+// real one lands once the read resolves.
+useHead({
+	title: () => (item.value ? itemPageTitle(item.value) : ''),
+});
 
 // Return to the backlog filtered to this item's media type. Mirrors the backlog's
 // own query convention (`book` is the default, so it's omitted); falls back to a

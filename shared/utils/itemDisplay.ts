@@ -1,5 +1,17 @@
-import type { Item, ShowMetadata } from '../types/item';
+import type { Item, MediaType, ShowMetadata } from '../types/item';
 import { itemSeries } from './series';
+
+const MEDIA_TYPE_LABELS: Record<MediaType, string> = {
+	book: 'Books',
+	movie: 'Movies',
+	show: 'Shows',
+	game: 'Games',
+};
+
+/** Plural, title-cased label for a media type, e.g. "Shows". */
+export function mediaTypeLabel(type: MediaType): string {
+	return MEDIA_TYPE_LABELS[type];
+}
 
 /**
  * Display title. Shows are stored per-season with the show name in `title`, so
@@ -31,6 +43,18 @@ export function formatSeries(item: Item): string {
 	const { name, number } = itemSeries(item);
 	if (!name) return '';
 	return number !== undefined ? `${name} #${number}` : name;
+}
+
+/**
+ * Browser-tab title for an item: its display title, plus the series position
+ * when it has one ("Leviathan Wakes, Expanse #1"). The series disambiguates
+ * same-named entries in a tab strip or a bookmark list, where there's no page
+ * around the title to do it.
+ */
+export function itemPageTitle(item: Item): string {
+	const series = formatSeries(item);
+	const title = itemDisplayTitle(item);
+	return series ? `${title}, ${series}` : title;
 }
 
 /**

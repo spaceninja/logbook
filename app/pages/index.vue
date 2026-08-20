@@ -27,6 +27,7 @@
 <script setup lang="ts">
 import { watchDebounced } from '@vueuse/core';
 import type { MediaType } from '~~/shared/types/item';
+import { mediaTypeLabel } from '~~/shared/utils/itemDisplay';
 import type {
 	FilterKey,
 	FilterState,
@@ -79,6 +80,9 @@ watchDebounced(
 watch(searchParam, (q) => {
 	if (q !== search.value) search.value = q;
 });
+
+// The media type is the view's main axis, so it belongs in the tab title.
+useHead({ title: () => `${mediaTypeLabel(type.value)} Backlog` });
 
 const filterRefs = { purchased, prioritized, released };
 const filters = computed<ItemFilters>(() => ({

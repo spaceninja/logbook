@@ -46,6 +46,7 @@
 <script setup lang="ts">
 import type { BookMetadata, Item, ShowMetadata } from '~~/shared/types/item';
 import type { SearchResult } from '~~/shared/types/search';
+import { itemPageTitle } from '~~/shared/utils/itemDisplay';
 
 definePageMeta({ middleware: 'owner' });
 
@@ -67,6 +68,11 @@ const {
 		watch: [id],
 	},
 );
+
+// Named once the client-side read resolves; "Edit Item" until then.
+useHead({
+	title: () => (item.value ? `Edit ${itemPageTitle(item.value)}` : 'Edit Item'),
+});
 
 // Type is inferred from the <ItemForm ref="formRef"> in the template, including
 // its exposed applyProviderFields.

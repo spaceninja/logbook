@@ -192,6 +192,7 @@ import type {
 } from '~~/app/composables/useImport';
 
 definePageMeta({ middleware: 'owner' });
+useHead({ title: 'Import' });
 
 type Step = 'select' | 'preview' | 'review' | 'running' | 'done';
 

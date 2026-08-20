@@ -56,6 +56,7 @@ import type { Item, MediaType } from '~~/shared/types/item';
 import type { SearchResult } from '~~/shared/types/search';
 
 definePageMeta({ middleware: 'owner' });
+useHead({ title: 'Add Item' });
 
 const { getAllByType, saveItem } = useItems();
 

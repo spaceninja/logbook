@@ -41,6 +41,7 @@
 <script setup lang="ts">
 import type { MediaType } from '~~/shared/types/item';
 import type { CompletionYearsByType } from '~~/shared/utils/completionYears';
+import { mediaTypeLabel } from '~~/shared/utils/itemDisplay';
 import {
 	HISTORY_SCOPES,
 	topRatedItems,
@@ -207,6 +208,24 @@ const scopedItems = computed(() => {
 const scopeYear = computed<number | undefined>(() =>
 	scope.value === 'year' ? year.value : undefined,
 );
+
+// Type and scope are both bookmarkable, so both belong in the tab title —
+// "Books History: 2025", "Movies History: Top 100".
+const scopeLabel = computed(() => {
+	switch (scope.value) {
+		case 'undated':
+			return 'Undated';
+		case 'unrated':
+			return 'Unrated';
+		case 'top100':
+			return 'Top 100';
+		default:
+			return String(year.value);
+	}
+});
+useHead({
+	title: () => `${mediaTypeLabel(type.value)} History: ${scopeLabel.value}`,
+});
 
 const emptyMessage = computed(() => {
 	switch (scope.value) {

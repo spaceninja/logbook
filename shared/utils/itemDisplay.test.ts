@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { Item } from '../types/item';
 import {
 	itemDisplayTitle,
+	itemPageTitle,
+	mediaTypeLabel,
 	formatCreator,
 	formatSeries,
 	formatCompletedDate,
@@ -54,6 +56,41 @@ describe('itemDisplayTitle', () => {
 	it('uses the title verbatim for non-shows', () => {
 		const book = makeShow({ type: 'book', title: 'Dune', metadata: {} });
 		expect(itemDisplayTitle(book)).toBe('Dune');
+	});
+});
+
+describe('itemPageTitle', () => {
+	it('appends the series position when there is one', () => {
+		const book = makeShow({
+			type: 'book',
+			title: 'Leviathan Wakes',
+			metadata: { series: 'Expanse', series_number: 1 },
+		});
+		expect(itemPageTitle(book)).toBe('Leviathan Wakes, Expanse #1');
+	});
+
+	it('is the display title alone without a series', () => {
+		const book = makeShow({
+			type: 'book',
+			title: 'Project Hail Mary',
+			metadata: {},
+		});
+		expect(itemPageTitle(book)).toBe('Project Hail Mary');
+	});
+
+	it('uses the composed season title for shows', () => {
+		expect(itemPageTitle(makeShow())).toBe(
+			'Avatar: The Last Airbender — Season 1',
+		);
+	});
+});
+
+describe('mediaTypeLabel', () => {
+	it('gives a plural, title-cased label per type', () => {
+		expect(mediaTypeLabel('book')).toBe('Books');
+		expect(mediaTypeLabel('movie')).toBe('Movies');
+		expect(mediaTypeLabel('show')).toBe('Shows');
+		expect(mediaTypeLabel('game')).toBe('Games');
 	});
 });
 
