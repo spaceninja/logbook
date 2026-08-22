@@ -35,7 +35,12 @@
 				</nav>
 			</div>
 		</header>
-		<main class="site-main">
+		<!-- Pages publish a backdrop image via `usePageBackdrop()`; it arrives here
+				 as `--backdrop` for CSS to use, and is absent when a page has none. -->
+		<main
+			class="site-main"
+			:style="backdrop ? { '--backdrop': backdrop } : null"
+		>
 			<div class="site-main__inner">
 				<slot />
 			</div>
@@ -63,4 +68,5 @@
 const showDev = import.meta.dev;
 
 const { user, isOwner, login } = useAuth();
+const backdrop = useBackdrop();
 </script>

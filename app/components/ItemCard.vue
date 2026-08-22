@@ -141,17 +141,20 @@ a {
 }
 
 li {
-	font-size: small;
+	font-size: 0.75rem;
 	position: relative;
 	text-align: center;
 	text-wrap: balance;
+
+	@media screen and (width >= 500px) {
+		font-size: small;
+	}
 }
 
 img,
 .placeholder {
 	aspect-ratio: 2/3;
-	filter: drop-shadow(1px 1px 0 light-dark(hotpink, cyan))
-		drop-shadow(-1px -1px 0 light-dark(hotpink, cyan));
+	filter: drop-shadow(0 0 1px light-dark(hotpink, cyan));
 	height: auto;
 	width: 100%;
 }
@@ -173,11 +176,13 @@ img {
 .dates,
 .status {
 	display: block;
+	overflow-wrap: anywhere;
 }
 
 .title {
 	-webkit-box-orient: vertical;
 	display: -webkit-box;
+	font-stretch: 70%;
 	-webkit-line-clamp: 5;
 	margin: 0.33em;
 	overflow: hidden;

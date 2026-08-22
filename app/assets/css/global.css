@@ -107,6 +107,12 @@ body {
 }
 
 .site-main {
+	/* `--backdrop` is set by the layout for pages that publish one (see
+	   `usePageBackdrop()`); pages without one resolve to `none`. */
+	background-image: var(--backdrop, none);
+	background-position: center top;
+	background-repeat: no-repeat;
+	background-size: 100%;
 	flex: 1;
 	padding: 1em;
 }

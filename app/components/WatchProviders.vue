@@ -19,13 +19,15 @@
 				<h3>{{ group.label }}</h3>
 				<ul>
 					<li v-for="provider in group.providers" :key="provider.id">
-						<img
-							v-if="provider.logo"
-							:src="provider.logo"
-							:alt="`${provider.name} logo`"
-							width="30"
-						/>
-						{{ provider.name }}
+						<figure>
+							<img
+								v-if="provider.logo"
+								:src="provider.logo"
+								:alt="`${provider.name} logo`"
+								width="30"
+							/>
+							<figcaption>{{ provider.name }}</figcaption>
+						</figure>
 					</li>
 				</ul>
 			</template>
@@ -81,3 +83,34 @@ const groups = computed(() => [
 
 const hasAny = computed(() => groups.value.some((g) => g.providers.length));
 </script>
+
+<style scoped>
+ul {
+	display: flex;
+	gap: 1em;
+	margin: 0;
+	padding: 0;
+}
+
+li {
+	list-style: none;
+}
+
+figure {
+	margin: 0;
+	max-width: 40px;
+}
+
+img {
+	height: 40px;
+	margin: auto;
+	width: 40px;
+}
+
+figcaption {
+	font-size: 0.6rem;
+	font-stretch: 70%;
+	margin-top: 0.5em;
+	text-align: center;
+}
+</style>

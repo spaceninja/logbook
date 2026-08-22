@@ -30,12 +30,7 @@
 					:src="item.cover"
 					:alt="`${itemDisplayTitle(item)} cover`"
 					width="200"
-				/>
-				<img
-					v-if="item.backdrop"
-					:src="item.backdrop"
-					:alt="`${itemDisplayTitle(item)} backdrop`"
-					width="400"
+					class="cover"
 				/>
 				<dl>
 					<dt>Type</dt>
@@ -178,6 +173,10 @@ const metadataEntries = computed(() =>
 	item.value ? Object.entries(item.value.metadata) : [],
 );
 
+// Hand the item's backdrop to the layout, which owns the `<main>` element this
+// needs to land on, as the `--backdrop` custom property.
+usePageBackdrop(() => item.value?.backdrop);
+
 const deleting = ref(false);
 
 async function onDelete() {
@@ -198,3 +197,9 @@ async function onDelete() {
 	}
 }
 </script>
+
+<style scoped>
+.cover {
+	width: 250px;
+}
+</style>
