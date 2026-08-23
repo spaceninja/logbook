@@ -38,7 +38,7 @@
 		"@vueuse/core": "14.4.0",
 		"@vueuse/router": "14.4.0",
 		"fast-xml-parser": "5.11.0",
-		"firebase": "12.17.1",
+		"firebase": "12.18.0",
 		"firebase-admin": "14.2.0",
 		"jszip": "3.10.1",
 		"markdown-it": "15.0.0",
