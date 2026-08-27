@@ -94,6 +94,7 @@ const reversed = defineModel<boolean>('reversed', { required: true });
 .controls {
 	align-items: center;
 	display: flex;
+	flex-wrap: wrap;
 	gap: 1em;
 }
 

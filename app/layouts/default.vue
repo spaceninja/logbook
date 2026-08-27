@@ -12,7 +12,6 @@
 							 hydration mismatch against the logged-out SSR markup. -->
 					<ClientOnly>
 						<template v-if="user">
-							<NuxtLink v-if="isOwner" to="/import">Import</NuxtLink>
 							<NuxtLink v-if="isOwner" to="/add" class="add-button">
 								<svg width="12" height="12" viewBox="0 0 32 32">
 									<path
@@ -56,6 +55,13 @@
 					<a href="https://www.justwatch.com">JustWatch</a>
 				</div>
 				<nav class="footer-nav">
+					<!-- Auth state is client-only; render it client-side to avoid a
+							 hydration mismatch against the logged-out SSR markup. -->
+					<ClientOnly>
+						<NuxtLink v-if="user && isOwner" class="button" to="/import">
+							Import
+						</NuxtLink>
+					</ClientOnly>
 					<NuxtLink v-if="showDev" class="button" to="/dev">Dev</NuxtLink>
 				</nav>
 			</div>
