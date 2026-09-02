@@ -6,6 +6,15 @@
 .cache
 dist
 
+# Machine-written module setup markers. Despite the name, this file holds no
+# config of ours — only `setups.@nuxt/test-utils="<version>"`, a ledger
+# @nuxt/kit rewrites whenever the recorded version drifts from the installed
+# one, so every Renovate bump turned into a stray diff. The marker gates
+# @nuxt/test-utils' install wizard, which already can't run here: it bails on
+# CI, on no TTY, and whenever a vitest config exists. Put real Nuxt config in
+# nuxt.config.ts.
+.nuxtrc
+
 # Node dependencies
 node_modules
 
