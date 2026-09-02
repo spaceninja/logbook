@@ -66,6 +66,25 @@ export function preferFresh<K extends keyof Item>(
 }
 
 /**
+ * Whether two creators name the same people in a different order — in which case
+ * the stored order is kept, so the sync doesn't rewrite the item every night.
+ *
+ * TMDB returns a film's crew in nondeterministic order, so a co-directed movie
+ * flaps: "Spa Weekend" (two directors) came back as `[Jon Lucas, Scott Moore]`
+ * on one request and `[Scott Moore, Jon Lucas]` on the next, and each run wrote
+ * back whatever it got. Order carries no meaning here — TMDB doesn't rank
+ * directors — so a pure reorder is not a change worth writing. A genuine cast
+ * correction (a name added, removed, or replaced) still wins normally.
+ */
+function sameCreatorSet(a: Item['creator'], b: Item['creator']): boolean {
+	if (!Array.isArray(a) || !Array.isArray(b)) return false;
+	if (a.length !== b.length) return false;
+	const sortedA = [...a].sort();
+	const sortedB = [...b].sort();
+	return sortedA.every((name, index) => name === sortedB[index]);
+}
+
+/**
  * Merge a fresh provider draft onto the stored item, following the table above.
  * One function serves all three types: spreading `fresh.metadata` over
  * `existing.metadata` gives a show its refreshed season fields, while movies and
@@ -78,7 +97,9 @@ export function mergeSyncedItem(existing: Item, fresh: Item): Item {
 		title: fresh.title,
 		metadata: { ...existing.metadata, ...fresh.metadata },
 	};
-	overwrite(merged, 'creator', fresh.creator);
+	if (!sameCreatorSet(existing.creator, fresh.creator)) {
+		overwrite(merged, 'creator', fresh.creator);
+	}
 	overwrite(merged, 'community_rating', fresh.community_rating);
 	preferFresh(merged, 'cover', fresh.cover);
 	preferFresh(merged, 'thumbnail', fresh.thumbnail);

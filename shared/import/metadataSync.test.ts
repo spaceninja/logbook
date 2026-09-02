@@ -161,6 +161,27 @@ describe('mergeSyncedItem', () => {
 		expect('community_rating' in merged).toBe(false);
 	});
 
+	it('keeps the stored order when the draft reorders the same directors', () => {
+		const existing = storedMovie({ creator: ['Jon Lucas', 'Scott Moore'] });
+		const fresh = freshMovie({ creator: ['Scott Moore', 'Jon Lucas'] });
+		const merged = mergeSyncedItem(existing, fresh);
+		expect(merged.creator).toEqual(['Jon Lucas', 'Scott Moore']);
+	});
+
+	it('takes the draft creators when the set actually changes', () => {
+		const existing = storedMovie({ creator: ['Jon Lucas', 'Scott Moore'] });
+		const fresh = freshMovie({ creator: ['Scott Moore', 'Greta Gerwig'] });
+		const merged = mergeSyncedItem(existing, fresh);
+		expect(merged.creator).toEqual(['Scott Moore', 'Greta Gerwig']);
+	});
+
+	it('takes the draft creator when one is a string and one an array', () => {
+		const existing = storedMovie({ creator: 'Jon Lucas' });
+		const fresh = freshMovie({ creator: ['Jon Lucas', 'Scott Moore'] });
+		const merged = mergeSyncedItem(existing, fresh);
+		expect(merged.creator).toEqual(['Jon Lucas', 'Scott Moore']);
+	});
+
 	it('keeps a hand-fixed creator_sort when the creator refreshes', () => {
 		const existing = storedMovie({
 			creator: 'Ursula K. Le Guin',
