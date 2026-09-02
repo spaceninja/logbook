@@ -1,0 +1,52 @@
+name: Sync Metadata
+
+# Runs the movie/show/game metadata sync (scripts/sync-metadata.ts) daily against
+# prod. Requires these repo secrets:
+#   FIREBASE_SERVICE_ACCOUNT   — raw JSON of a prod service-account key
+#   NUXT_TMDB_READ_TOKEN       — TMDB API read access token
+#   NUXT_TWITCH_CLIENT_ID      — Twitch app client id (IGDB auth)
+#   NUXT_TWITCH_CLIENT_SECRET  — Twitch app client secret
+
+on:
+  schedule:
+    # 12:47 UTC daily — 30 minutes after the Goodreads sync, so the two jobs
+    # never contend for the same Firestore documents or run concurrently.
+    - cron: '47 12 * * *'
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Preview changes without writing to Firestore'
+        type: boolean
+        default: false
+
+concurrency:
+  group: sync-metadata
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎
+        uses: actions/checkout@v7.0.1
+      - name: Setup Node env 🏗
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+      - name: Install dependencies 👨🏻‍💻
+        run: npm ci
+      - name: Sync movie, show, and game metadata 🎬
+        run: npm run sync:metadata ${{ inputs.dry-run && '-- --dry-run' || '' }}
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          NUXT_TMDB_READ_TOKEN: ${{ secrets.NUXT_TMDB_READ_TOKEN }}
+          NUXT_TWITCH_CLIENT_ID: ${{ secrets.NUXT_TWITCH_CLIENT_ID }}
+          NUXT_TWITCH_CLIENT_SECRET: ${{ secrets.NUXT_TWITCH_CLIENT_SECRET }}
+          # Not a secret — which HowLongToBeat-style estimate to store. Must match
+          # the app's own setting, or synced lengths won't agree with hand-refreshed
+          # ones. See TIME_TO_BEAT_STATS in shared/providers/igdb.ts.
+          NUXT_IGDB_TIME_TO_BEAT_STAT: completely

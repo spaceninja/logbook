@@ -24,6 +24,7 @@
 		"test:watch": "vitest",
 		"generate:sample": "node scripts/generate-sample.js",
 		"sync:goodreads": "tsx scripts/sync-goodreads.ts",
+		"sync:metadata": "tsx scripts/sync-metadata.ts",
 		"migrate:book-list": "tsx scripts/migrate-book-list.ts",
 		"backfill:google-books": "tsx scripts/backfill-google-books.ts",
 		"merge:duplicate-books": "tsx scripts/merge-duplicate-books.ts",

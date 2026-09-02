@@ -59,6 +59,27 @@ export async function readBooks(): Promise<Item[]> {
 	return snapshot.docs.map((doc) => doc.data() as Item);
 }
 
+/**
+ * Every active (`backlog` | `in_progress`) item of the given types — what the
+ * metadata sync refreshes (#106). `complete` and `dnf` items are deliberately
+ * out of scope: their community ratings drift too, but nothing about a finished
+ * item's metadata is actionable.
+ *
+ * The status filter runs in Firestore (a single-field `in`, so no composite index)
+ * and the type filter runs in memory: Firestore allows only one `in`/`array-contains`
+ * clause per query, and pulling the few hundred extra book docs is cheaper than a
+ * second round trip.
+ */
+export async function readActiveItems(types: MediaType[]): Promise<Item[]> {
+	const snapshot = await items()
+		.where('status', 'in', ['backlog', 'in_progress'])
+		.get();
+	const wanted = new Set(types);
+	return snapshot.docs
+		.map((doc) => doc.data() as Item)
+		.filter((item) => wanted.has(item.type));
+}
+
 /** The stored record for an item: `completed_years`/`creator_sort` normalized. */
 function normalize(item: Item): Item {
 	const creatorSort =

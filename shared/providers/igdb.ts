@@ -40,6 +40,16 @@ export interface IgdbGame {
 	franchises?: number[];
 }
 
+/**
+ * The APICalypse `fields` list every game lookup requests — exactly what
+ * `mapIgdbDraft` and `mapIgdbSearch` below read. Lives here, beside the mappers,
+ * so the Nitro client (`server/utils/igdb.ts`) and the Node-side script mirror
+ * (`scripts/lib/igdb.ts`) can't drift on it. Mirrors `HARDCOVER_BOOK_QUERY` in
+ * `providers/hardcover.ts`.
+ */
+export const IGDB_DRAFT_FIELDS =
+	'name,first_release_date,summary,rating,total_rating_count,cover.image_id,artworks.image_id,artworks.artwork_type,artworks.width,artworks.height,screenshots.image_id,genres.name,themes.name,involved_companies.developer,involved_companies.company.name';
+
 // Portrait cover sizes (retina): big = 528×748, small = 180×256. Avoid t_thumb,
 // which is a 90×90 square crop.
 const COVER_SIZE = 't_cover_big_2x';
