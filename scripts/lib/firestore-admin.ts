@@ -8,6 +8,11 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import type { Item, MediaType } from '../../shared/types/item';
 import { deriveCompletedYears } from '../../shared/utils/completedYears';
 import { deriveCreatorSort } from '../../shared/utils/creatorSort';
+import type {
+	SyncName,
+	SyncRun,
+	SyncRunsDoc,
+} from '../../shared/utils/syncHealth';
 
 /**
  * Firestore access for the Goodreads sync via the Firebase Admin SDK. Unlike the
@@ -78,6 +83,28 @@ export async function readActiveItems(types: MediaType[]): Promise<Item[]> {
 	return snapshot.docs
 		.map((doc) => doc.data() as Item)
 		.filter((item) => wanted.has(item.type));
+}
+
+/** The `meta/syncRuns` aggregate (#126), which records every scheduled run. */
+function syncRunsDoc() {
+	return db().collection('meta').doc('syncRuns');
+}
+
+/** Recorded run history for every sync; empty when nothing has run yet. */
+export async function readSyncRuns(): Promise<SyncRunsDoc> {
+	const snapshot = await syncRunsDoc().get();
+	return snapshot.exists ? (snapshot.data() as SyncRunsDoc) : {};
+}
+
+/**
+ * Replace one sync's run history. Merged, so writing `metadata` never disturbs
+ * `goodreads` — the two jobs share this document but own disjoint keys.
+ */
+export async function writeSyncRuns(
+	name: SyncName,
+	runs: SyncRun[],
+): Promise<void> {
+	await syncRunsDoc().set({ [name]: runs }, { merge: true });
 }
 
 /** The stored record for an item: `completed_years`/`creator_sort` normalized. */

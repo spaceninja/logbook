@@ -4,6 +4,7 @@ import { mergeSyncedItem } from '../shared/import/metadataSync';
 import type { Item, MediaType, ShowMetadata } from '../shared/types/item';
 import { itemsEqual, readActiveItems, writeItems } from './lib/firestore-admin';
 import { igdbDraft } from './lib/igdb';
+import { tryRecordSyncRun, type SyncRunInput } from './lib/syncRuns';
 import { tmdbMovieDraft, tmdbSeasonDraft } from './lib/tmdb';
 
 /**
@@ -143,8 +144,31 @@ function writeStepSummary(lines: string[]): void {
 	appendFileSync(path, `${lines.join('\n')}\n`);
 }
 
+// Parsed before anything else so a usage error exits without recording a run:
+// a malformed argument isn't a sync failure, and shouldn't age the health record.
+let options: Options;
+try {
+	options = parseArgs(process.argv.slice(2));
+} catch (error) {
+	console.error((error as Error).message);
+	process.exit(1);
+}
+
+/**
+ * What the run has managed so far, so the failure path can record real counts
+ * rather than zeros — an abort after 200 lookups is a more useful record than
+ * "it died". Mutated as the run proceeds (#126).
+ */
+const progress: SyncRunInput = {
+	attempted: 0,
+	written: 0,
+	skipped: 0,
+	errors: 0,
+	errorSamples: [],
+};
+
 async function main() {
-	const { dryRun, types, limit } = parseArgs(process.argv.slice(2));
+	const { dryRun, types, limit } = options;
 
 	const active = await readActiveItems(types);
 	// An empty result means the query or the credential broke, not that the
@@ -156,18 +180,24 @@ async function main() {
 		);
 	}
 	const targets = limit ? active.slice(0, limit) : active;
+	// Every item the run considered, skips included — the number that would have
+	// exposed #103, where a truncated feed left this stuck at 100 against a shelf
+	// of 492. The `/sync` page shows it per run for exactly that reason.
+	progress.attempted = targets.length;
 	console.log(
 		`Metadata sync: ${targets.length} active ${types.join('/')} items` +
 			(limit ? ` (limited from ${active.length})` : ''),
 	);
 
 	const merged: { prev: Item; next: Item }[] = [];
+	const errorSamples: string[] = [];
 	let skipped = 0;
 	let errors = 0;
 	for (const item of targets) {
 		const draft = draftFor(item);
 		if (!draft) {
 			skipped++;
+			progress.skipped = skipped;
 			console.log(`  skipped (no provider id): ${item.id}`);
 			continue;
 		}
@@ -179,14 +209,18 @@ async function main() {
 			// stop the run. (The Goodreads sync aborts wholesale instead, because a
 			// truncated feed is indistinguishable from books being removed.)
 			errors++;
-			console.log(`  error: ${item.id}: ${(error as Error).message}`);
+			const message = `${item.id}: ${(error as Error).message}`;
+			errorSamples.push(message);
+			progress.errors = errors;
+			progress.errorSamples = errorSamples;
+			console.log(`  error: ${message}`);
 		}
 	}
 
-	const attempted = targets.length - skipped;
-	if (errors > attempted * ERROR_ABORT_RATIO) {
+	const lookups = targets.length - skipped;
+	if (errors > lookups * ERROR_ABORT_RATIO) {
 		throw new Error(
-			`Metadata sync: ${errors}/${attempted} lookups failed — aborting without writing`,
+			`Metadata sync: ${errors}/${lookups} lookups failed — aborting without writing`,
 		);
 	}
 
@@ -221,6 +255,9 @@ async function main() {
 		await writeItems(toWrite);
 	}
 
+	progress.written = toWrite.length;
+	progress.substantive = substantive.length;
+
 	const summary =
 		`updated ${toWrite.length} (${ratingOnly} rating-only), ` +
 		`unchanged ${unchanged}, skipped ${skipped}, errors ${errors}`;
@@ -232,7 +269,22 @@ async function main() {
 	]);
 }
 
-main().catch((error: unknown) => {
-	console.error('Metadata sync failed:', error);
-	process.exit(1);
-});
+// A dry run is never recorded: it writes nothing, so letting it reset the
+// staleness clock would mask a job that had stopped doing real work (#126).
+// Recording is best-effort on both paths: a health-record write that fails must
+// not turn an otherwise-good sync into a failed job. When nothing is recorded at
+// all, staleness surfaces it within 36 hours, which is the designed fallback.
+main()
+	.then(async () => {
+		if (!options.dryRun) await tryRecordSyncRun('metadata', progress);
+	})
+	.catch(async (error: unknown) => {
+		console.error('Metadata sync failed:', error);
+		if (!options.dryRun) {
+			await tryRecordSyncRun('metadata', {
+				...progress,
+				failure: (error as Error).message,
+			});
+		}
+		process.exit(1);
+	});

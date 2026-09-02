@@ -20,6 +20,7 @@ import {
 import { enrichBooksWithGoogleBooks } from './lib/googleBooks';
 import { enrichBooksWithHardcover } from './lib/hardcover';
 import { paginate } from './lib/paginate';
+import { tryRecordSyncRun, type SyncRunInput } from './lib/syncRuns';
 
 /**
  * Daily Goodreads sync (issue #17). Fetches the tracked shelf RSS feeds, maps
@@ -181,9 +182,23 @@ async function findTwins(
 	return twins;
 }
 
-async function main(): Promise<void> {
-	const dryRun = process.argv.includes('--dry-run');
+const dryRun = process.argv.includes('--dry-run');
 
+/**
+ * What the run has managed so far, so the failure path can record real counts
+ * rather than zeros (#126). `attempted` is the book count across shelves — the
+ * number that would have exposed #103, where the unpaged feed left it stuck at
+ * 100 against a 492-book shelf.
+ */
+const progress: SyncRunInput = {
+	attempted: 0,
+	written: 0,
+	skipped: 0,
+	errors: 0,
+	errorSamples: [],
+};
+
+async function main(): Promise<void> {
 	// All feeds first: if any fetch/parse fails the whole run aborts before a
 	// single write, so partial/garbage state is never committed.
 	const feeds = await Promise.all(SHELVES.map(fetchShelf));
@@ -199,6 +214,7 @@ async function main(): Promise<void> {
 			books.set(makeBookId('goodreads', book.bookId), book);
 		}
 	}
+	progress.attempted = books.size;
 
 	const existing = await readItems([...books.keys()]);
 
@@ -262,6 +278,13 @@ async function main(): Promise<void> {
 		);
 	}
 
+	// Enrichment failures are the only per-item errors this sync counts; the feed
+	// itself aborts the run rather than failing item by item. Neither enricher
+	// retains the individual messages, so `errorSamples` stays empty here — unlike
+	// the metadata sync, which names the offending item (#126).
+	progress.errors = enrichment.errors + googleBooks.errors;
+	progress.skipped = enrichment.skipped;
+
 	const toWrite: Item[] = [];
 	let created = 0;
 	let updated = 0;
@@ -296,13 +319,31 @@ async function main(): Promise<void> {
 		await deleteItems(absorbed);
 	}
 
+	progress.written = toWrite.length;
+	progress.substantive = created;
+
 	console.log(
 		`created ${created}, updated ${updated}, unchanged ${unchanged}` +
 			(absorbed.length > 0 ? `, absorbed ${absorbed.length}` : ''),
 	);
 }
 
-main().catch((error: unknown) => {
-	console.error('Goodreads sync failed:', error);
-	process.exit(1);
-});
+// A dry run is never recorded: it writes nothing, so letting it reset the
+// staleness clock would mask a job that had stopped doing real work. Recording
+// is best-effort on both paths — a failed health write must not turn an
+// otherwise-good sync into a failed job, and staleness catches a silent one
+// within 36 hours. (#126)
+main()
+	.then(async () => {
+		if (!dryRun) await tryRecordSyncRun('goodreads', progress);
+	})
+	.catch(async (error: unknown) => {
+		console.error('Goodreads sync failed:', error);
+		if (!dryRun) {
+			await tryRecordSyncRun('goodreads', {
+				...progress,
+				failure: (error as Error).message,
+			});
+		}
+		process.exit(1);
+	});

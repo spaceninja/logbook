@@ -58,9 +58,10 @@
 					<!-- Auth state is client-only; render it client-side to avoid a
 							 hydration mismatch against the logged-out SSR markup. -->
 					<ClientOnly>
-						<NuxtLink v-if="user && isOwner" class="button" to="/import">
-							Import
-						</NuxtLink>
+						<template v-if="user && isOwner">
+							<NuxtLink class="button" to="/import">Import</NuxtLink>
+							<SyncHealthLink />
+						</template>
 					</ClientOnly>
 					<NuxtLink v-if="showDev" class="button" to="/dev">Dev</NuxtLink>
 				</nav>

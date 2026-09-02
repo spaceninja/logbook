@@ -18,6 +18,7 @@ import type { Item, MediaType } from '~~/shared/types/item';
 import { deriveCompletedYears } from '~~/shared/utils/completedYears';
 import type { CompletionYearsByType } from '~~/shared/utils/completionYears';
 import { deriveCreatorSort } from '~~/shared/utils/creatorSort';
+import type { SyncRunsDoc } from '~~/shared/utils/syncHealth';
 
 /**
  * ms to wait on a Firestore read before treating a stall as a failure (#23).
@@ -108,6 +109,8 @@ export function useItems() {
 	const items = () => collection(db(), 'items');
 	/** Aggregate doc backing the History year switcher (core design §15). */
 	const completionYearsDoc = () => doc(db(), 'meta', 'completionYears');
+	/** Aggregate doc recording every scheduled sync run (#126). */
+	const syncRunsDoc = () => doc(db(), 'meta', 'syncRuns');
 
 	/** Backlog membership for one media type: status is `backlog` or `in_progress`. */
 	async function getBacklog(type: MediaType): Promise<Item[]> {
@@ -195,6 +198,20 @@ export function useItems() {
 		);
 		if (!snapshot.exists()) return {};
 		return snapshot.data() as CompletionYearsByType;
+	}
+
+	/**
+	 * Recorded run history for every sync, newest first, backing the footer
+	 * health indicator and `/sync` (#126). Empty when nothing has run yet, which
+	 * `syncHealth` reports as `unknown` rather than healthy.
+	 */
+	async function getSyncRuns(): Promise<SyncRunsDoc> {
+		const snapshot = await withTimeout(
+			getDoc(syncRunsDoc()),
+			'Loading sync health',
+		);
+		if (!snapshot.exists()) return {};
+		return snapshot.data() as SyncRunsDoc;
 	}
 
 	/** A single item by id, or null when the document does not exist. */
@@ -326,6 +343,7 @@ export function useItems() {
 		getUndated,
 		getAllByType,
 		getCompletionYears,
+		getSyncRuns,
 		getItem,
 		getItemsByIds,
 		saveItem,
