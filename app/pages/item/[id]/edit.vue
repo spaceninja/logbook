@@ -74,6 +74,10 @@ useHead({
 	title: () => (item.value ? `Edit ${itemPageTitle(item.value)}` : 'Edit Item'),
 });
 
+// The edit page has no shortcut links of its own, but the layout's nav is here —
+// hand it this item's type so Backlog/History don't reset to the default (#128).
+usePageMediaType(() => item.value?.type);
+
 // Type is inferred from the <ItemForm ref="formRef"> in the template, including
 // its exposed applyProviderFields.
 const formRef = useTemplateRef('formRef');

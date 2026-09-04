@@ -2,7 +2,7 @@
 	<section>
 		<p>
 			<NuxtLink :to="backlogLink">← Backlog</NuxtLink> ·
-			<NuxtLink to="/history">History</NuxtLink>
+			<NuxtLink :to="historyLink">History</NuxtLink>
 		</p>
 
 		<!-- Client-only Firestore data; render client-side to avoid hydrating
@@ -151,13 +151,18 @@ useHead({
 	title: () => (item.value ? itemPageTitle(item.value) : ''),
 });
 
-// Return to the backlog filtered to this item's media type. Mirrors the backlog's
-// own query convention (`book` is the default, so it's omitted); falls back to a
-// bare link while the item is still loading.
-const backlogLink = computed(() => {
-	const type = item.value?.type;
-	return type && type !== 'book' ? { path: '/', query: { type } } : '/';
-});
+// Return to the backlog or history filtered to this item's media type (#128),
+// falling back to a bare link while the item is still loading. `viewLink` mirrors
+// the views' own query convention: the default type is omitted.
+const backlogLink = computed(() =>
+	viewLink('/', item.value?.type ?? DEFAULT_MEDIA_TYPE),
+);
+const historyLink = computed(() =>
+	viewLink('/history', item.value?.type ?? DEFAULT_MEDIA_TYPE),
+);
+
+// Also hand the type to the layout, so the primary nav agrees with these two.
+usePageMediaType(() => item.value?.type);
 
 // Streaming availability is movies/shows only, and needs a TMDB id to look up —
 // manual and Letterboxd-only titles have none, and books/games have no source.

@@ -39,7 +39,6 @@
 </template>
 
 <script setup lang="ts">
-import type { MediaType } from '~~/shared/types/item';
 import type { CompletionYearsByType } from '~~/shared/utils/completionYears';
 import { mediaTypeLabel } from '~~/shared/utils/itemDisplay';
 import {
@@ -51,7 +50,6 @@ import {
 import type { SortKey } from '~~/shared/utils/itemSort';
 import { enumParam, flagParam, yearParam } from '~~/shared/utils/viewQuery';
 
-const MEDIA_TYPES: MediaType[] = ['book', 'movie', 'show', 'game'];
 const SORT_KEYS: SortKey[] = [
 	'completion_date',
 	'rating',
@@ -71,7 +69,11 @@ const router = useRouter();
 // scope, and year each push a browser-history entry (back button steps through
 // them like separate pages); sort and direction update the URL in place (core
 // design §4).
-const type = useQueryParam('type', enumParam(MEDIA_TYPES, 'book'), 'push');
+const type = useQueryParam(
+	'type',
+	enumParam(MEDIA_TYPES, DEFAULT_MEDIA_TYPE),
+	'push',
+);
 const sortKey = useQueryParam('sort', enumParam(SORT_KEYS, 'completion_date'));
 const reversed = useQueryParam('reverse', flagParam());
 const urlYear = useQueryParam('year', yearParam(), 'push');
@@ -155,7 +157,9 @@ function goToSearch() {
 	if (!search.value.trim()) return;
 	navigateTo({
 		path: '/search',
-		query: { type: type.value, q: search.value.trim() },
+		// The default type is omitted, like every other link to a type-scoped view —
+		// writing it produced a `?type=book` URL the app never generates elsewhere.
+		query: { ...mediaTypeQuery(type.value), q: search.value.trim() },
 	});
 }
 
@@ -227,6 +231,9 @@ const scopeLabel = computed(() => {
 useHead({
 	title: () => `${mediaTypeLabel(type.value)} History: ${scopeLabel.value}`,
 });
+
+// Hand the type to the layout so the nav's Backlog link stays on this type (#128).
+usePageMediaType(type);
 
 const emptyMessage = computed(() => {
 	switch (scope.value) {

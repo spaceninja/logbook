@@ -19,12 +19,10 @@
 
 <script setup lang="ts">
 import { watchDebounced } from '@vueuse/core';
-import type { MediaType } from '~~/shared/types/item';
 import { mediaTypeLabel } from '~~/shared/utils/itemDisplay';
 import type { SortKey } from '~~/shared/utils/itemSort';
 import { enumParam, flagParam, stringParam } from '~~/shared/utils/viewQuery';
 
-const MEDIA_TYPES: MediaType[] = ['book', 'movie', 'show', 'game'];
 const SORT_KEYS: SortKey[] = [
 	'completion_date',
 	'rating',
@@ -41,7 +39,11 @@ const { getAllByType } = useItems();
 // Same URL-bound view state as the other list views, so a search is bookmarkable
 // and shareable. Type pushes a history entry (switching media type is a separate
 // page); sort, direction, and the query update in place.
-const type = useQueryParam('type', enumParam(MEDIA_TYPES, 'book'), 'push');
+const type = useQueryParam(
+	'type',
+	enumParam(MEDIA_TYPES, DEFAULT_MEDIA_TYPE),
+	'push',
+);
 const sortKey = useQueryParam('sort', enumParam(SORT_KEYS, 'completion_date'));
 const reversed = useQueryParam('reverse', flagParam());
 
@@ -70,6 +72,9 @@ useHead({
 			: label;
 	},
 });
+
+// Hand the type to the layout so the nav links stay on this type (#128).
+usePageMediaType(type);
 
 // For shows, the series sort (show name + numeric season) supersedes the title
 // sort — it groups seasons and orders them numerically — so offer Series, not Title.

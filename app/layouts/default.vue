@@ -6,8 +6,8 @@
 					<span class="logo">🪵</span> <span class="logotype">Logbook</span>
 				</NuxtLink>
 				<nav aria-label="primary" class="site-nav">
-					<NuxtLink to="/">Backlog</NuxtLink>
-					<NuxtLink to="/history">History</NuxtLink>
+					<NuxtLink :to="backlogLink">Backlog</NuxtLink>
+					<NuxtLink :to="historyLink">History</NuxtLink>
 					<!-- Auth state is client-only; render it client-side to avoid a
 							 hydration mismatch against the logged-out SSR markup. -->
 					<ClientOnly>
@@ -76,4 +76,11 @@ const showDev = import.meta.dev;
 
 const { user, isOwner, login } = useAuth();
 const backdrop = useBackdrop();
+
+// Carry the type the user is currently looking at into the nav, so leaving the
+// game backlog for History lands on the game history (#128). The logo stays a
+// bare `/` on purpose — it's "home", and the way back to the default view.
+const mediaType = useCurrentMediaType();
+const backlogLink = computed(() => viewLink('/', mediaType.value));
+const historyLink = computed(() => viewLink('/history', mediaType.value));
 </script>

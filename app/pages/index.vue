@@ -26,7 +26,6 @@
 
 <script setup lang="ts">
 import { watchDebounced } from '@vueuse/core';
-import type { MediaType } from '~~/shared/types/item';
 import { mediaTypeLabel } from '~~/shared/utils/itemDisplay';
 import type {
 	FilterKey,
@@ -36,7 +35,6 @@ import type {
 import type { SortKey } from '~~/shared/utils/itemSort';
 import { enumParam, flagParam, stringParam } from '~~/shared/utils/viewQuery';
 
-const MEDIA_TYPES: MediaType[] = ['book', 'movie', 'show', 'game'];
 const SORT_KEYS: SortKey[] = [
 	'rating',
 	'title',
@@ -54,7 +52,11 @@ const { getBacklog } = useItems();
 // View state is bound to the URL so the view is bookmarkable. Content type pushes
 // a browser-history entry (back button treats it like a separate page); sort,
 // direction, and filters update the URL in place (core design §4).
-const type = useQueryParam('type', enumParam(MEDIA_TYPES, 'book'), 'push');
+const type = useQueryParam(
+	'type',
+	enumParam(MEDIA_TYPES, DEFAULT_MEDIA_TYPE),
+	'push',
+);
 const sortKey = useQueryParam('sort', enumParam(SORT_KEYS, 'rating'));
 const reversed = useQueryParam('reverse', flagParam());
 const purchased = useQueryParam('purchased', enumParam(FILTER_STATES, 'all'));
@@ -84,6 +86,9 @@ watch(searchParam, (q) => {
 
 // The media type is the view's main axis, so it belongs in the tab title.
 useHead({ title: () => `${mediaTypeLabel(type.value)} Backlog` });
+
+// Hand the type to the layout so the nav's History link stays on this type (#128).
+usePageMediaType(type);
 
 const filterRefs = { purchased, prioritized, released };
 const filters = computed<ItemFilters>(() => ({
