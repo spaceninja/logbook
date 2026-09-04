@@ -64,6 +64,27 @@ export async function readBooks(): Promise<Item[]> {
 	return snapshot.docs.map((doc) => doc.data() as Item);
 }
 
+/** An item plus the document metadata only the Admin SDK can see. */
+export interface StoredItem {
+	item: Item;
+	/**
+	 * The document's creation day (`YYYY-MM-DD`). Firestore records this on every
+	 * document, but only the Admin SDK exposes it and no query can order by it —
+	 * so it's usable for a one-time backfill (#95) and nothing else. It resets if
+	 * a document is deleted and recreated.
+	 */
+	createdDay: string;
+}
+
+/** Every item in the collection, with each document's creation day. */
+export async function readAllItems(): Promise<StoredItem[]> {
+	const snapshot = await items().get();
+	return snapshot.docs.map((doc) => ({
+		item: doc.data() as Item,
+		createdDay: doc.createTime.toDate().toISOString().slice(0, 10),
+	}));
+}
+
 /**
  * Every active (`backlog` | `in_progress`) item of the given types — what the
  * metadata sync refreshes (#106). `complete` and `dnf` items are deliberately

@@ -33,6 +33,7 @@ const SORT_KEYS: SortKey[] = [
 	'series',
 	'length',
 	'release_date',
+	'added_date',
 ];
 
 const { getAllByType } = useItems();

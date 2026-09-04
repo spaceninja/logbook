@@ -150,9 +150,12 @@ function bookRecord(
 		myRating: ratingOf(row['My Rating']),
 		isPurchased: positiveInt(row['Owned Copies']) !== undefined,
 		fallbackDraft: fallbackDraft(row, preferredIsbn),
+		// Every shelf, not just `read`: this is the item's `added_date` (#95), and
+		// the to-read shelf is exactly where "how long has this been sitting here"
+		// matters. On a history row it doubles as the user's date fallback for an
+		// undated read; a backlog row never reaches that path (`effectiveContribution`).
+		addedDate: isoDay(row['Date Added']),
 	};
-	// Date-added lets an undated "read" book be dated by the user's fallback choice.
-	if (shelf.section === 'history') record.addedDate = isoDay(row['Date Added']);
 	return record;
 }
 

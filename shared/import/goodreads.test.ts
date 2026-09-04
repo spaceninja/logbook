@@ -217,8 +217,8 @@ describe('parseGoodreads — backlog shelves', () => {
 			{ section: 'backlog', status: 'backlog', completedDates: [] },
 			{ section: 'backlog', status: 'in_progress', completedDates: [] },
 		]);
-		// Backlog rows carry no completion fallback date.
-		expect(records[0]?.addedDate).toBeUndefined();
+		// Every shelf carries Date Added, so a to-read book gets an `added_date` (#95).
+		expect(records[0]?.addedDate).toBe('2024-01-01');
 	});
 });
 

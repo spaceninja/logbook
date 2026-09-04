@@ -28,6 +28,7 @@ export type SortKey =
 	| 'series'
 	| 'length'
 	| 'release_date'
+	| 'added_date'
 	| 'completion_date';
 
 /** Which rating "rating" sorts resolve to — provider vs the owner's. */
@@ -83,6 +84,7 @@ const seriesValue: Accessor = (item) => {
 const seriesNumberValue: Accessor = (item) => itemSeries(item).number;
 const lengthValue: Accessor = (item) => item.length;
 const releaseValue: Accessor = (item) => item.release_date;
+const addedValue: Accessor = (item) => item.added_date;
 const completionValue: Accessor = (item, ctx) =>
 	latestCompletedDate(item, ctx.year);
 
@@ -104,6 +106,12 @@ const SORTS: Record<SortKey, { primary: Tier; secondary: Tier }> = {
 	release_date: {
 		primary: { get: releaseValue, dir: 1 },
 		secondary: ratingTierDesc,
+	},
+	// Newest first, like `completion_date` — the useful question is "what did I
+	// add lately," not "what has sat here longest" (that's the reversed view).
+	added_date: {
+		primary: { get: addedValue, dir: -1 },
+		secondary: titleTier,
 	},
 	completion_date: {
 		primary: { get: completionValue, dir: -1 },

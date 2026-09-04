@@ -131,6 +131,12 @@ export function authorsMatch(
  * The user-owned and structural fields every provider draft starts with. Provider
  * mappers spread provider-sourced fields on top of these. Keeping these concrete
  * (not undefined) matches the milestone-1 convention.
+ *
+ * `added_date` is today because this is the single origin for every new item —
+ * a search-add, a provider draft, the Goodreads sync. An import overrides it
+ * with the export's real date-added, which is always earlier (see
+ * `applyContribution`), so a drafted "today" only survives on items that really
+ * were added today.
  */
 export function draftDefaults(): Pick<
 	Item,
@@ -140,6 +146,7 @@ export function draftDefaults(): Pick<
 	| 'completed_dates'
 	| 'completed_years'
 	| 'tags'
+	| 'added_date'
 > {
 	return {
 		status: 'backlog',
@@ -148,5 +155,6 @@ export function draftDefaults(): Pick<
 		completed_dates: [],
 		completed_years: [],
 		tags: [],
+		added_date: new Date().toISOString().slice(0, 10),
 	};
 }

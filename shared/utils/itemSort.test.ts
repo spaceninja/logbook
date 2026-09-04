@@ -251,6 +251,23 @@ describe('makeItemComparator', () => {
 		).toEqual(['b', 'a']);
 	});
 
+	it('sorts by date added, newest first, undated last in either direction', () => {
+		const a = makeItem({ id: 'a', added_date: '2018-07-17' });
+		const b = makeItem({ id: 'b', added_date: '2024-01-01' });
+		const undated = makeItem({ id: 'undated' });
+		const ctx = { ratingField: 'my_rating' as const };
+		expect(sortedIds([a, undated, b], 'added_date', false, ctx)).toEqual([
+			'b',
+			'a',
+			'undated',
+		]);
+		expect(sortedIds([a, undated, b], 'added_date', true, ctx)).toEqual([
+			'a',
+			'b',
+			'undated',
+		]);
+	});
+
 	it('sorts by completion date within the year, newest first', () => {
 		const a = makeItem({ id: 'a', completed_dates: ['2025-02-01'] });
 		const b = makeItem({

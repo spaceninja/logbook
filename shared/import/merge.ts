@@ -41,6 +41,7 @@ export function toContribution(record: ImportRecord): ImportContribution {
 	return {
 		status: record.status,
 		completedDates: record.completedDates,
+		addedDate: record.addedDate,
 		myRating: record.myRating,
 		isPurchased: record.isPurchased,
 		ratingAuthority: record.ratingAuthority,
@@ -116,6 +117,18 @@ function mergeStatus(
 	return contribution.status;
 }
 
+/** The earlier of the item's existing `added_date` and the record's, as a day. */
+function mergeAddedDate(
+	current: Item,
+	contribution: ImportContribution,
+): string | undefined {
+	const days = [current.added_date, contribution.addedDate]
+		.filter((value): value is string => Boolean(value))
+		.map(toDay)
+		.filter((day): day is string => day !== undefined);
+	return days.sort()[0];
+}
+
 /**
  * Apply a record's contribution to `current` and return the merged item.
  * Works for both a brand-new enriched base and an existing doc: on a new base
@@ -138,6 +151,13 @@ export function applyContribution(
 
 	if (my_rating == null) delete merged.my_rating;
 	else merged.my_rating = my_rating;
+
+	// Earliest wins, which is what makes `added_date` idempotent and
+	// order-independent: a fresh draft's "today" is pulled back to the export's
+	// real date, a re-import can never drift the value forward, and a title two
+	// sources both carry settles on whichever added it first.
+	const added_date = mergeAddedDate(current, contribution);
+	if (added_date) merged.added_date = added_date;
 
 	return merged;
 }

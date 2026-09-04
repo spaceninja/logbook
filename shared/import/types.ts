@@ -121,6 +121,13 @@ export interface ImportContribution {
 	 * choice replaces the old placeholder instead of stacking a second date (#20).
 	 */
 	replaceableDays?: string[];
+	/**
+	 * The export's date-added for this row, persisted as the item's `added_date`
+	 * (#95). Distinct from `fallbackDate`, which may be the same day but is a
+	 * stand-in *completion* date; this one records when the item entered the
+	 * library and applies to backlog records too.
+	 */
+	addedDate?: string;
 	myRating?: number;
 	isPurchased?: boolean;
 	ratingAuthority: RatingAuthority;

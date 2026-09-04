@@ -59,6 +59,7 @@ describe('toContribution', () => {
 			resolve: { kind: 'tmdb-movie', tmdbId: '1542' },
 			status: 'complete',
 			completedDates: ['1999-05-01'],
+			addedDate: '2018-07-17',
 			myRating: 8,
 			isPurchased: true,
 			ratingAuthority: 'overwrite',
@@ -68,6 +69,7 @@ describe('toContribution', () => {
 		expect(toContribution(record)).toStrictEqual({
 			status: 'complete',
 			completedDates: ['1999-05-01'],
+			addedDate: '2018-07-17',
 			myRating: 8,
 			isPurchased: true,
 			ratingAuthority: 'overwrite',
@@ -267,6 +269,55 @@ describe('applyContribution — fallback dates', () => {
 			}),
 		);
 		expect(merged.completed_dates).toStrictEqual(['2021-05-05']);
+	});
+});
+
+describe('applyContribution — added_date', () => {
+	it('sets the date on an item that has none', () => {
+		const merged = applyContribution(
+			makeItem(),
+			makeContribution({ addedDate: '2018-07-17' }),
+		);
+		expect(merged.added_date).toBe('2018-07-17');
+	});
+
+	it('keeps the earlier date when the import carries a later one', () => {
+		const merged = applyContribution(
+			makeItem({ added_date: '2018-07-17' }),
+			makeContribution({ addedDate: '2024-01-01' }),
+		);
+		expect(merged.added_date).toBe('2018-07-17');
+	});
+
+	it('pulls a drafted date back to the export date', () => {
+		// What a fresh draft (today) meeting a real export date looks like.
+		const merged = applyContribution(
+			makeItem({ added_date: '2026-09-04' }),
+			makeContribution({ addedDate: '2018-07-17' }),
+		);
+		expect(merged.added_date).toBe('2018-07-17');
+	});
+
+	it('leaves the existing date alone when the record carries none', () => {
+		const merged = applyContribution(
+			makeItem({ added_date: '2018-07-17' }),
+			makeContribution(),
+		);
+		expect(merged.added_date).toBe('2018-07-17');
+	});
+
+	it('normalizes a datetime to a day', () => {
+		const merged = applyContribution(
+			makeItem(),
+			makeContribution({ addedDate: '2018-07-17T04:32:11.000Z' }),
+		);
+		expect(merged.added_date).toBe('2018-07-17');
+	});
+
+	it('leaves the field absent when neither side has a date', () => {
+		expect(
+			applyContribution(makeItem(), makeContribution()),
+		).not.toHaveProperty('added_date');
 	});
 });
 

@@ -44,6 +44,7 @@ const SORT_KEYS: SortKey[] = [
 	'series',
 	'length',
 	'release_date',
+	'added_date',
 ];
 const FILTER_KEYS: FilterKey[] = ['purchased', 'prioritized', 'released'];
 const FILTER_STATES: FilterState[] = ['all', 'yes', 'no'];

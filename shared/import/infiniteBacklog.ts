@@ -124,6 +124,11 @@ function parseWishlist(text: string): ParseResult {
 			ratingAuthority: ratingAuthorityFor('infinite-backlog', 'game'),
 			title: row['Game name'] ?? '',
 			year: yearOf(row['Game release date']),
+			// The wishlist carries `Date added` just like the collection does, and a
+			// wishlisted game is precisely where "how long has this been sitting
+			// here" matters (#95). No `updatedDate`: that only ever dates an undated
+			// completion, and a wishlist row has no completion.
+			addedDate: isoDay(row['Date added']),
 		});
 	}
 	return { records, skipped };

@@ -56,6 +56,7 @@ const SORT_LABELS: Record<SortKey, string> = {
 	series: 'Series',
 	length: 'Length',
 	release_date: 'Release date',
+	added_date: 'Date added',
 	completion_date: 'Completion date',
 };
 

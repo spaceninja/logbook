@@ -119,6 +119,13 @@ export interface Item {
 	backdrop?: string;
 	/** ISO date; for shows, the season air date. */
 	release_date?: string;
+	/**
+	 * `YYYY-MM-DD` day this item entered the library — the export's date-added
+	 * where one exists, otherwise the Firestore document's creation day (#95).
+	 * Earliest known wins, so a re-import can only move it backwards. Absent only
+	 * on docs written before the backfill.
+	 */
+	added_date?: string;
 	description?: string;
 	/** Numeric size of the work, paired with `length_unit`. */
 	length?: number;
