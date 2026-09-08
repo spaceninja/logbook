@@ -1,5 +1,12 @@
 {
 	"extends": ["config:recommended", ":automergeMinor", ":pinVersions"],
 	"minimumReleaseAge": "3 days",
-	"commitMessageSuffix": "[skip netlify]"
+	"commitMessageSuffix": "[skip netlify]",
+	"packageRules": [
+		{
+			"description": "@nuxt/test-utils gates vitest via a peerDependency range, so a lone vitest major cannot resolve a lockfile. Update them together.",
+			"matchPackageNames": ["vitest", "@vitest/**", "@nuxt/test-utils"],
+			"groupName": "vitest"
+		}
+	]
 }
