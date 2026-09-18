@@ -1,10 +1,5 @@
 <template>
 	<section>
-		<p>
-			<NuxtLink :to="backlogLink">← Backlog</NuxtLink> ·
-			<NuxtLink :to="historyLink">History</NuxtLink>
-		</p>
-
 		<!-- Client-only Firestore data; render client-side to avoid hydrating
          against the empty SSR default. -->
 		<ClientOnly>
@@ -16,10 +11,14 @@
 			<p v-else-if="!item">Item not found.</p>
 
 			<article v-else>
+				<div class="backdrop">
+					<img :src="item.backdrop" />
+				</div>
+
 				<h1>{{ itemDisplayTitle(item) }}</h1>
 
 				<p v-if="isOwner">
-					<NuxtLink :to="`/item/${id}/edit`">Edit</NuxtLink>
+					<NuxtLink class="button" :to="`/item/${id}/edit`">Edit</NuxtLink>
 					<button type="button" :disabled="deleting" @click="onDelete">
 						{{ deleting ? 'Deleting…' : 'Delete' }}
 					</button>
@@ -151,16 +150,6 @@ useHead({
 	title: () => (item.value ? itemPageTitle(item.value) : ''),
 });
 
-// Return to the backlog or history filtered to this item's media type (#128),
-// falling back to a bare link while the item is still loading. `viewLink` mirrors
-// the views' own query convention: the default type is omitted.
-const backlogLink = computed(() =>
-	viewLink('/', item.value?.type ?? DEFAULT_MEDIA_TYPE),
-);
-const historyLink = computed(() =>
-	viewLink('/history', item.value?.type ?? DEFAULT_MEDIA_TYPE),
-);
-
 // Also hand the type to the layout, so the primary nav agrees with these two.
 usePageMediaType(() => item.value?.type);
 
@@ -177,10 +166,6 @@ const watchTarget = computed(() => {
 const metadataEntries = computed(() =>
 	item.value ? Object.entries(item.value.metadata) : [],
 );
-
-// Hand the item's backdrop to the layout, which owns the `<main>` element this
-// needs to land on, as the `--backdrop` custom property.
-usePageBackdrop(() => item.value?.backdrop);
 
 const deleting = ref(false);
 
@@ -206,5 +191,31 @@ async function onDelete() {
 <style scoped>
 .cover {
 	width: 250px;
+}
+
+.backdrop {
+	margin-inline: -1em;
+	margin-top: -1em;
+	position: relative;
+
+	&::after {
+		background: linear-gradient(
+			to bottom,
+			transparent 80%,
+			var(--color-theme-bg)
+		);
+		content: '';
+		display: block;
+		inset: 0;
+		position: absolute;
+
+		@media screen and (width >= 1024px) {
+			background:
+				linear-gradient(to bottom, transparent 80%, var(--color-theme-bg)),
+				linear-gradient(to left, transparent 80%, var(--color-theme-bg)),
+				linear-gradient(to right, transparent 80%, var(--color-theme-bg));
+			margin-inline: 0;
+		}
+	}
 }
 </style>

@@ -1,33 +1,37 @@
 <template>
-	<li :class="{ 'status-dnf': item.status === 'dnf' }">
-		<NuxtLink :to="`/item/${item.id}`">
-			<img
-				v-if="item.thumbnail"
-				:src="item.thumbnail"
-				:alt="`${itemDisplayTitle(item)} cover`"
-			/>
-			<div v-else class="placeholder">
-				{{ itemDisplayTitle(item) }}
-			</div>
-		</NuxtLink>
-		<strong class="title">{{ itemDisplayTitle(item) }}</strong>
-		<em v-if="formatSeries(item)" class="series">{{ formatSeries(item) }}</em>
-		<span v-if="item.creator" class="creator">{{
-			formatCreator(item.creator)
-		}}</span>
-		<time v-if="releaseYear" class="year" :datetime="releaseYear">{{
-			releaseYear
-		}}</time>
-		<span v-if="rating" class="rating">{{ rating }}</span>
-		<span v-if="length" class="length">{{ length }}</span>
-		<span v-if="item.status === 'dnf'" class="dnf">DNF</span>
-		<span v-if="showInProgress" class="in-progress">In Progress</span>
-		<span v-if="completedDates.length" class="dates">
-			<time v-for="d in completedDates" :key="d" :datetime="d">{{
-				formatDate(d)
+	<li :class="[{ 'status-dnf': item.status === 'dnf' }, `type-${item.type}`]">
+		<div class="thumb">
+			<NuxtLink :to="`/item/${item.id}`">
+				<img
+					v-if="item.thumbnail"
+					:src="item.thumbnail"
+					:alt="`${itemDisplayTitle(item)} cover`"
+				/>
+				<div v-else class="placeholder">
+					{{ itemDisplayTitle(item) }}
+				</div>
+			</NuxtLink>
+		</div>
+		<div class="meta">
+			<strong class="title">{{ itemDisplayTitle(item) }}</strong>
+			<em v-if="formatSeries(item)" class="series">{{ formatSeries(item) }}</em>
+			<span v-if="item.creator" class="creator">{{
+				formatCreator(item.creator)
+			}}</span>
+			<time v-if="releaseYear" class="year" :datetime="releaseYear">{{
+				releaseYear
 			}}</time>
-		</span>
-		<span v-if="statusLabel" class="status">{{ statusLabel }}</span>
+			<span v-if="rating" class="rating">{{ rating }}</span>
+			<span v-if="length" class="length">{{ length }}</span>
+			<span v-if="item.status === 'dnf'" class="dnf">DNF</span>
+			<span v-if="showInProgress" class="in-progress">In Progress</span>
+			<span v-if="completedDates.length" class="dates">
+				<time v-for="d in completedDates" :key="d" :datetime="d">{{
+					formatDate(d)
+				}}</time>
+			</span>
+			<span v-if="statusLabel" class="status">{{ statusLabel }}</span>
+		</div>
 	</li>
 </template>
 
@@ -136,11 +140,17 @@ const length = computed(() => {
 
 <style scoped>
 a {
+	align-items: flex-end;
 	color: currentcolor;
+	display: flex;
+	height: 100%;
+	justify-content: center;
 	text-decoration: none;
+	width: 100%;
 }
 
 li {
+	container-type: inline-size;
 	font-size: 0.75rem;
 	position: relative;
 	text-align: center;
@@ -151,16 +161,23 @@ li {
 	}
 }
 
-img,
-.placeholder {
-	aspect-ratio: 2/3;
-	filter: drop-shadow(0 0 1px light-dark(hotpink, cyan));
-	height: auto;
+.thumb {
+	height: 150cqw; /* 2/3 aspect ratio */
 	width: 100%;
+
+	.type-game & {
+		height: 133cqw; /* 3/4 aspect ratio */
+	}
 }
 
-img {
-	object-fit: contain;
+img,
+.placeholder {
+	border-radius: 2px;
+	box-shadow: 0 0 0 1px var(--color-currentcolor-30);
+	height: auto;
+	max-height: 100%;
+	max-width: 100%;
+	width: auto;
 }
 
 /* TODO maybe these should be list items? */

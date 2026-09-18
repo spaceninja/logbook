@@ -190,11 +190,11 @@ function absolute(at: string): string {
 }
 
 .sync__dot--ok {
-	background: light-dark(green, lightgreen);
+	background: lightgreen;
 }
 
 .sync__dot--error {
-	background: light-dark(firebrick, lightcoral);
+	background: lightcoral;
 }
 
 .sync__dot--unknown {
@@ -236,7 +236,7 @@ function absolute(at: string): string {
 }
 
 .sync__runs .is-failed {
-	color: light-dark(firebrick, lightcoral);
+	color: lightcoral;
 }
 
 .sync__detail {

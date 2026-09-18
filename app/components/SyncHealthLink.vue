@@ -62,11 +62,11 @@ const label = computed(() => {
 }
 
 .sync-health--ok {
-	--sync-health-color: light-dark(green, lightgreen);
+	--sync-health-color: lightgreen;
 }
 
 .sync-health--error {
-	--sync-health-color: light-dark(firebrick, lightcoral);
+	--sync-health-color: lightcoral;
 }
 
 .sync-health--unknown {

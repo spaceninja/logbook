@@ -125,11 +125,11 @@ onKeyStroke('Escape', () => {
 }
 
 .user-menu__list {
-	background: light-dark(lightblue, black);
+	background: black;
 	border: 1px solid var(--color-border);
 	border-radius: 0.25em;
 	box-shadow: 0 6px 20px rgb(0 0 0 / 40%);
-	color: light-dark(black, white);
+	color: white;
 	inset-block-start: calc(100% + 0.5em);
 	inset-inline-end: 0;
 	list-style: none;
