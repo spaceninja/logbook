@@ -40,7 +40,7 @@
 		"@vueuse/core": "15.0.0",
 		"@vueuse/router": "15.0.0",
 		"fast-xml-parser": "5.11.2",
-		"firebase": "13.0.0",
+		"firebase": "13.1.0",
 		"firebase-admin": "14.5.0",
 		"jszip": "3.10.2",
 		"markdown-it": "15.0.3",
