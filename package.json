@@ -57,7 +57,7 @@
 		"@typescript-eslint/parser": "8.72.1",
 		"@vitest/eslint-plugin": "1.6.28",
 		"@vue/test-utils": "2.5.1",
-		"dotenv": "18.0.9",
+		"dotenv": "18.0.10",
 		"eslint": "10.14.0",
 		"eslint-config-prettier": "10.1.8",
 		"eslint-plugin-testing-library": "7.16.2",
