@@ -3,7 +3,8 @@ import type { Item } from '../types/item';
 /**
  * Which source wins which book field (issue #69). Books arrive through two doors
  * — the bulk CSV import (`import/goodreads.ts` → Google Books → Hardcover) and the
- * daily RSS sync (`import/goodreadsRss.ts` → Hardcover) — and used to disagree,
+ * daily Goodreads sync (`import/goodreadsSync.ts` → Hardcover → Google Books) — and
+ * used to disagree,
  * because each door made its own field-by-field choices. This module is the single
  * table both obey:
  *
@@ -13,8 +14,8 @@ import type { Item } from '../types/item';
  * | `status`, `my_rating`, `completed_dates`, purchased  | Goodreads              | —          |
  * | `release_date`                                       | Goodreads *            | Google     |
  * | `length`, `length_unit`                              | Goodreads              | Google     |
- * | `description`                                        | Goodreads RSS          | Google     |
- * | `community_rating`                                   | Goodreads RSS          | Hardcover  |
+ * | `description`                                        | Goodreads †            | Google     |
+ * | `community_rating`                                   | Goodreads †            | Hardcover  |
  * | `tags`                                               | Hardcover `Genre`      | Google     |
  * | `cover`, `thumbnail`                                 | Goodreads if ≥ 640px   | Google     |
  *
@@ -35,10 +36,15 @@ import type { Item } from '../types/item';
  * with Goodreads on the year wins; everything else keeps the Goodreads year. See
  * `preferGoogleReleaseDate` for why the year check is the whole safety mechanism.
  *
+ * † Since Goodreads retired RSS (#205), the daily sync reads the shelf widget,
+ * which carries no description, length, release date, or community rating. A book
+ * synced before then keeps the values RSS gave it; a newly synced one gets them
+ * from the fallback column, filled only where blank.
+ *
  * Cover is the one field Google usually wins, because Goodreads' art is served off
  * Amazon's CDN where the `._SX640_` directive only ever scales *down* — 55 of the
  * 100 covers on the `read` shelf have an original narrower than 640px. That rule
- * needs a measured width, so it lives in the sync (`import/goodreadsRss.ts`); the
+ * needs a measured width, so it lives in the sync (`import/goodreadsSync.ts`); the
  * CSV export carries no cover URL at all, leaving the import with Google either way.
  */
 
@@ -46,8 +52,6 @@ import type { Item } from '../types/item';
 const YEAR_ONLY = /^\d{4}$/;
 /** A `YYYY-MM-DD`, the shape every other media type stores. */
 const FULL_DATE = /^\d{4}-\d{2}-\d{2}$/;
-/** A date carrying more than a year: `YYYY-MM` (hand-typed) or `YYYY-MM-DD`. */
-const REFINED_DATE = /^\d{4}-\d{2}(-\d{2})?$/;
 
 /**
  * How far back the carve-out reaches, in years before the current one. Three years
@@ -78,25 +82,6 @@ export function preferGoogleReleaseDate(
 	if (!YEAR_ONLY.test(goodreads) || !FULL_DATE.test(google)) return false;
 	if (google.slice(0, 4) !== goodreads) return false;
 	return Number(goodreads) >= now.getFullYear() - RECENT_YEARS;
-}
-
-/**
- * Whether writing `incoming` over `stored` would throw away precision — a bare
- * `YYYY` replacing a `YYYY-MM`/`YYYY-MM-DD` that already starts with that year.
- *
- * The Goodreads RSS sync re-applies the feed's year on every run, so without this
- * check any full date the library holds for a currently-shelved book — put there by
- * the carve-out above, by the backfill script, or by hand in the edit form — is
- * silently downgraded the next morning. Unlike the carve-out this has no recency
- * window: a hand-typed date on a 1984 book deserves the same protection. (#97)
- */
-export function isReleaseDateDowngrade(
-	stored: string | undefined,
-	incoming: string | undefined,
-): boolean {
-	if (!stored || !incoming) return false;
-	if (!YEAR_ONLY.test(incoming) || !REFINED_DATE.test(stored)) return false;
-	return stored.startsWith(incoming);
 }
 
 /**

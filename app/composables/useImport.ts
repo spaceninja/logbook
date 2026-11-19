@@ -84,7 +84,7 @@ export interface ImportSummary {
 	 * How many new books couldn't be enriched from Hardcover because a batch
 	 * errored (rate-limited / unavailable / token expired) — distinct from books
 	 * Hardcover simply had no match for. Non-actionable: they import fine and get
-	 * retried on the next RSS sync. Surfaced so a failed run isn't silent.
+	 * retried on the next Goodreads sync. Surfaced so a failed run isn't silent.
 	 */
 	hardcoverErrors: number;
 }
@@ -871,7 +871,7 @@ export function useImport() {
 		}
 
 		// Supplemental Hardcover tag/rating enrichment for the new books, batched
-		// and best-effort — a failure just leaves them for the next RSS sync.
+		// and best-effort — a failure just leaves them for the next Goodreads sync.
 		const hardcoverErrors = await enrichBooksWithHardcover(newItems);
 
 		phase = 'saving';

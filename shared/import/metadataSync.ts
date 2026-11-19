@@ -2,8 +2,8 @@ import type { Item } from '../types/item';
 
 /**
  * Which fields the nightly movie/show/game metadata sync is allowed to touch
- * (issue #106). Books are not merged here — they arrive through the Goodreads RSS
- * sync, which has its own precedence rules (`import/goodreadsRss.ts`, and the
+ * (issue #106). Books are not merged here — they arrive through the Goodreads
+ * sync, which has its own precedence rules (`import/goodreadsSync.ts`, and the
  * table in `providers/bookFields.ts`).
  *
  * | Field                                                    | Rule                                         |

@@ -37,6 +37,15 @@ function db() {
 	return getFirestore();
 }
 
+/**
+ * The Firebase project the service account points at. Local `.env` keys are for
+ * dev while CI's secret is prod, so scripts print this to make the target obvious.
+ */
+export function projectId(): string {
+	db();
+	return getApps()[0]?.options.projectId ?? '(unknown project)';
+}
+
 /** The `items` collection handle. */
 function items() {
 	return db().collection('items');

@@ -22,7 +22,7 @@ import { tmdbMovieDraft, tmdbSeasonDraft } from './lib/tmdb';
  * and NUXT_TWITCH_CLIENT_SECRET; NUXT_IGDB_TIME_TO_BEAT_STAT is optional.
  *
  * Books are deliberately out of scope: they're already refreshed by the Goodreads
- * RSS sync, under the different precedence rules in `providers/bookFields.ts`.
+ * sync, under the different precedence rules in `providers/bookFields.ts`.
  * Which fields this sync may touch is `import/metadataSync.ts` — notably *not*
  * the same set the edit form's refresh button overwrites.
  */

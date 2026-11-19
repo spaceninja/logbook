@@ -1,10 +1,9 @@
 name: Sync Goodreads
 
-# Runs the Goodreads RSS sync (scripts/sync-goodreads.ts) daily against prod.
+# Runs the Goodreads shelf-widget sync (scripts/sync-goodreads.ts) daily against prod.
 # Requires these repo secrets, all pointing at the prod Firebase project:
 #   FIREBASE_SERVICE_ACCOUNT — raw JSON of a prod service-account key
 #   GOODREADS_USER_ID        — numeric Goodreads user id
-#   GOODREADS_RSS_KEY        — the `key` param from a shelf RSS URL
 #   NUXT_HARDCOVER_TOKEN     — optional; tag enrichment is skipped without it
 
 on:
@@ -43,5 +42,4 @@ jobs:
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           GOODREADS_USER_ID: ${{ secrets.GOODREADS_USER_ID }}
-          GOODREADS_RSS_KEY: ${{ secrets.GOODREADS_RSS_KEY }}
           NUXT_HARDCOVER_TOKEN: ${{ secrets.NUXT_HARDCOVER_TOKEN }}

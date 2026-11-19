@@ -6,7 +6,7 @@ import { normalizeTags, round2 } from './helpers';
  * network (the fetch layer lives in `server/utils/hardcover.ts` for Nitro and
  * `scripts/lib/hardcover.ts` for the sync script, both of which use these
  * mappers). Hardcover is the source of Goodreads-quality community **genre tags**
- * that neither Goodreads' RSS/CSV nor Google Books expose, plus a community
+ * that neither Goodreads nor Google Books expose, plus a community
  * rating used only to fill a gap (never to override Goodreads).
  *
  * Books are matched by ISBN → edition → `edition.book`. Tags/ratings are

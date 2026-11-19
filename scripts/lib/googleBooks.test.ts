@@ -231,6 +231,61 @@ describe('applyVolume', () => {
 		expect(item.release_date).toBe('2026');
 	});
 
+	it('fills a missing release date from the volume', () => {
+		const item = book();
+
+		applyVolume(item, {
+			id: 'v',
+			volumeInfo: { title: 'Radiant Star', publishedDate: '2026-06-30' },
+		});
+
+		expect(item.release_date).toBe('2026-06-30');
+	});
+
+	it('fills a missing description, converted to markdown', () => {
+		const item = book();
+
+		applyVolume(item, {
+			id: 'v',
+			volumeInfo: { title: 'Radiant Star', description: '<b>Bold</b> start' },
+		});
+
+		expect(item.description).toBe('**Bold** start');
+	});
+
+	it('does not replace a description the book already has', () => {
+		const item = book({ description: 'From Goodreads.' });
+
+		applyVolume(item, {
+			id: 'v',
+			volumeInfo: { title: 'Radiant Star', description: 'From Google.' },
+		});
+
+		expect(item.description).toBe('From Goodreads.');
+	});
+
+	it('fills a missing page count', () => {
+		const item = book();
+
+		applyVolume(item, {
+			id: 'v',
+			volumeInfo: { title: 'Radiant Star', pageCount: 412 },
+		});
+
+		expect([item.length, item.length_unit]).toEqual([412, 'pages']);
+	});
+
+	it('does not replace a page count the book already has', () => {
+		const item = book({ length: 248, length_unit: 'pages' });
+
+		applyVolume(item, {
+			id: 'v',
+			volumeInfo: { title: 'Radiant Star', pageCount: 189 },
+		});
+
+		expect(item).toHaveLength(248);
+	});
+
 	it('does not overwrite a date that is already day-level', () => {
 		const item = book({ release_date: '2026-05-12' });
 
