@@ -4,6 +4,7 @@ import {
 } from '../../shared/providers/googleBooks';
 import { preferGoogleReleaseDate } from '../../shared/providers/bookFields';
 import type { BookMetadata, Item } from '../../shared/types/item';
+import { htmlToMarkdown } from '../../shared/utils/htmlToMarkdown';
 
 /**
  * Node-side (non-Nitro) Google Books lookups for the sync and backfill scripts.
@@ -12,11 +13,11 @@ import type { BookMetadata, Item } from '../../shared/types/item';
  * because that module reaches for `useRuntimeConfig()` and can't run outside Nitro.
  *
  * The enrichment here is deliberately narrow (#98): it stamps
- * `metadata.google_books_id` and, when `preferGoogleReleaseDate` accepts it, a
- * day-level `release_date`. Nothing else. Cover, description, and length belong to
- * the Goodreads feed and tags to Hardcover — see the precedence table in
- * `shared/providers/bookFields.ts`. The RSS feed is rich enough that Google's only
- * unique contributions are the exact date and the id itself.
+ * `metadata.google_books_id`, a day-level `release_date` when
+ * `preferGoogleReleaseDate` accepts it, and fills description, length, and release
+ * date only where the book has none. It never overwrites a value from Goodreads,
+ * the CSV import, or the owner; cover belongs to the sync and tags to Hardcover —
+ * see the precedence table in `shared/providers/bookFields.ts`.
  */
 
 /** Google Books' minimum spacing, mirroring `server/utils/googleBooks.ts`. */
@@ -136,8 +137,11 @@ export async function resolveVolume(
 }
 
 /**
- * Apply a resolved volume to a book: always the id, and the release date only when
- * the shared precedence rule accepts it. Returns whether the date was taken, so
+ * Apply a resolved volume to a book: always the id; the release date when the book
+ * has none or the shared precedence rule prefers Google's; and description and page
+ * count only when the book has none. The Goodreads widget carries none of those, so
+ * for a newly synced book Google is the only source — the "Google" fallback column
+ * in `shared/providers/bookFields.ts`. Returns whether a release date was taken, so
  * callers can report it. Mutates, like `applyHardcoverEnrichment`'s caller does.
  */
 export function applyVolume(item: Item, volume: GoogleBooksVolume): boolean {
@@ -145,12 +149,20 @@ export function applyVolume(item: Item, volume: GoogleBooksVolume): boolean {
 		...(item.metadata as BookMetadata),
 		google_books_id: volume.id,
 	};
-	const published = volume.volumeInfo?.publishedDate;
+	const info = volume.volumeInfo;
+	if (item.description === undefined && info?.description) {
+		item.description = htmlToMarkdown(info.description);
+	}
+	if (item.length === undefined && info?.pageCount && info.pageCount > 0) {
+		item.length = info.pageCount;
+		item.length_unit = 'pages';
+	}
+
+	const published = info?.publishedDate;
 	const stored = item.release_date;
 	if (
-		stored !== undefined &&
 		published !== undefined &&
-		preferGoogleReleaseDate(stored, published)
+		(stored === undefined || preferGoogleReleaseDate(stored, published))
 	) {
 		item.release_date = published;
 		return true;

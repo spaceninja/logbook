@@ -10,7 +10,7 @@ import {
 import type { BookMetadata, Item } from '../../shared/types/item';
 
 /**
- * Node-side (non-Nitro) Hardcover enrichment for the Goodreads RSS sync. Mirrors
+ * Node-side (non-Nitro) Hardcover enrichment for the Goodreads sync. Mirrors
  * `server/utils/hardcover.ts` but reads the token from an argument (the script
  * sources `NUXT_HARDCOVER_TOKEN` via dotenv) and uses global `fetch`. Enriches book
  * items lacking a `hardcover_id` in batched, best-effort fashion — a failure

@@ -14,7 +14,7 @@ import type { BookMetadata, Item } from '../shared/types/item';
  * `metadata.google_books_id` (#98) and a day-level `release_date` (#97).
  *
  * Books arrive from Goodreads carrying only a bare year, because that's all the
- * RSS feed's `book_published` holds. Google has the exact date, and for a book
+ * retired RSS feed's `book_published` held. Google has the exact date, and for a book
  * published in the last three years its answer is trustworthy — no time has passed
  * for a reprint edition to exist, so the edition it resolves *is* the first one.
  * `preferGoogleReleaseDate` owns that rule and this script only applies it.

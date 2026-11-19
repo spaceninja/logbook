@@ -1,10 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Item } from '../types/item';
-import {
-	isReleaseDateDowngrade,
-	preferGoodreadsFields,
-	preferGoogleReleaseDate,
-} from './bookFields';
+import { preferGoodreadsFields, preferGoogleReleaseDate } from './bookFields';
 
 function book(overrides: Partial<Item> = {}): Item {
 	return {
@@ -157,35 +153,5 @@ describe('preferGoogleReleaseDate', () => {
 		expect(preferGoogleReleaseDate('2026-05-12', '2026-05-05', now)).toBe(
 			false,
 		);
-	});
-});
-
-describe('isReleaseDateDowngrade', () => {
-	it('flags a bare year replacing a full date of that year', () => {
-		expect(isReleaseDateDowngrade('2026-05-12', '2026')).toBe(true);
-	});
-
-	it('flags a bare year replacing a month-precision date of that year', () => {
-		expect(isReleaseDateDowngrade('2026-05', '2026')).toBe(true);
-	});
-
-	it('has no recency window — a hand-typed 1984 date is protected too', () => {
-		expect(isReleaseDateDowngrade('1984-07-01', '1984')).toBe(true);
-	});
-
-	it('allows a bare year that corrects the year outright', () => {
-		expect(isReleaseDateDowngrade('2000-07-01', '1984')).toBe(false);
-	});
-
-	it('allows a full date to replace a bare year', () => {
-		expect(isReleaseDateDowngrade('2026', '2026-05-12')).toBe(false);
-	});
-
-	it('allows a year onto a book that has no date at all', () => {
-		expect(isReleaseDateDowngrade(undefined, '2026')).toBe(false);
-	});
-
-	it('is not fooled by a year that is a prefix of a longer number', () => {
-		expect(isReleaseDateDowngrade('20260', '2026')).toBe(false);
 	});
 });

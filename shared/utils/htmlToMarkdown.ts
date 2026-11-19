@@ -22,7 +22,8 @@ const NAMED_ENTITIES: Record<string, string> = {
 	ldquo: '“',
 };
 
-function decodeEntities(text: string): string {
+/** Decode named and numeric HTML entities (`&amp;`, `&#39;`, `&#x2019;`). */
+export function decodeEntities(text: string): string {
 	return text.replace(/&(#x?[0-9a-f]+|[a-z0-9]+);/gi, (match, code: string) => {
 		if (code[0] === '#') {
 			const isHex = code[1]?.toLowerCase() === 'x';

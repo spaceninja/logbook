@@ -45,7 +45,7 @@ export interface BookMetadata {
 	/**
 	 * Canonical Hardcover book id — the handle for the supplemental tag/rating
 	 * enrichment (see `providers/hardcover.ts`). Its presence marks a book as
-	 * already matched against Hardcover, so import and the RSS sync skip re-matching
+	 * already matched against Hardcover, so import and the Goodreads sync skip re-matching
 	 * it; its absence triggers an enrichment attempt. Matched by ISBN, falling back
 	 * to a title search; either way it resolves to the canonical (editions-bearing)
 	 * record.
