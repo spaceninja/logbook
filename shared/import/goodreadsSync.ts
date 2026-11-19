@@ -62,17 +62,19 @@ export function syncedStatus(
 
 /**
  * The owner's timezone, which decides which calendar day "yesterday" is. The sync
- * runs in the early hours Pacific, so a book finished late the previous evening is
- * still dated to the evening it was finished.
+ * is scheduled for the early hours Pacific, so a book finished late the previous
+ * evening is still dated to the evening it was finished.
  */
 export const OWNER_TIMEZONE = 'America/Los_Angeles';
 
 /**
  * The completion day the sync assigns a book newly found on `read`: the day before
  * the run, in the owner's timezone. A daily run sees each change within a day of it
- * happening, and runs early in the morning, so "yesterday" is right far more often
- * than the run's own date. A run that follows days of failures dates everything it
- * catches up on to yesterday — an accepted inaccuracy, since nothing better exists.
+ * happening, and is scheduled for the early hours, so "yesterday" is right far more
+ * often than the run's own date. Two accepted inaccuracies, since nothing better
+ * exists: GitHub starts scheduled runs hours late, so a book finished in the
+ * morning before the run lands is dated a day early; and a run that follows days
+ * of failures dates everything it catches up on to yesterday.
  */
 export function readDayFor(now: Date): string {
 	const today = new Intl.DateTimeFormat('en-CA', {

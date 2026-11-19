@@ -57,7 +57,7 @@ function toRun(input: SyncRunInput, at: Date): SyncRun {
  * Prepend this run to the sync's history and trim to the retention limit.
  *
  * Only this sync's key is written, so the two jobs can't clobber one another
- * even though they share a document — and in practice they run 30 minutes apart.
+ * even though they share a document — and in practice they run hours apart.
  */
 export async function recordSyncRun(
 	name: SyncName,

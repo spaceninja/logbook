@@ -8,8 +8,11 @@ name: Sync Goodreads
 
 on:
   schedule:
-    # 12:17 UTC daily — early morning Pacific, off the hour to dodge peak load.
-    - cron: '17 12 * * *'
+    # 09:17 UTC daily (1:17am PST / 2:17am PDT), off the hour to dodge peak load.
+    # GitHub routinely starts scheduled runs 3–9 hours late, so this lands them
+    # in the Pacific morning. Earlier risks an on-time run before midnight
+    # Pacific, which would date new reads two days back (see `readDayFor`).
+    - cron: '17 9 * * *'
   workflow_dispatch:
     inputs:
       dry-run:
