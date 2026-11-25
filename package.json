@@ -51,7 +51,7 @@
 	"devDependencies": {
 		"@eslint/js": "10.0.1",
 		"@nuxt/test-utils": "4.4.0",
-		"@testing-library/jest-dom": "7.0.1",
+		"@testing-library/jest-dom": "8.0.0",
 		"@testing-library/vue": "8.1.0",
 		"@types/markdown-it": "14.2.0",
 		"@typescript-eslint/parser": "8.73.0",
